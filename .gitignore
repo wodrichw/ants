@@ -1,0 +1,7 @@
+compile_commands.json
+CMakeFiles
+CMakeCache.txt
+vcpkgs-manifest-install.log
+cmake_install.cmake
+vcpkg_installed
+
