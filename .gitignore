@@ -2,9 +2,9 @@ compile_commands.json
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
-vcpkg*
 .cache
 Makefile
-
+vcpkg-manifest-install.log
+vcpkg_installed/
 
 
