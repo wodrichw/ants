@@ -5,11 +5,11 @@
 #include "engine.hpp"
 
 Engine::Engine(): 
-    player(new Actor(40,25,'@', "white", tcod::ColorRGB{255,255,255})),
+    player(new ant::Player(40,25,'@', "white", tcod::ColorRGB{255,255,255})),
     map(new Map(80,45))
 {
     TCODConsole::initRoot(80,50,"roguelike C++",false);
-    actors.push(player);
+    ants.push(player);
 }
 
 Engine::~Engine() {
