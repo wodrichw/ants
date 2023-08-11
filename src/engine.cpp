@@ -3,23 +3,25 @@
 #include <libtcod/context.h>
 #include <libtcod/context_init.h>
 #include "engine.hpp"
+#include "ant.hpp"
 
 Engine::Engine(): 
-    player(new Actor(40,25,'@', "white", tcod::ColorRGB{255,255,255})),
-    map(new Map(80,45))
+    player(new ant::Player(40,25, 10, '@', tcod::ColorRGB{255,255,255})),
+    ants( {player} ),
+    map(new Map(80,45, ants))
 {
-    TCODConsole::initRoot(80,50,"roguelike C++",false);
-    actors.push(player);
+    TCODConsole::initRoot(80,50,"A N T S",false);
+    map->updateFov();
 }
 
 Engine::~Engine() {
-    actors.clearAndDelete();
+    for (auto ant : ants) delete ant;
     delete map;
 }
 
 void Engine::update() {
     TCOD_key_t key;
-    if ( gameStatus == STARTUP ) map->computeFov();
+    if ( gameStatus == STARTUP ) map->updateFov();
     gameStatus=IDLE;
     TCODSystem::checkForEvent(TCOD_EVENT_KEY_PRESS,&key,NULL);
 
@@ -33,30 +35,36 @@ void Engine::update() {
     }
     if ( dx != 0 || dy != 0 ) {
         gameStatus=NEW_TURN;
-        if ( player->moveOrAttack(player->x+dx,player->y+dy) ) {
-            map->computeFov();
+        if ( map->canWalk(player->x + dx, player->y + dy) ) {
+            player->updatePositionByDelta(dx, dy);
+            map->updateFov();
         }
+        // if ( player->moveOrAttack(player->x+dx,player->y+dy) ) {
+            // map->updateFov();
+        // }
     }
     if ( gameStatus == NEW_TURN ) {
-        for (Actor **iterator=actors.begin(); iterator != actors.end();
-                iterator++) {
-            Actor *actor=*iterator;
-            if ( actor != player ) {
-                actor->update();
-            }
-        }
+        // for (Actor **iterator=actors.begin(); iterator != actors.end();
+        //         iterator++) {
+        //     Actor *actor=*iterator;
+        //     if ( actor != player ) {
+        //         actor->update();
+        //     }
+        // }
     }
 }
 
-void Engine::render() {
+
+void Engine::render() 
+{
     TCODConsole::root->clear();
     // draw the map
     map->render();
 
-    // draw the actors
-    for (auto actor: actors) {
-        if ( map->isInFov(actor->x,actor->y) ) {
-            actor->render();
+    // draw the ants
+    for (auto ant: ants) {
+        if ( map->isInFov(ant->x,ant->y) ) {
+            ant->render();
         }
     }
 }

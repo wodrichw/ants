@@ -2,8 +2,9 @@
 #define __ENGINE_HPP
 
 #include <libtcod.hpp>
+#include <vector>
 #include "map.hpp"
-#include "actor.hpp"
+#include "ant.hpp"
 
 
 
@@ -17,8 +18,8 @@ public :
         DEFEAT
     } gameStatus;
 
-    TCODList<Actor *> actors;
-    Actor *player;
+    ant::Player* player;
+    std::vector<ant::Ant*> ants;
     Map *map;
     int fovRadius = 10;
     bool computeFov = true;

@@ -1,12 +1,10 @@
 #include <libtcod.hpp>
 
-#include "actor.hpp"
-#include "map.hpp"
 #include "engine.hpp"
 
-Engine engine;
 
 int main() {
+    Engine engine;
     while ( !TCODConsole::isWindowClosed() ) {
         engine.update();
         engine.render();
