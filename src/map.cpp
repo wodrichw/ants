@@ -1,9 +1,10 @@
 #include <libtcod.hpp>
 #include <libtcod/color.hpp>
 #include <libtcod/bsp.hpp>
+#include <libtcod/console_drawing.h>
+#include <vector>
 #include "map.hpp"
-#include "engine.hpp"
-#include "actor.hpp"
+#include "ant.hpp"
 
 class BspListener : public ITCODBspCallback {
 private :
@@ -15,7 +16,8 @@ public :
     BspListener(Map &map) : map(map), roomNum(0) {}
 
 
-    bool visitNode(TCODBsp *node, void *userData) {
+    bool visitNode(TCODBsp *node, void *user_data) {
+        (void)user_data; // don't need user_data
         if ( node->isLeaf() ) {
             int x,y,w,h;
             // dig a room
@@ -38,7 +40,7 @@ public :
     }
 };
 
-Map::Map(int width, int height) : width(width),height(height), 
+Map::Map(int width, int height, std::vector<ant::Ant*>& ants) : width(width), height(height), ants(ants),
     tiles(new Tile[width*height]),
     map(new TCODMap(width, height))
 {
@@ -56,6 +58,17 @@ Map::~Map()
     delete map;
 }
 
+Tile& Map::getTile(int x, int y) const 
+{ 
+    return tiles[x + y*width]; 
+}
+
+void Map::clearCh(int x, int y)
+{
+    auto& tile = root_console.at(x,y);
+    tile.ch = ' ';
+}
+
 void Map::setWall(int x, int y)
 {
     map->setProperties(x, y, false, false);
@@ -71,8 +84,8 @@ bool Map::canWalk(int x, int y) const
     if (isWall(x,y)) {
         return false;
     }
-    for( auto actor : engine.actors) {
-        if ( actor->x == x && actor->y == y ) {
+    for( auto ant : ants) {
+        if ( ant->x == x && ant->y == y ) {
             // there is an actor there. cannot walk
             return false;
         }
@@ -82,8 +95,9 @@ bool Map::canWalk(int x, int y) const
 
 
 bool Map::isInFov(int x, int y) const {
-    if ( map->isInFov(x,y) ) {
-        tiles[x+y*width].explored=true;
+    Tile& tile = getTile(x,  y);
+    if ( tile.inFov ) {
+        tile.explored=true;
         return true;
     }
     return false;
@@ -91,47 +105,69 @@ bool Map::isInFov(int x, int y) const {
 
 bool Map::isExplored(int x, int y) const
 {
-    return tiles[x+y*width].explored;
+    return getTile(x, y).explored;
 }
 
-void Map::render() const 
+void Map::render()
 {
-    static const TCODColor darkWall(0,0,100);
-    static const TCODColor darkGround(50,50,150);
-    static const TCODColor lightWall(130,110,50);
-    static const TCODColor lightGround(200,180,50);
+    TCOD_ColorRGBA darkWall{0,0,100, 255};
+    TCOD_ColorRGBA darkGround{50,50,150, 255};
+    TCOD_ColorRGBA lightWall{130,110,50,255};
+    TCOD_ColorRGBA lightGround{200,180,50,255};
 
 
     for (int x=0; x < width; x++) {
         for (int y=0; y < height; y++) {
+            auto& tile = root_console.at(x,y);
             if ( isInFov(x, y)) {
-                TCODConsole::root->setCharBackground( x,y, isWall(x,y) ? lightWall : lightGround );
+                tile.bg = isWall(x,y)? lightWall: lightGround;
             } else {
                 if (isExplored(x, y)) {
-                    TCODConsole::root->setCharBackground( x,y, isWall(x,y) ? darkWall : darkGround );
+                    tile.bg =  isWall(x,y) ? darkWall : darkGround;
                 } else {
-                    TCODConsole::root->setCharBackground( x,y, darkWall);
+                    tile.bg =  darkWall;
                 }
             }
         }
     }
 }
-
-void Map::computeFov()  const
+void Map::renderAnt(ant::Ant& a)
 {
-    map->computeFov(engine.player->x,engine.player->y, engine.fovRadius);
+    if ( isInFov(a.x,a.y) ) {
+        auto& tile = root_console.at(a.x, a.y);
+        tile.ch = a.ch;
+        tile.fg = a.col;
+    }
 }
 
-void Map::addMonster(int x, int y) {
-    TCODRandom *rng=TCODRandom::getInstance();
-    if ( rng->getInt(0,100) < 80 ) {
-        // create an orc
-        engine.actors.push(new Actor(x,y,'o',"orc",
-             TCODColor::desaturatedGreen));
-    } else {
-        // create a troll
-        engine.actors.push(new Actor(x,y,'T',"troll",
-             TCODColor::darkerGreen));               
+
+void Map::resetFov() {
+    for (int x=0; x < width; x++) {
+        for (int y=0; y < height; y++) {
+            getTile(x,y).inFov = false;
+        }
+    }
+    for (auto ant : ants) {
+        ant->resetFov();
+    }
+}
+
+void Map::updateTileFov() {
+    for (int x=0; x < width; x++) {
+        for (int y=0; y < height; y++) {
+            if ( map->isInFov(x,  y) ) {
+                getTile(x,y).inFov = true;
+            }
+        }
+    }
+}
+
+void Map::updateFov()
+{
+    resetFov();
+    for (auto ant: ants) {
+        map->computeFov(ant->x, ant->y, ant->fovRadius);
+        updateTileFov();
     }
 }
 
@@ -161,20 +197,21 @@ void Map::dig(int x1, int y1, int x2, int y2)
 void Map::createRoom(bool first, int x1, int y1, int x2, int y2)
 {
     dig (x1,y1,x2,y2);
+
     if ( first ) {
         // put the player in the first room
-        engine.player->x=(x1+x2)/2;
-        engine.player->y=(y1+y2)/2;
+        ants[0]->x=(x1+x2)/2;
+        ants[0]->y=(y1+y2)/2;
     } else {
         TCODRandom *rng=TCODRandom::getInstance();
-        int nbMonsters=rng->getInt(0,MAX_ROOM_MONSTERS);
-        while (nbMonsters > 0) {
+        int nbAnts=rng->getInt(0,MAX_ROOM_MONSTERS);
+        while (nbAnts > 0) {
             int x=rng->getInt(x1,x2);
             int y=rng->getInt(y1,y2);
             if ( canWalk(x,y) ) {
-                addMonster(x,y);
+                ants.push_back(new ant::Player(x, y, 2, 'w', tcod::ColorRGB{1, 2, 3}));
             }
-            nbMonsters--;
+            nbAnts--;
         }
     }
 }

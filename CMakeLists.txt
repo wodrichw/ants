@@ -61,8 +61,8 @@ endif()
 
 add_executable(ants 
     src/main.cpp
-    src/actor.cpp
-    src/actor.hpp
+    src/ant.cpp
+    src/ant.hpp
     src/map.cpp
     src/map.hpp
     src/engine.cpp

@@ -4,7 +4,8 @@ CMakeCache.txt
 cmake_install.cmake
 .cache
 Makefile
-vcpkg-manifest-install.log
 vcpkg_installed/
+ants
+*.log
 
 
