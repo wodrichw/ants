@@ -1,6 +1,7 @@
 #include <libtcod.hpp>
 #include <libtcod/color.hpp>
 #include <libtcod/bsp.hpp>
+#include <libtcod/console_drawing.h>
 #include <vector>
 #include "map.hpp"
 #include "ant.hpp"
@@ -15,7 +16,8 @@ public :
     BspListener(Map &map) : map(map), roomNum(0) {}
 
 
-    bool visitNode(TCODBsp *node, void *userData) {
+    bool visitNode(TCODBsp *node, void *user_data) {
+        (void)user_data; // don't need user_data
         if ( node->isLeaf() ) {
             int x,y,w,h;
             // dig a room
@@ -61,6 +63,12 @@ Tile& Map::getTile(int x, int y) const
     return tiles[x + y*width]; 
 }
 
+void Map::clearCh(int x, int y)
+{
+    auto& tile = root_console.at(x,y);
+    tile.ch = ' ';
+}
+
 void Map::setWall(int x, int y)
 {
     map->setProperties(x, y, false, false);
@@ -100,28 +108,38 @@ bool Map::isExplored(int x, int y) const
     return getTile(x, y).explored;
 }
 
-void Map::render() const 
+void Map::render()
 {
-    static const TCODColor darkWall(0,0,100);
-    static const TCODColor darkGround(50,50,150);
-    static const TCODColor lightWall(130,110,50);
-    static const TCODColor lightGround(200,180,50);
+    TCOD_ColorRGBA darkWall{0,0,100, 255};
+    TCOD_ColorRGBA darkGround{50,50,150, 255};
+    TCOD_ColorRGBA lightWall{130,110,50,255};
+    TCOD_ColorRGBA lightGround{200,180,50,255};
 
 
     for (int x=0; x < width; x++) {
         for (int y=0; y < height; y++) {
+            auto& tile = root_console.at(x,y);
             if ( isInFov(x, y)) {
-                TCODConsole::root->setCharBackground( x,y, isWall(x,y) ? lightWall : lightGround );
+                tile.bg = isWall(x,y)? lightWall: lightGround;
             } else {
                 if (isExplored(x, y)) {
-                    TCODConsole::root->setCharBackground( x,y, isWall(x,y) ? darkWall : darkGround );
+                    tile.bg =  isWall(x,y) ? darkWall : darkGround;
                 } else {
-                    TCODConsole::root->setCharBackground( x,y, darkWall);
+                    tile.bg =  darkWall;
                 }
             }
         }
     }
 }
+void Map::renderAnt(ant::Ant& a)
+{
+    if ( isInFov(a.x,a.y) ) {
+        auto& tile = root_console.at(a.x, a.y);
+        tile.ch = a.ch;
+        tile.fg = a.col;
+    }
+}
+
 
 void Map::resetFov() {
     for (int x=0; x < width; x++) {
@@ -151,19 +169,6 @@ void Map::updateFov()
         map->computeFov(ant->x, ant->y, ant->fovRadius);
         updateTileFov();
     }
-}
-
-void Map::addMonster(int x, int y) {
-    // TCODRandom *rng=TCODRandom::getInstance();
-    // if ( rng->getInt(0,100) < 80 ) {
-    //     // create an orc
-    //     engine.actors.push(new Actor(x,y,'o',"orc",
-    //          TCODColor::desaturatedGreen));
-    // } else {
-    //     // create a troll
-    //     engine.actors.push(new Actor(x,y,'T',"troll",
-    //          TCODColor::darkerGreen));               
-    // }
 }
 
 

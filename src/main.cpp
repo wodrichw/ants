@@ -5,10 +5,11 @@
 
 int main() {
     Engine engine;
-    while ( !TCODConsole::isWindowClosed() ) {
+    // while ( !TCODConsole::isWindowClosed() ) {
+    while ( 1 ) {
         engine.update();
         engine.render();
-        TCODConsole::flush();
+        // TCODConsole::flush();
     }
     return 0;
 }

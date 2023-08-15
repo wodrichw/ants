@@ -2,6 +2,7 @@
 #define __ENGINE_HPP
 
 #include <libtcod.hpp>
+#include <libtcod/console.hpp>
 #include <vector>
 #include "map.hpp"
 #include "ant.hpp"
@@ -18,6 +19,7 @@ public :
         DEFEAT
     } gameStatus;
 
+    tcod::Context context;
     ant::Player* player;
     std::vector<ant::Ant*> ants;
     Map *map;
