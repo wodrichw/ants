@@ -119,6 +119,7 @@ void Map::render()
     for (int x=0; x < width; x++) {
         for (int y=0; y < height; y++) {
             auto& tile = root_console.at(x,y);
+            tile.ch = ' ';
             if ( isInFov(x, y)) {
                 tile.bg = isWall(x,y)? lightWall: lightGround;
             } else {
