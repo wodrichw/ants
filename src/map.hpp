@@ -7,6 +7,9 @@ __MAP_HPP
 #include <vector>
 #include "ant.hpp"
 
+
+class Building;
+
 static const int ROOM_MAX_SIZE = 12;
 static const int ROOM_MIN_SIZE = 6;
 static const int MAX_ROOM_MONSTERS = 3;
@@ -14,7 +17,8 @@ static const int MAX_ROOM_MONSTERS = 3;
 struct Tile {
     bool explored; // has the player already seen this tile ?
     bool inFov;
-    Tile() : explored(false), inFov(false) {}
+    std::optional<int> bldgId; // set if to the ID of the building occupying the tile, unset if no building
+    Tile() : explored(false), inFov(false), bldgId() {}
 };
 
 class Map {
@@ -22,7 +26,7 @@ public :
     int width,height;
     tcod::Console root_console;
 
-    Map(int width, int height, std::vector<ant::Ant*>& ants);
+    Map(int width, int height, std::vector<ant::Ant*>& ants, std::vector<Building*>&buildings);
     ~Map();
     Tile& getTile(int x, int y) const;
     void clearCh(int x, int y);
@@ -32,9 +36,11 @@ public :
     bool isExplored(int x, int y) const;
     void render();
     void renderAnt(ant::Ant& a);
+    void renderBuilding(Building& b);
     void updateFov();
 private :
     std::vector<ant::Ant*>& ants;
+    std::vector<Building*>& buildings;
     Tile *tiles;
     TCODMap *map;
     friend class BspListener;

@@ -1,10 +1,7 @@
 #ifndef __ANT_HPP
 #define __ANT_HPP
 
-#include <cwchar>
-#include <libtcod.hpp>
 #include <libtcod/color.hpp>
-#include <string>
 
 
 namespace ant {
@@ -15,8 +12,11 @@ public :
     int fovRadius;
     char ch;
     tcod::ColorRGB col;
+    std::optional<int> bldgId; // the building the player is occupying. Will not be set if player not in a building.
 
     Ant(int x, int y, int fovRadius, char ch, tcod::ColorRGB col);
+    void updatePositionByDelta(int dx, int dy);
+
     virtual bool isInFov() = 0;
     virtual void resetFov() { return; }
 
@@ -24,11 +24,17 @@ public :
 };
 
 
-class Player :public Ant {
+class Player: public Ant {
 public:
     Player(int x, int y, int fovRadius, char ch, tcod::ColorRGB col);
     bool isInFov() { return true; }
-    void updatePositionByDelta(int dx, int dy);
+};
+
+
+class Worker: public Ant {
+public:
+    Worker(int x, int y);
+    bool isInFov() { return true; }
 };
 
 }

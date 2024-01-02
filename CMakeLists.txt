@@ -65,8 +65,13 @@ add_executable(ants
     src/ant.hpp
     src/map.cpp
     src/map.hpp
+    src/controller.cpp
+    src/controller.hpp
     src/engine.cpp
     src/engine.hpp
+    src/colors.hpp
+    src/building.cpp
+    src/building.hpp
 )
 target_link_libraries(ants ${LINK_TCOD} ${SDL2MAIN})
 if (CONAN_FILE)
