@@ -1,3 +1,4 @@
+#include <optional>
 #include <libtcod/color.hpp>
 #include "ant.hpp"
 #include "colors.hpp"
