@@ -21,7 +21,8 @@ static const int COLS = 60;
 Engine::Engine()
     : player(new ant::Player(40, 25, 10, '@', color::white)), ants({player}),
     buildings(), controllers(), map(new Map(COLS, ROWS, ants, buildings)),
-    textEditorLines(textBoxHeight) {
+    textEditorLines(textBoxHeight) 
+{
         gameStatus = STARTUP;
         auto params = TCOD_ContextParams();
         params.columns = COLS, params.rows = ROWS, params.window_title = "A N T S";
@@ -33,7 +34,8 @@ Engine::Engine()
         }
     }
 
-Engine::~Engine() {
+Engine::~Engine() 
+{
     for (auto ant : ants)
         delete ant;
     delete map;
@@ -45,11 +47,13 @@ struct Box {
     Box(std::vector<std::string> &asciiGrid, int x, int y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {}
 
-    void populateChar(int x_idx, int y_idx, char ch) {
+    void populateChar(int x_idx, int y_idx, char ch) 
+    {
         asciiGrid[y_idx + y][x + x_idx] = ch;
     }
 
-    void checkInputText(const std::vector<std::string> &text) {
+    void checkInputText(const std::vector<std::string> &text) 
+    {
         assert(text.size() == h - 2);
         assert(
                 std::all_of(text.begin(), text.end(), [this](const std::string &str) {
@@ -57,7 +61,8 @@ struct Box {
                     }));
     }
 
-    void populate(const std::vector<std::string> &text) {
+    void populate(const std::vector<std::string> &text) 
+    {
         checkInputText(text);
 
         // render corners
@@ -86,7 +91,8 @@ struct Column {
     int width, height;
 };
 
-void Engine::printTextEditor() {
+void Engine::printTextEditor()
+{
     std::vector<std::string> asciiGrid(textBoxHeight + 2);
     for (int i = 0; i < textBoxHeight + 2; ++i) {
         asciiGrid[i] = std::string(regBoxWidth + textBoxWidth + 4, ' ');
@@ -129,7 +135,8 @@ void Engine::moveToEndLine() {
     moveToPrevNonWhiteSpace();
 }
 
-void Engine::handleTextEditorAction(SDL_Keycode key_sym) {
+void Engine::handleTextEditorAction(SDL_Keycode key_sym)
+{
     if (key_sym == SDLK_RETURN && cursorY < (textBoxHeight - 1)) {
         ++cursorY;
         textEditorLines.insert(textEditorLines.begin() + cursorY,
@@ -181,7 +188,18 @@ void Engine::handleTextEditorAction(SDL_Keycode key_sym) {
     }
 }
 
-void Engine::handleKeyPress(SDL_Keycode key_sym, int &dx, int &dy) {
+// Find location of mouse click and iterate through z-index from top to bottom
+// to see if it lands on anything selectable
+void Engine::handleMouseClick(SDL_MouseButtonEvent event)
+{
+    if ( event.button != SDL_BUTTON_LEFT ) return; 
+
+    // check 
+    map;
+}
+
+void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy) 
+{
     if (key_sym == SDLK_SLASH && gameStatus == TEXT_EDITOR) {
         gameStatus = IDLE;
         return;
@@ -269,11 +287,16 @@ void Engine::update() {
         gameStatus = IDLE;
 
     SDL_Event event;
-    int dx = 0, dy = 0;
+    int dx, dy;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
             case SDL_QUIT:
                 std::exit(EXIT_SUCCESS);
+
+            case SDL_MOUSEBUTTONDOWN:
+                handleMouseClick(event.button);
+                break;
+
             case SDL_KEYDOWN:
                 handleKeyPress(event.key.keysym.sym, dx, dy);
                 break;
@@ -288,12 +311,15 @@ void Engine::update() {
         clock_timeout_1000ms += 1000;
     }
 
-    if ((dx != 0 || dy != 0) && map->canWalk(player->x + dx, player->y + dy)) {
+    if ((dx != 0 || dy != 0) &&
+        map->canWalk(player->x + dx, player->y + dy)) 
+    {
         moveAnt(player, dx, dy);
     }
 }
 
-void Engine::render() {
+void Engine::render()
+{
     // draw the map
     map->render();
 

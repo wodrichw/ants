@@ -1,6 +1,7 @@
 #ifndef __ENGINE_HPP
 #define __ENGINE_HPP
 
+#include <SDL_events.h>
 #include <SDL_keycode.h>
 #include <libtcod.hpp>
 #include <libtcod/console.hpp>
@@ -22,6 +23,11 @@ public :
         VICTORY,
         DEFEAT
     } gameStatus;
+
+    struct InputEvent {
+        int dx, dy; // keyboard move events
+        std::optional<ulong> clickX, clickY; // mouse click events
+    };
 
     tcod::Context context;
     ant::Player* player;
@@ -48,6 +54,7 @@ private:
     void printTextEditor();
     void printHelpBoxes();
     void handleTextEditorAction(SDL_Keycode key_sym);
+    void handleMouseClick(SDL_MouseButtonEvent event);
     void handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy);
     void moveToPrevNonWhiteSpace();
     void moveToEndLine();
