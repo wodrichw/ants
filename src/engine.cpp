@@ -21,7 +21,7 @@ static const int COLS = 60;
 Engine::Engine()
     : player(new ant::Player(40, 25, 10, '@', color::white)), ants({player}),
     buildings(), controllers(), map(new Map(COLS, ROWS, ants, buildings)),
-    textEditorLines(textBoxHeight) {
+    clock_timeout_1000ms(SDL_GetTicks64()), textEditorLines(textBoxHeight) {
         gameStatus = STARTUP;
         auto params = TCOD_ContextParams();
         params.columns = COLS, params.rows = ROWS, params.window_title = "A N T S";
