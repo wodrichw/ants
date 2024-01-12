@@ -13,6 +13,7 @@
 
 #include "ant.hpp"
 #include "colors.hpp"
+#include "controller.hpp"
 #include "engine.hpp"
 
 static const int ROWS = 60;
@@ -206,23 +207,19 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int &dx, int &dy) {
         //      and look for open squared there. Radius increasing will go on until
         //      an open square is found (or out of space in the map)
 
-        Building &b = *buildings[player->bldgId.value()];
+        Building &b = *buildings[player->bldgId.value()]; // TODO: restrict to only nursersies
         int addAnt_x = b.x, addAnt_y = b.y;
         ant::Worker* new_ant = new ant::Worker(addAnt_x, addAnt_y);
-        Worker_Controller::move_ant_f move_ant = [&, new_ant](int dx, int dy) {
+
+        EngineInteractor interactor;
+        interactor.move_ant = [&, new_ant](int dx, int dy) {
             if (map->canWalk(new_ant->x + dx, new_ant->y + dy))
                 moveAnt(new_ant, dx, dy);
         };
-        bool p_err = false;
-        std::string err_msg;
-        Worker_Controller::parse_error_f parse_error = [&p_err, &err_msg](std::string error_msg) {
-            p_err = true;
-            err_msg = error_msg;
-        };
 
-        Worker_Controller* w = new Worker_Controller(move_ant, parse_error,  textEditorLines);
+        Worker_Controller* w = new Worker_Controller(assembler, interactor,textEditorLines);
 
-        if (! p_err ) { // add worker ant if the textEditorLines have no parser errors
+        if (! interactor.status.p_err ) { // add worker ant if the textEditorLines have no parser errors
             controllers.push_back(w);
             ants.push_back(new_ant);
         } else {
@@ -230,7 +227,7 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int &dx, int &dy) {
             delete new_ant;
             // TODO: show parse errors in the text editor box instead of a cout
             // this will likely require returning the line number, and word that caused the parse error
-            std::cout << err_msg << std::endl;
+            std::cout << interactor.status.err_msg << std::endl;
         }
 
         return;
