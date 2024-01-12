@@ -15,12 +15,14 @@ struct Controller {
 };
 
 struct ParserStatus {
-    bool p_err = false;
-    std::string err_msg = "";
+    bool p_err;
+    std::string err_msg;
     void error(const std::string& err_msg) {
         this->p_err = true;
         this->err_msg = err_msg;
     }
+    ParserStatus(): p_err(false), err_msg("") {}
+    ParserStatus(bool p_err, std::string err_msg): p_err(p_err), err_msg(err_msg) {}
 };
 
 struct EngineInteractor {
@@ -29,6 +31,8 @@ struct EngineInteractor {
 
     move_ant_f move_ant;
     ParserStatus status;
+    EngineInteractor() = default;
+    EngineInteractor(const EngineInteractor& rhs);
 };
 
 class ParserCommandsAssembler;

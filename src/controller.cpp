@@ -2,6 +2,13 @@
 #include <unordered_set>
 #include "controller.hpp"
 
+EngineInteractor::EngineInteractor(const EngineInteractor& rhs):
+    move_ant(rhs.move_ant),
+    status()
+{
+    status.p_err = rhs.status.p_err;
+    status.err_msg = rhs.status.err_msg;
+}
 
 ParserCommandsAssembler::ParserCommandsAssembler(): _map()
 {
@@ -9,7 +16,7 @@ ParserCommandsAssembler::ParserCommandsAssembler(): _map()
     insert(new Parser::CommandConfig(
         "MOVE",
         Parser::Command::MOVE,
-        [](EngineInteractor interactor, std::vector<Controller::Op>& operations){
+        [](EngineInteractor& interactor, std::vector<Controller::Op>& operations){
             return Parser::CommandParser(1, //TODO: remove num args or handle it automatically
                 [&interactor, &operations](std::istringstream& arg_sstream) {
                     std::string word;
@@ -66,9 +73,9 @@ Parser::Parser(
             if ( !word_stream ) continue; // no need to read an empty line
             empty_program = false;
 
-            if (commands.find(word) == commands.end()) return;
-
-            commands[word].parse(word_stream);
+            auto c = commands.find(word);
+            if (c == commands.end()) return;
+            c->second.parse(word_stream);
         } while (word_stream);
     }
     if ( empty_program ) {
