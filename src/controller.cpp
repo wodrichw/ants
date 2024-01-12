@@ -3,7 +3,7 @@
 
 
 
-void Worker_Controller::Move::exec()
+void WorkerController::Move::exec()
 {
     int dx, dy;
     switch(dir) {
@@ -23,19 +23,19 @@ void Worker_Controller::Move::exec()
     move_ant(dx, dy);
 }
 
-Worker_Controller::Worker_Controller(move_ant_f move_ant, parse_error_f parse_error, std::vector<std::string>& program_code):
+WorkerController::WorkerController(move_ant_f move_ant, parse_error_f parse_error, std::vector<std::string>& program_code):
     operations(), operation_idx(), move_ant(move_ant), parse_error(parse_error)
 {
     parse(program_code);
 }
 
-Worker_Controller::~Worker_Controller() {
+WorkerController::~WorkerController() {
     for( Op* o: operations) {
         delete o;
     }
 }
 
-void Worker_Controller::parse(std::vector<std::string>& program_code)
+void WorkerController::parse(std::vector<std::string>& program_code)
 {
     bool empty_program = true;
     for (std::string& line: program_code) {
@@ -88,7 +88,7 @@ void Worker_Controller::parse(std::vector<std::string>& program_code)
 }
 
 
-void Worker_Controller::handleClockPulse()
+void WorkerController::handleClockPulse()
 {
     operations[operation_idx]->exec();
     operation_idx == operations.size()-1? operation_idx = 0: operation_idx++;

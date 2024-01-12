@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <libtcod.hpp>
+#include <libtcod/color.hpp>
 #include <libtcod/console.hpp>
 #include <libtcod/context.h>
 #include <libtcod/context.hpp>
@@ -12,33 +13,37 @@
 #include <iostream>
 
 #include "ant.hpp"
+#include "building.hpp"
+#include "buttonController.hpp"
 #include "colors.hpp"
+#include "controller.hpp"
 #include "engine.hpp"
-
-static const int ROWS = 60;
-static const int COLS = 60;
+#include "globals.hpp"
+#include "map.hpp"
 
 Engine::Engine()
     : player(new ant::Player(40, 25, 10, '@', color::white)), ants({player}),
-    buildings(), controllers(), map(new Map(COLS, ROWS, ants, buildings)),
-    textEditorLines(textBoxHeight) 
+    buildings(), clockControllers(), map(new Map(globals::COLS, globals::ROWS, ants, buildings)),
+    buttonController(new ButtonController()), clock_timeout_1000ms(SDL_GetTicks64()),
+    textEditorLines(textBoxHeight)
 {
-        gameStatus = STARTUP;
-        auto params = TCOD_ContextParams();
-        params.columns = COLS, params.rows = ROWS, params.window_title = "A N T S";
-        context = tcod::Context(params);
-        map->root_console = context.new_console(COLS, ROWS);
+    gameStatus = STARTUP;
+    auto params = TCOD_ContextParams();
+    params.columns = globals::COLS, params.rows = globals::ROWS, params.window_title = "A N T S";
+    context = tcod::Context(params);
+    map->root_console = context.new_console(globals::COLS, globals::ROWS);
 
-        for (int i = 0; i < textBoxHeight; ++i) {
-            textEditorLines[i] = std::string(textBoxWidth, ' ');
-        }
+    for (int i = 0; i < textBoxHeight; ++i) {
+        textEditorLines[i] = std::string(textBoxWidth, ' ');
     }
+}
 
 Engine::~Engine() 
 {
     for (auto ant : ants)
         delete ant;
     delete map;
+    delete buttonController;
 }
 
 struct Box {
@@ -55,10 +60,11 @@ struct Box {
     void checkInputText(const std::vector<std::string> &text) 
     {
         assert(text.size() == h - 2);
-        assert(
-                std::all_of(text.begin(), text.end(), [this](const std::string &str) {
-                    return str.length() == w - 2;
-                    }));
+        bool checkStrLengths = std::all_of(text.begin(), text.end(), [this](const std::string &str) 
+        {
+            return str.length() == w - 2;
+        });
+        assert(checkStrLengths);
     }
 
     void populate(const std::vector<std::string> &text) 
@@ -193,9 +199,10 @@ void Engine::handleTextEditorAction(SDL_Keycode key_sym)
 void Engine::handleMouseClick(SDL_MouseButtonEvent event)
 {
     if ( event.button != SDL_BUTTON_LEFT ) return; 
-
-    // check 
-    map;
+    std::array<int,2> tile = context.pixel_to_tile_coordinates(std::array<int, 2>{event.x, event.y});
+    size_t x = tile[0];
+    size_t y = tile[1];
+    buttonController->handleClick(x, y);
 }
 
 void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy) 
@@ -225,24 +232,39 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
         //      an open square is found (or out of space in the map)
 
         Building &b = *buildings[player->bldgId.value()];
-        int addAnt_x = b.x, addAnt_y = b.y;
+        size_t addAnt_x = b.x, addAnt_y = b.y;
         ant::Worker* new_ant = new ant::Worker(addAnt_x, addAnt_y);
-        Worker_Controller::move_ant_f move_ant = [&, new_ant](int dx, int dy) {
-            if (map->canWalk(new_ant->x + dx, new_ant->y + dy))
+        ButtonController::Button* new_button = new ButtonController::Button{
+            addAnt_x, addAnt_y, 1, 1, // button lives on top of the ant we are adding
+            ButtonController::Layer::FIFTH, // button lives on bottom layer and thus last priority to be clicked
+            [new_ant]() {
+                if( new_ant->col == color::light_green ) new_ant->col = color::dark_yellow;
+                else new_ant->col = color::light_green;
+                return true;
+            },
+            std::optional<tcod::ColorRGB>()
+        };
+        WorkerController::move_ant_f move_ant = [&, new_ant, new_button](int dx, int dy) {
+            if( map->canWalk(new_ant->x + dx, new_ant->y + dy) &&
+                buttonController->canMoveButton(new_button, dx, dy))
+            {
                 moveAnt(new_ant, dx, dy);
+                buttonController->moveButton(new_button, dx, dy);
+            }
         };
         bool p_err = false;
         std::string err_msg;
-        Worker_Controller::parse_error_f parse_error = [&p_err, &err_msg](std::string error_msg) {
+        WorkerController::parse_error_f parse_error = [&p_err, &err_msg](std::string error_msg) {
             p_err = true;
             err_msg = error_msg;
         };
 
-        Worker_Controller* w = new Worker_Controller(move_ant, parse_error,  textEditorLines);
+        WorkerController* w = new WorkerController(move_ant, parse_error,  textEditorLines);
 
         if (! p_err ) { // add worker ant if the textEditorLines have no parser errors
-            controllers.push_back(w);
+            clockControllers.push_back(w);
             ants.push_back(new_ant);
+            buttonController->addButton(new_button);
         } else {
             delete w;
             delete new_ant;
@@ -287,7 +309,7 @@ void Engine::update() {
         gameStatus = IDLE;
 
     SDL_Event event;
-    int dx, dy;
+    int dx = 0, dy = 0;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
             case SDL_QUIT:
@@ -305,7 +327,7 @@ void Engine::update() {
 
 
     if (clock_timeout_1000ms < SDL_GetTicks64()) {
-        for (Controller *c : controllers) {
+        for (ClockController *c : clockControllers) {
             c->handleClockPulse();
         }
         clock_timeout_1000ms += 1000;

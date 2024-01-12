@@ -6,12 +6,16 @@
 #include <libtcod.hpp>
 #include <libtcod/console.hpp>
 #include <vector>
-#include "controller.hpp"
-#include "map.hpp"
-#include "ant.hpp"
-#include "building.hpp"
 
 
+namespace ant { 
+    class Ant; 
+    class Player;
+}
+class Building;
+class ClockController;
+class Map;
+class ButtonController;
 
 class Engine {
 public :
@@ -33,8 +37,9 @@ public :
     ant::Player* player;
     std::vector<ant::Ant*> ants;
     std::vector<Building*> buildings;
-    std::vector<Controller*> controllers;
-    Map *map;
+    std::vector<ClockController*> clockControllers;
+    Map* map;
+    ButtonController* buttonController;
     int fovRadius = 10;
     bool computeFov = true;
 

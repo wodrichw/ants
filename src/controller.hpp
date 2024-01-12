@@ -7,15 +7,15 @@
 
 
 
-class Controller {
+class ClockController {
 public:
     virtual void handleClockPulse() = 0;
-    virtual ~Controller() = default;
+    virtual ~ClockController() = default;
 };
 
 
 
-class  Worker_Controller: public Controller {
+class  WorkerController: public ClockController {
 public:
     typedef std::function<void(int dx, int dy)>  move_ant_f;
     typedef std::function<void(std::string error_msg)>  parse_error_f;
@@ -47,8 +47,8 @@ public:
     move_ant_f move_ant;
     parse_error_f parse_error;
     
-    Worker_Controller(move_ant_f move_ant, parse_error_f parse_error, std::vector<std::string>& program_code);
-    ~Worker_Controller();
+    WorkerController(move_ant_f move_ant, parse_error_f parse_error, std::vector<std::string>& program_code);
+    ~WorkerController();
 
     void parse(std::vector<std::string>& program_code);
     void handleClockPulse() override;

@@ -67,6 +67,8 @@ add_executable(ants
     src/map.hpp
     src/controller.cpp
     src/controller.hpp
+    src/buttonController.cpp
+    src/buttonController.hpp
     src/engine.cpp
     src/engine.hpp
     src/colors.hpp
