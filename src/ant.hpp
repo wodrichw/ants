@@ -2,6 +2,7 @@
 #define __ANT_HPP
 
 #include <libtcod/color.hpp>
+#include <optional>
 
 
 namespace ant {
