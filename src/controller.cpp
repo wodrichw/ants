@@ -1,42 +1,68 @@
 #include <sstream>
+#include <unordered_set>
 #include "controller.hpp"
 
-
-
-void WorkerController::Move::exec()
+EngineInteractor::EngineInteractor(const EngineInteractor& rhs):
+    move_ant(rhs.move_ant),
+    status()
 {
-    int dx, dy;
-    switch(dir) {
-        case UP:
-            dx = 0, dy = -1;
-            break;
-        case DOWN:
-            dx = 0, dy = 1;
-            break;
-        case LEFT:
-            dx = -1, dy = 0;
-            break;
-        case RIGHT:
-            dx = 1, dy = 0;
-            break;
+    status.p_err = rhs.status.p_err;
+    status.err_msg = rhs.status.err_msg;
+}
+
+ParserCommandsAssembler::ParserCommandsAssembler(): _map()
+{
+    // MOVE command
+    insert(new Parser::CommandConfig(
+        "MOVE",
+        Parser::Command::MOVE,
+        [](EngineInteractor& interactor, std::vector<ClockController::Op>& operations){
+            return Parser::CommandParser(1, //TODO: remove num args or handle it automatically
+                [&interactor, &operations](std::istringstream& arg_sstream) {
+                    std::string word;
+                    arg_sstream >> word;
+                    int dx = 0, dy = 0;
+                    if        ( word == "UP" ) {
+                        dy = -1;
+                    } else if ( word == "LEFT" ) {
+                        dx = -1;
+                    } else if ( word == "DOWN" ) {
+                        dy = 1;
+                    } else if ( word == "RIGHT" ) {
+                        dx = 1;
+                    } else {
+                        interactor.status.error("TODO: MAKE ERRORS MAKE SENSE");
+                        return;
+                    }
+                    operations.push_back(Parser::Move(interactor, dx, dy));
+
+                    arg_sstream >> word;
+                    if ( arg_sstream ) {
+                        interactor.status.error("TODO: MAKE ERRORS MAKE SENSE");
+                    }
+                }
+            );
+        }
+    ));
+}
+
+Parser::Move::Move(const EngineInteractor& interactor, int dx, int dy): interactor(interactor), dx(dx), dy(dy) {}
+
+void Parser::Move::operator()() {
+    interactor.move_ant(dx, dy);
+}
+Parser::Parser(
+    ParserCommandsAssembler& commands_assember,
+    std::unordered_set<Command> command_set,
+    EngineInteractor& interactor,
+    std::vector<ClockController::Op>& operations,
+    std::vector<std::string>& program_code
+    ) : commands()
+{
+    for( auto& command: command_set ) {
+        commands.insert({commands_assember[command].command_string, commands_assember[command].assemble(interactor, operations)});
     }
-    move_ant(dx, dy);
-}
 
-WorkerController::WorkerController(move_ant_f move_ant, parse_error_f parse_error, std::vector<std::string>& program_code):
-    operations(), operation_idx(), move_ant(move_ant), parse_error(parse_error)
-{
-    parse(program_code);
-}
-
-WorkerController::~WorkerController() {
-    for( Op* o: operations) {
-        delete o;
-    }
-}
-
-void WorkerController::parse(std::vector<std::string>& program_code)
-{
     bool empty_program = true;
     for (std::string& line: program_code) {
         std::istringstream word_stream(line);
@@ -47,52 +73,26 @@ void WorkerController::parse(std::vector<std::string>& program_code)
             if ( !word_stream ) continue; // no need to read an empty line
             empty_program = false;
 
-            if ( word == "MOVE" ) {
-                if ( word_stream ) {
-                    word_stream >> word;
-                    Move::Dir dir;
-                    if        ( word == "UP" ) {
-                        dir = Move::Dir::UP;
-                    } else if ( word == "LEFT" ) {
-                        dir = Move::Dir::LEFT;
-                    } else if ( word == "DOWN" ) {
-                        dir = Move::Dir::DOWN;
-                    } else if ( word == "RIGHT" ) {
-                        dir = Move::Dir::RIGHT;
-                    } else {
-                        parse_error("TODO: MAKE ERRORS MAKE SENSE");
-                        return;
-                    }
-                    operations.push_back(new Move(dir, move_ant));
-
-                    word_stream >> word;
-                    if ( word_stream ) {
-                        parse_error("TODO: MAKE ERRORS MAKE SENSE");
-                        return;
-                    }
-                } else {
-                    parse_error("TODO: MAKE ERRORS MAKE SENSE");
-                    return;
-                }
-            } else if ( word_stream ) { // There's words here but they're not recognized 
-                parse_error("TODO: MAKE ERRORS MAKE SENSE");
-                return;
-            }
-
+            auto c = commands.find(word);
+            if (c == commands.end()) return;
+            c->second.parse(word_stream);
         } while (word_stream);
     }
     if ( empty_program ) {
-        parse_error("WILL NOT ADD AN ANT WITHOUT A PROGRAM");
+        interactor.status.error("WILL NOT ADD AN ANT WITHOUT A PROGRAM");
         return;
     }
 }
 
+Worker_Controller::Worker_Controller(ParserCommandsAssembler& commands_assember, EngineInteractor& interactor, std::vector<std::string>& program_code):
+    operations(), operation_idx(), parser(commands_assember, {Parser::Command::MOVE}, interactor, operations, program_code)
+{}
 
-void WorkerController::handleClockPulse()
+Worker_Controller::~Worker_Controller() {}
+
+
+void Worker_Controller::handleClockPulse()
 {
-    operations[operation_idx]->exec();
+    operations[operation_idx]();
     operation_idx == operations.size()-1? operation_idx = 0: operation_idx++;
 }
-
-
-

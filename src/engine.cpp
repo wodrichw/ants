@@ -24,8 +24,7 @@
 Engine::Engine()
     : player(new ant::Player(40, 25, 10, '@', color::white)), ants({player}),
     buildings(), clockControllers(), map(new Map(globals::COLS, globals::ROWS, ants, buildings)),
-    buttonController(new ButtonController()), clock_timeout_1000ms(SDL_GetTicks64()),
-    textEditorLines(textBoxHeight)
+    buttonController(new ButtonController()), clock_timeout_1000ms(SDL_GetTicks64()), textEditorLines(textBoxHeight)
 {
     gameStatus = STARTUP;
     auto params = TCOD_ContextParams();
@@ -244,7 +243,8 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
             },
             std::optional<tcod::ColorRGB>()
         };
-        WorkerController::move_ant_f move_ant = [&, new_ant, new_button](int dx, int dy) {
+        EngineInteractor interactor;
+        interactor.move_ant = [&, new_ant, new_button](int dx, int dy) {
             if( map->canWalk(new_ant->x + dx, new_ant->y + dy) &&
                 buttonController->canMoveButton(new_button, dx, dy))
             {
@@ -252,16 +252,10 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
                 buttonController->moveButton(new_button, dx, dy);
             }
         };
-        bool p_err = false;
-        std::string err_msg;
-        WorkerController::parse_error_f parse_error = [&p_err, &err_msg](std::string error_msg) {
-            p_err = true;
-            err_msg = error_msg;
-        };
 
-        WorkerController* w = new WorkerController(move_ant, parse_error,  textEditorLines);
+        Worker_Controller* w = new Worker_Controller(assembler, interactor,  textEditorLines);
 
-        if (! p_err ) { // add worker ant if the textEditorLines have no parser errors
+        if (! interactor.status.p_err ) { // add worker ant if the textEditorLines have no parser errors
             clockControllers.push_back(w);
             ants.push_back(new_ant);
             buttonController->addButton(new_button);
@@ -270,7 +264,7 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
             delete new_ant;
             // TODO: show parse errors in the text editor box instead of a cout
             // this will likely require returning the line number, and word that caused the parse error
-            std::cout << err_msg << std::endl;
+            std::cout << interactor.status.err_msg << std::endl;
         }
 
         return;

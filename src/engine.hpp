@@ -7,6 +7,8 @@
 #include <libtcod/console.hpp>
 #include <vector>
 
+#include "controller.hpp"
+
 
 namespace ant { 
     class Ant; 
@@ -40,6 +42,7 @@ public :
     std::vector<ClockController*> clockControllers;
     Map* map;
     ButtonController* buttonController;
+    ParserCommandsAssembler assembler;
     int fovRadius = 10;
     bool computeFov = true;
 
