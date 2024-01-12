@@ -16,7 +16,7 @@ ParserCommandsAssembler::ParserCommandsAssembler(): _map()
     insert(new Parser::CommandConfig(
         "MOVE",
         Parser::Command::MOVE,
-        [](EngineInteractor& interactor, std::vector<Controller::Op>& operations){
+        [](EngineInteractor& interactor, std::vector<ClockController::Op>& operations){
             return Parser::CommandParser(1, //TODO: remove num args or handle it automatically
                 [&interactor, &operations](std::istringstream& arg_sstream) {
                     std::string word;
@@ -55,7 +55,7 @@ Parser::Parser(
     ParserCommandsAssembler& commands_assember,
     std::unordered_set<Command> command_set,
     EngineInteractor& interactor,
-    std::vector<Controller::Op>& operations,
+    std::vector<ClockController::Op>& operations,
     std::vector<std::string>& program_code
     ) : commands()
 {

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <libtcod.hpp>
+#include <libtcod/color.hpp>
 #include <libtcod/console.hpp>
 #include <libtcod/context.h>
 #include <libtcod/context.hpp>
@@ -12,32 +13,36 @@
 #include <iostream>
 
 #include "ant.hpp"
+#include "building.hpp"
+#include "buttonController.hpp"
 #include "colors.hpp"
 #include "controller.hpp"
 #include "engine.hpp"
-
-static const int ROWS = 60;
-static const int COLS = 60;
+#include "globals.hpp"
+#include "map.hpp"
 
 Engine::Engine()
     : player(new ant::Player(40, 25, 10, '@', color::white)), ants({player}),
-    buildings(), controllers(), map(new Map(COLS, ROWS, ants, buildings)),
-    clock_timeout_1000ms(SDL_GetTicks64()), textEditorLines(textBoxHeight) {
-        gameStatus = STARTUP;
-        auto params = TCOD_ContextParams();
-        params.columns = COLS, params.rows = ROWS, params.window_title = "A N T S";
-        context = tcod::Context(params);
-        map->root_console = context.new_console(COLS, ROWS);
+    buildings(), clockControllers(), map(new Map(globals::COLS, globals::ROWS, ants, buildings)),
+    buttonController(new ButtonController()), clock_timeout_1000ms(SDL_GetTicks64()), textEditorLines(textBoxHeight)
+{
+    gameStatus = STARTUP;
+    auto params = TCOD_ContextParams();
+    params.columns = globals::COLS, params.rows = globals::ROWS, params.window_title = "A N T S";
+    context = tcod::Context(params);
+    map->root_console = context.new_console(globals::COLS, globals::ROWS);
 
-        for (int i = 0; i < textBoxHeight; ++i) {
-            textEditorLines[i] = std::string(textBoxWidth, ' ');
-        }
+    for (int i = 0; i < textBoxHeight; ++i) {
+        textEditorLines[i] = std::string(textBoxWidth, ' ');
     }
+}
 
-Engine::~Engine() {
+Engine::~Engine() 
+{
     for (auto ant : ants)
         delete ant;
     delete map;
+    delete buttonController;
 }
 
 struct Box {
@@ -46,19 +51,23 @@ struct Box {
     Box(std::vector<std::string> &asciiGrid, int x, int y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {}
 
-    void populateChar(int x_idx, int y_idx, char ch) {
+    void populateChar(int x_idx, int y_idx, char ch) 
+    {
         asciiGrid[y_idx + y][x + x_idx] = ch;
     }
 
-    void checkInputText(const std::vector<std::string> &text) {
+    void checkInputText(const std::vector<std::string> &text) 
+    {
         assert(text.size() == h - 2);
-        assert(
-                std::all_of(text.begin(), text.end(), [this](const std::string &str) {
-                    return str.length() == w - 2;
-                    }));
+        bool checkStrLengths = std::all_of(text.begin(), text.end(), [this](const std::string &str) 
+        {
+            return str.length() == w - 2;
+        });
+        assert(checkStrLengths);
     }
 
-    void populate(const std::vector<std::string> &text) {
+    void populate(const std::vector<std::string> &text) 
+    {
         checkInputText(text);
 
         // render corners
@@ -87,7 +96,8 @@ struct Column {
     int width, height;
 };
 
-void Engine::printTextEditor() {
+void Engine::printTextEditor()
+{
     std::vector<std::string> asciiGrid(textBoxHeight + 2);
     for (int i = 0; i < textBoxHeight + 2; ++i) {
         asciiGrid[i] = std::string(regBoxWidth + textBoxWidth + 4, ' ');
@@ -130,7 +140,8 @@ void Engine::moveToEndLine() {
     moveToPrevNonWhiteSpace();
 }
 
-void Engine::handleTextEditorAction(SDL_Keycode key_sym) {
+void Engine::handleTextEditorAction(SDL_Keycode key_sym)
+{
     if (key_sym == SDLK_RETURN && cursorY < (textBoxHeight - 1)) {
         ++cursorY;
         textEditorLines.insert(textEditorLines.begin() + cursorY,
@@ -182,7 +193,19 @@ void Engine::handleTextEditorAction(SDL_Keycode key_sym) {
     }
 }
 
-void Engine::handleKeyPress(SDL_Keycode key_sym, int &dx, int &dy) {
+// Find location of mouse click and iterate through z-index from top to bottom
+// to see if it lands on anything selectable
+void Engine::handleMouseClick(SDL_MouseButtonEvent event)
+{
+    if ( event.button != SDL_BUTTON_LEFT ) return; 
+    std::array<int,2> tile = context.pixel_to_tile_coordinates(std::array<int, 2>{event.x, event.y});
+    size_t x = tile[0];
+    size_t y = tile[1];
+    buttonController->handleClick(x, y);
+}
+
+void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy) 
+{
     if (key_sym == SDLK_SLASH && gameStatus == TEXT_EDITOR) {
         gameStatus = IDLE;
         return;
@@ -207,21 +230,35 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int &dx, int &dy) {
         //      and look for open squared there. Radius increasing will go on until
         //      an open square is found (or out of space in the map)
 
-        Building &b = *buildings[player->bldgId.value()]; // TODO: restrict to only nursersies
-        int addAnt_x = b.x, addAnt_y = b.y;
+        Building &b = *buildings[player->bldgId.value()];
+        size_t addAnt_x = b.x, addAnt_y = b.y;
         ant::Worker* new_ant = new ant::Worker(addAnt_x, addAnt_y);
-
+        ButtonController::Button* new_button = new ButtonController::Button{
+            addAnt_x, addAnt_y, 1, 1, // button lives on top of the ant we are adding
+            ButtonController::Layer::FIFTH, // button lives on bottom layer and thus last priority to be clicked
+            [new_ant]() {
+                if( new_ant->col == color::light_green ) new_ant->col = color::dark_yellow;
+                else new_ant->col = color::light_green;
+                return true;
+            },
+            std::optional<tcod::ColorRGB>()
+        };
         EngineInteractor interactor;
-        interactor.move_ant = [&, new_ant](int dx, int dy) {
-            if (map->canWalk(new_ant->x + dx, new_ant->y + dy))
+        interactor.move_ant = [&, new_ant, new_button](int dx, int dy) {
+            if( map->canWalk(new_ant->x + dx, new_ant->y + dy) &&
+                buttonController->canMoveButton(new_button, dx, dy))
+            {
                 moveAnt(new_ant, dx, dy);
+                buttonController->moveButton(new_button, dx, dy);
+            }
         };
 
-        Worker_Controller* w = new Worker_Controller(assembler, interactor,textEditorLines);
+        Worker_Controller* w = new Worker_Controller(assembler, interactor,  textEditorLines);
 
         if (! interactor.status.p_err ) { // add worker ant if the textEditorLines have no parser errors
-            controllers.push_back(w);
+            clockControllers.push_back(w);
             ants.push_back(new_ant);
+            buttonController->addButton(new_button);
         } else {
             delete w;
             delete new_ant;
@@ -271,6 +308,11 @@ void Engine::update() {
         switch (event.type) {
             case SDL_QUIT:
                 std::exit(EXIT_SUCCESS);
+
+            case SDL_MOUSEBUTTONDOWN:
+                handleMouseClick(event.button);
+                break;
+
             case SDL_KEYDOWN:
                 handleKeyPress(event.key.keysym.sym, dx, dy);
                 break;
@@ -279,18 +321,21 @@ void Engine::update() {
 
 
     if (clock_timeout_1000ms < SDL_GetTicks64()) {
-        for (Controller *c : controllers) {
+        for (ClockController *c : clockControllers) {
             c->handleClockPulse();
         }
         clock_timeout_1000ms += 1000;
     }
 
-    if ((dx != 0 || dy != 0) && map->canWalk(player->x + dx, player->y + dy)) {
+    if ((dx != 0 || dy != 0) &&
+        map->canWalk(player->x + dx, player->y + dy)) 
+    {
         moveAnt(player, dx, dy);
     }
 }
 
-void Engine::render() {
+void Engine::render()
+{
     // draw the map
     map->render();
 

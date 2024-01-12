@@ -8,10 +8,11 @@
 
 
 
-struct Controller {
+class ClockController {
+public:
     using Op = std::function<void()>;
     virtual void handleClockPulse() = 0;
-    virtual ~Controller() = default;
+    virtual ~ClockController() = default;
 };
 
 struct ParserStatus {
@@ -27,7 +28,6 @@ struct ParserStatus {
 
 struct EngineInteractor {
     using move_ant_f = std::function<void(int dx, int dy)>;
-
 
     move_ant_f move_ant;
     ParserStatus status;
@@ -54,11 +54,17 @@ public:
     struct CommandConfig {
         std::string command_string;
         Command command_enum;
-        std::function<CommandParser(EngineInteractor& interactor, std::vector<Controller::Op>& operations)> assemble;
-        CommandConfig(const std::string& command_string, Command command_enum,  std::function<CommandParser(EngineInteractor& interactor, std::vector<Controller::Op>& operations)> assemble):
+        std::function<CommandParser(EngineInteractor& interactor, std::vector<ClockController::Op>& operations)> assemble;
+        CommandConfig(
+            const std::string& command_string,
+            Command command_enum, 
+            std::function<CommandParser(EngineInteractor& interactor,
+            std::vector<ClockController::Op>& operations)> assemble
+        ):
             command_string(command_string),
             command_enum(command_enum),
-            assemble(assemble) {}
+            assemble(assemble)
+        {}
     };
 
     struct Move {
@@ -73,7 +79,7 @@ public:
     Parser(ParserCommandsAssembler& commands_assember,
         std::unordered_set<Command> command_set,
         EngineInteractor& interactor,
-        std::vector<Controller::Op>& operations,
+        std::vector<ClockController::Op>& operations,
         std::vector<std::string>& program_code
     );
 };
@@ -88,7 +94,7 @@ public:
 
 
 
-class  Worker_Controller: public Controller {
+class  Worker_Controller: public ClockController {
 public:
     struct Brain {
         int acc_reg;

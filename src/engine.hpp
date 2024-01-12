@@ -1,16 +1,23 @@
 #ifndef __ENGINE_HPP
 #define __ENGINE_HPP
 
+#include <SDL_events.h>
 #include <SDL_keycode.h>
 #include <libtcod.hpp>
 #include <libtcod/console.hpp>
 #include <vector>
+
 #include "controller.hpp"
-#include "map.hpp"
-#include "ant.hpp"
-#include "building.hpp"
 
 
+namespace ant { 
+    class Ant; 
+    class Player;
+}
+class Building;
+class ClockController;
+class Map;
+class ButtonController;
 
 class Engine {
 public :
@@ -23,14 +30,19 @@ public :
         DEFEAT
     } gameStatus;
 
+    struct InputEvent {
+        int dx, dy; // keyboard move events
+        std::optional<ulong> clickX, clickY; // mouse click events
+    };
+
     tcod::Context context;
     ant::Player* player;
     std::vector<ant::Ant*> ants;
     std::vector<Building*> buildings;
-    std::vector<Controller*> controllers;
-
+    std::vector<ClockController*> clockControllers;
+    Map* map;
+    ButtonController* buttonController;
     ParserCommandsAssembler assembler;
-    Map *map;
     int fovRadius = 10;
     bool computeFov = true;
 
@@ -50,6 +62,7 @@ private:
     void printTextEditor();
     void printHelpBoxes();
     void handleTextEditorAction(SDL_Keycode key_sym);
+    void handleMouseClick(SDL_MouseButtonEvent event);
     void handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy);
     void moveToPrevNonWhiteSpace();
     void moveToEndLine();
