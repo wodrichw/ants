@@ -28,6 +28,8 @@ public :
     std::vector<ant::Ant*> ants;
     std::vector<Building*> buildings;
     std::vector<Controller*> controllers;
+
+    ParserCommandsAssembler assembler;
     Map *map;
     int fovRadius = 10;
     bool computeFov = true;

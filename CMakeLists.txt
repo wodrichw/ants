@@ -7,6 +7,7 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.c
 
 project (ants C CXX)
 
+
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake OPTIONAL RESULT_VARIABLE CONAN_FILE)
 if(CONAN_FILE)
 conan_basic_setup(TARGETS)
@@ -73,6 +74,8 @@ add_executable(ants
     src/building.cpp
     src/building.hpp
 )
+set_property(TARGET ants PROPERTY CXX_STANDARD 17)
+
 target_link_libraries(ants ${LINK_TCOD} ${SDL2MAIN})
 if (CONAN_FILE)
     add_dependencies(ants copy_font)
