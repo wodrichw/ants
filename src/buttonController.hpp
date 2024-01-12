@@ -2,6 +2,7 @@
 #include <libtcod/color.hpp>
 #include <optional>
 #include <unordered_set>
+#include <functional>
 #include "globals.hpp"
 
 // Button Controller manages all the buttons that are present. The
