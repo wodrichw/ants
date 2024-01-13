@@ -142,6 +142,13 @@ void Engine::moveToEndLine() {
 
 void Engine::handleTextEditorAction(SDL_Keycode key_sym)
 {
+    bool key_is_printable = cursorX < (textBoxWidth - 1) && (
+        (key_sym >= SDLK_a && key_sym <= SDLK_z) || 
+        (key_sym >= SDLK_0 && key_sym <= SDLK_9) ||
+        key_sym == SDLK_COMMA || key_sym == SDLK_SPACE ||
+        key_sym == SDLK_HASH || key_sym == SDLK_COLON
+    );
+
     if (key_sym == SDLK_RETURN && cursorY < (textBoxHeight - 1)) {
         ++cursorY;
         textEditorLines.insert(textEditorLines.begin() + cursorY,
@@ -160,13 +167,7 @@ void Engine::handleTextEditorAction(SDL_Keycode key_sym)
             --cursorY;
             moveToEndLine();
         }
-    } else if (key_sym >= SDLK_a && key_sym <= SDLK_z &&
-            cursorX < (textBoxWidth - 1)) {
-        textEditorLines[cursorY][cursorX] = toupper(key_sym);
-        cursorX++;
-    } else if (((key_sym >= SDLK_0 && key_sym <= SDLK_9) ||
-                key_sym == SDLK_COMMA || key_sym == SDLK_SPACE) &&
-            cursorX < (textBoxWidth - 1)) {
+    } else if( key_is_printable ) {
         textEditorLines[cursorY][cursorX] = toupper(key_sym);
         cursorX++;
     } else if (key_sym == SDLK_LEFT) {
@@ -314,6 +315,11 @@ void Engine::update() {
                 break;
 
             case SDL_KEYDOWN:
+                // fix keypress syms to account for shift key
+                if( event.key.keysym.mod & (KMOD_RSHIFT | KMOD_LSHIFT) ) {
+                    if( event.key.keysym.sym == SDLK_3 ) event.key.keysym.sym = SDLK_HASH;
+                    if( event.key.keysym.sym == SDLK_SEMICOLON ) event.key.keysym.sym = SDLK_COLON;
+                }
                 handleKeyPress(event.key.keysym.sym, dx, dy);
                 break;
         }

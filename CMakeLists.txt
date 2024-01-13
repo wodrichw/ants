@@ -75,6 +75,10 @@ add_executable(ants
     src/colors.hpp
     src/building.cpp
     src/building.hpp
+    src/operations.hpp
+    src/operations.cpp
+    src/parser.hpp
+    src/parser.cpp
 )
 set_property(TARGET ants PROPERTY CXX_STANDARD 17)
 
