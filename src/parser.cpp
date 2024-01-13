@@ -33,7 +33,7 @@ void Parser::parse(EngineInteractor& interactor, Operations& operations, std::ve
 {
     std::unordered_map<std::string, size_t> label_map;
     bool empty_program = true;
-    size_t op_idx;
+    size_t op_idx = 0;
     for (std::string& line: program_code) {
         std::istringstream word_stream(line);
         bool comment = false;
@@ -53,7 +53,7 @@ void Parser::parse(EngineInteractor& interactor, Operations& operations, std::ve
                     interactor.status.error("DEFINED AN EMPTY LABEL");
                     return;
                 }
-                std::string label(word.substr(0, word.length()-2));
+                std::string label(word.substr(0, word.length()-1));
                 operations.add_label({label, op_idx});
                 continue;
             }
@@ -84,11 +84,11 @@ ParserCommandsAssembler::ParserCommandsAssembler(): _map()
         Parser::parse_move
     ));
 
-    // GOTO command
+    // JMP command
     insert(new Parser::CommandConfig(
-        "GOTO",
-        Parser::Command::GOTO,
-        Parser::parse_goto
+        "JMP",
+        Parser::Command::JMP,
+        Parser::parse_jmp
     ));
 }
 
@@ -128,7 +128,7 @@ Parser::CommandParser Parser::parse_move(EngineInteractor& interactor, Operation
     });
 }
 
-Parser::CommandParser Parser::parse_goto(EngineInteractor& interactor, Operations& operations)
+Parser::CommandParser Parser::parse_jmp(EngineInteractor& interactor, Operations& operations)
 {
     return Parser::CommandParser(1,
     [&interactor, &operations](std::istringstream& arg_sstream) {
@@ -136,7 +136,7 @@ Parser::CommandParser Parser::parse_goto(EngineInteractor& interactor, Operation
         std::string address;
         arg_sstream >> address;
         if( !arg_sstream ) {
-            interactor.status.error("NEED DIRECTION DEFINED FOR GOTO COMMAND");
+            interactor.status.error("NEED DIRECTION DEFINED FOR JMP COMMAND");
             return;
         }
         bool is_op_idx = std::find_if(address.begin(), address.end(), [](unsigned char c) {
@@ -145,13 +145,13 @@ Parser::CommandParser Parser::parse_goto(EngineInteractor& interactor, Operation
 
         arg_sstream >> word;
         if( !arg_sstream.eof() ) {
-            interactor.status.error("GOTO TAKES ONLY ONE ARGUMENT");
+            interactor.status.error("JMP TAKES ONLY ONE ARGUMENT");
             return;
         }
         if( is_op_idx ) {
-            operations.add_op(GotoOp(std::strtoul(address.c_str(), nullptr, 10), operations));
+            operations.add_op(JmpOp(std::strtoul(address.c_str(), nullptr, 10), operations));
         } else {
-            operations.add_op(GotoOp(address, operations));
+            operations.add_op(JmpOp(address, operations));
         }
     });
 }

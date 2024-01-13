@@ -1,3 +1,5 @@
+#include <string>
+
 #include "operations.hpp"
 
 // MOVE /////////////////////////////////////////
@@ -8,13 +10,13 @@ void MoveOp::operator()()
     interactor.move_ant(dx, dy);
 }
 
-// GOTO /////////////////////////////////////////
-GotoOp::GotoOp(std::string label, Operations& operations):  addr(new std::string(label)), type(LABEL), operations(operations) {}
-GotoOp::GotoOp(size_t op_idx, Operations& operations):  addr(op_idx), type(INDEX), operations(operations) {}
+// JMP /////////////////////////////////////////
+JmpOp::JmpOp(std::string label, Operations& operations):  addr(new std::string(label)), type(LABEL), operations(operations) {}
+JmpOp::JmpOp(size_t op_idx, Operations& operations):  addr(op_idx), type(INDEX), operations(operations) {}
 
-void GotoOp::operator()()
+void JmpOp::operator()()
 {
-    operations.goto_set = true;
+    operations.jmp_set = true;
     if( type == LABEL ) {
         operations.set_op_idx(*addr.str_lbl);
     } else {

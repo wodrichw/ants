@@ -3,14 +3,15 @@
 #include <functional>
 #include <unordered_map>
 #include <vector>
+#include <string>
 
 class Operations {
     std::vector<std::function<void()>> _ops; 
     std::unordered_map<std::string, size_t> label_map;
 public:
     size_t op_idx;
-    bool goto_set;
-    Operations(): _ops(), label_map(), op_idx(), goto_set() {}
+    bool jmp_set;
+    Operations(): _ops(), label_map(), op_idx(), jmp_set() {}
 
     void add_op(const std::function<void()>&& op) { _ops.push_back(op); }
     void add_label(std::pair<std::string, size_t>&& p) { label_map.insert(p); }
@@ -48,7 +49,7 @@ struct MoveOp {
     void operator()();
 };
 
-struct GotoOp {
+struct JmpOp {
     union Address {
         Address(std::string* str_lbl): str_lbl(str_lbl) {}
         Address(size_t op_idx): op_idx(op_idx) {}
@@ -58,8 +59,8 @@ struct GotoOp {
     enum Type { LABEL, INDEX } type;
     Operations& operations;
 
-    GotoOp(std::string label, Operations& operations);
-    GotoOp(size_t op_idx, Operations& operations);
+    JmpOp(std::string label, Operations& operations);
+    JmpOp(size_t op_idx, Operations& operations);
     void operator()();
 };
 
