@@ -54,12 +54,12 @@ public :
     void render();
 private:
     static const int textBoxHeight = 17;
-    static const int textBoxWidth = 23;
-    static const int regBoxWidth = 6;
+    static const int textBoxWidth = 25;
+    static const int regBoxWidth = 8;
     static const int regBoxHeight = 1;
     std::vector<std::string> textEditorLines;
     int cursorX = 0, cursorY = 0;
-    void printTextEditor();
+    void printTextEditor(std::size_t numAnts);
     void printHelpBoxes();
     void handleTextEditorAction(SDL_Keycode key_sym);
     void handleMouseClick(SDL_MouseButtonEvent event);

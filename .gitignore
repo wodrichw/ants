@@ -7,5 +7,5 @@ Makefile
 vcpkg_installed/
 ants
 *.log
-
-
+build
+.vscode
