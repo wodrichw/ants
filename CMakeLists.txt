@@ -60,7 +60,7 @@ endif()
 # Suppress MSVC warnings for POSIX C functions such as strdup.  This is only for the C samples.
 # target_compile_definitions(samples_c PRIVATE "$<$<C_COMPILER_ID:MSVC>:_CRT_NONSTDC_NO_DEPRECATE>")
 
-add_executable(ants 
+add_executable(ants
     src/main.cpp
     src/ant.cpp
     src/ant.hpp
@@ -75,6 +75,14 @@ add_executable(ants
     src/colors.hpp
     src/building.cpp
     src/building.hpp
+    src/operations.hpp
+    src/operations.cpp
+    src/parser.hpp
+    src/parser.cpp
+    src/text_editor_handler.hpp
+    src/text_editor_handler.cpp
+    src/render.hpp
+    src/render.cpp
 )
 set_property(TARGET ants PROPERTY CXX_STANDARD 17)
 

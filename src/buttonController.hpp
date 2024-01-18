@@ -19,9 +19,13 @@ public:
         FIRST=0, SECOND, THIRD, FOURTH, FIFTH
     };
 
-    struct Button {
-        size_t x, y, w, h;
+    struct ButtonData {
+        long x, y, w, h;
         Layer layer;
+    };
+
+    struct Button {
+        ButtonData data;
         // Todo: make a ClickEvent struct which holds information about the button click.
         // For instance, it can hold information like click duration and maybe which mouse
         // button clicked the button.
@@ -34,7 +38,7 @@ public:
 
 
 private:
-    // butons is a 2D array which maps a (layer, x, y) coordinate to a Button. 
+    // buttons is a 2D array which maps a (layer, x, y) coordinate to a Button.
     // This way, when the engine gets a mouse event, it can see what buttons occupy
     // that x, y location and call the corresponding Button::onClick functions
     std::array<std::array<Button*, globals::COLS*globals::ROWS>, globals::NUM_BUTTON_LAYERS> buttons;
@@ -48,14 +52,16 @@ public:
     ~ButtonController();
 
     // returns true if button successfully added, false if otherwise
-    // will not add a button to a location if it is already occupied 
+    // will not add a button to a location if it is already occupied
     // by another button on the same (layer, x,y) space
-    bool addButton(Button* b);
+    bool canCreateButton(ButtonController::ButtonData const& data);
+    Button* createButton(ButtonController::ButtonData const& data, std::function<bool()>onClick, std::optional<tcod::ColorRGB> color);
     void removeButton(Button* b);
-    void handleClick(size_t x, size_t y);
-    bool canMoveButton(Button* b, int dx, int dy);
-    void moveButton(Button* b, int dx, int dy);
+    void handleClick(long x, long y);
+    bool canMoveButton(Layer layer, long x, long y, long w, long h);
+    bool canMoveButton(Button* b, long dx, long dy);
+    void moveButton(Button* b, long dx, long dy);
 
 private:
-    inline size_t idx(size_t x, size_t y) const { return x+(y*globals::COLS); }
+    inline size_t idx(long x, long y) const { return x+(y*globals::COLS); }
 };

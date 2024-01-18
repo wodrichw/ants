@@ -1,9 +1,9 @@
 #pragma once
 
-
+using cpu_word_size = unsigned int;
 
 namespace globals {
-    const int ROWS = 60;
-    const int COLS = 60;
-    const int NUM_BUTTON_LAYERS = 5;
+    const long ROWS = 60;
+    const long COLS = 60;
+    const long NUM_BUTTON_LAYERS = 5;
 };
