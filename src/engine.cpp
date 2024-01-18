@@ -11,6 +11,7 @@
 #include <libtcod/context_init.h>
 #include <numeric>
 #include <iostream>
+#include <string>
 
 #include "ant.hpp"
 #include "building.hpp"
@@ -37,7 +38,7 @@ Engine::Engine()
     }
 }
 
-Engine::~Engine() 
+Engine::~Engine()
 {
     for (auto ant : ants)
         delete ant;
@@ -51,22 +52,22 @@ struct Box {
     Box(std::vector<std::string> &asciiGrid, int x, int y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {}
 
-    void populateChar(int x_idx, int y_idx, char ch) 
+    void populateChar(int x_idx, int y_idx, char ch)
     {
         asciiGrid[y_idx + y][x + x_idx] = ch;
     }
 
-    void checkInputText(const std::vector<std::string> &text) 
+    void checkInputText(const std::vector<std::string> &text)
     {
         assert(text.size() == h - 2);
-        bool checkStrLengths = std::all_of(text.begin(), text.end(), [this](const std::string &str) 
+        bool checkStrLengths = std::all_of(text.begin(), text.end(), [this](const std::string &str)
         {
             return str.length() == w - 2;
         });
         assert(checkStrLengths);
     }
 
-    void populate(const std::vector<std::string> &text) 
+    void populate(const std::vector<std::string> &text)
     {
         checkInputText(text);
 
@@ -96,7 +97,7 @@ struct Column {
     int width, height;
 };
 
-void Engine::printTextEditor()
+void Engine::printTextEditor(std::size_t numAnts)
 {
     std::vector<std::string> asciiGrid(textBoxHeight + 2);
     for (int i = 0; i < textBoxHeight + 2; ++i) {
@@ -108,10 +109,16 @@ void Engine::printTextEditor()
     Box accBox(asciiGrid, textBoxWidth + 1, 0, regBoxWidth + 2, regBoxHeight + 2);
     Box bacBox(asciiGrid, textBoxWidth + 1, regBoxHeight + 1, regBoxWidth + 2,
             regBoxHeight + 2);
+    Box antBox(asciiGrid, textBoxWidth + 1, (regBoxHeight * 2) + 2, regBoxWidth + 2, regBoxHeight + 2);
 
     mainBox.populate(textEditorLines);
-    accBox.populate({"ACC:0 "});
-    bacBox.populate({"BAC:1 "});
+    accBox.populate({"ACC:0   "});
+    bacBox.populate({"BAC:1   "});
+    
+    int numAntsSpaces = 4 - std::to_string(numAnts).length();
+    std::ostringstream numAntsStream;
+    numAntsStream << "ANT:" << numAnts << std::string(numAntsSpaces, ' ');
+    antBox.populate({numAntsStream.str()});
 
     std::string result =
         std::accumulate(asciiGrid.begin(), asciiGrid.end(), std::string(""));
@@ -197,14 +204,14 @@ void Engine::handleTextEditorAction(SDL_Keycode key_sym)
 // to see if it lands on anything selectable
 void Engine::handleMouseClick(SDL_MouseButtonEvent event)
 {
-    if ( event.button != SDL_BUTTON_LEFT ) return; 
+    if ( event.button != SDL_BUTTON_LEFT ) return;
     std::array<int,2> tile = context.pixel_to_tile_coordinates(std::array<int, 2>{event.x, event.y});
     size_t x = tile[0];
     size_t y = tile[1];
     buttonController->handleClick(x, y);
 }
 
-void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy) 
+void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
 {
     if (key_sym == SDLK_SLASH && gameStatus == TEXT_EDITOR) {
         gameStatus = IDLE;
@@ -328,7 +335,7 @@ void Engine::update() {
     }
 
     if ((dx != 0 || dy != 0) &&
-        map->canWalk(player->x + dx, player->y + dy)) 
+        map->canWalk(player->x + dx, player->y + dy))
     {
         moveAnt(player, dx, dy);
     }
@@ -349,8 +356,10 @@ void Engine::render()
         map->renderBuilding(*building);
     }
 
-    if (gameStatus == TEXT_EDITOR)
-        printTextEditor();
+    if (gameStatus == TEXT_EDITOR) {
+        std::size_t numAnts = ants.size();
+        printTextEditor(numAnts);
+    }
 
     printHelpBoxes();
 
