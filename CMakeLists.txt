@@ -81,6 +81,8 @@ add_executable(ants
     src/parser.cpp
     src/text_editor_handler.hpp
     src/text_editor_handler.cpp
+    src/render.hpp
+    src/render.cpp
 )
 set_property(TARGET ants PROPERTY CXX_STANDARD 17)
 

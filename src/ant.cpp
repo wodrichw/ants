@@ -15,6 +15,7 @@ namespace ant {
     {
         x += dx;
         y += dy;
+        last_rendered_pos.requires_update = true;
     }
 
     Player::Player(int x, int y, int fovRadius, char ch, tcod::ColorRGB col): 

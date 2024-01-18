@@ -7,7 +7,6 @@
 #include "map.hpp"
 #include "ant.hpp"
 #include "building.hpp"
-#include "colors.hpp"
 #include "globals.hpp"
 
 class BspListener : public ITCODBspCallback {
@@ -62,11 +61,6 @@ Map::~Map() {
 
 Tile &Map::getTile(int x, int y) const { return tiles[x + y * width]; }
 
-void Map::clearCh(int x, int y) {
-  auto &tile = root_console.at(x, y);
-  tile.ch = ' ';
-}
-
 void Map::setWall(int x, int y) { map->setProperties(x, y, false, false); }
 
 bool Map::isWall(int x, int y) const { return !map->isWalkable(x, y); }
@@ -96,45 +90,6 @@ bool Map::isInFov(int x, int y) const {
 
 bool Map::isExplored(int x, int y) const { return getTile(x, y).explored; }
 
-void Map::render() {
-  TCOD_ColorRGBA darkWall = color::light_black;
-  TCOD_ColorRGBA darkGround = color::dark_grey;
-  TCOD_ColorRGBA lightWall = color::indian_red;
-  TCOD_ColorRGBA lightGround = color::grey;
-
-  for (int x = 0; x < width; x++) {
-    for (int y = 0; y < height; y++) {
-      auto &tile = root_console.at(x, y);
-      tile.ch = ' ';
-      if (isInFov(x, y)) {
-        tile.bg = isWall(x, y) ? lightWall : lightGround;
-      } else {
-        if (isExplored(x, y)) {
-          tile.bg = isWall(x, y) ? darkWall : darkGround;
-        } else {
-          tile.bg = darkWall;
-        }
-      }
-    }
-  }
-}
-
-void Map::renderAnt(ant::Ant &a) {
-  if (isInFov(a.x, a.y)) {
-    auto &tile = root_console.at(a.x, a.y);
-    tile.ch = a.ch;
-    tile.fg = a.col;
-  }
-}
-
-void Map::renderBuilding(Building &b) {
-  for (int xi = b.x; xi < b.x + b.w; ++xi) {
-    for (int yi = b.y; yi < b.y + b.h; ++yi) {
-      auto &tile = root_console.at(xi, yi);
-      tile.bg = b.color;
-    }
-  }
-}
 
 void Map::resetFov() {
   for (int x = 0; x < width; x++) {

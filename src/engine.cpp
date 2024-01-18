@@ -22,13 +22,9 @@
 Engine::Engine()
     : player(new ant::Player(40, 25, 10, '@', color::white)), ants({player}),
     buildings(), clockControllers(), map(new Map(globals::COLS, globals::ROWS, ants, buildings)),
-    editor(map), buttonController(new ButtonController()), clock_timeout_1000ms(SDL_GetTicks64())
+    renderer(), editor(map), buttonController(new ButtonController()), clock_timeout_1000ms(SDL_GetTicks64())
 {
     gameStatus = STARTUP;
-    auto params = TCOD_ContextParams();
-    params.columns = globals::COLS, params.rows = globals::ROWS, params.window_title = "A N T S";
-    context = tcod::Context(params);
-    map->root_console = context.new_console(globals::COLS, globals::ROWS);
 }
 
 Engine::~Engine()
@@ -48,9 +44,8 @@ struct Column {
 void Engine::handleMouseClick(SDL_MouseButtonEvent event)
 {
     if ( event.button != SDL_BUTTON_LEFT ) return;
-    std::array<int,2> tile = context.pixel_to_tile_coordinates(std::array<int, 2>{event.x, event.y});
-    size_t x = tile[0];
-    size_t y = tile[1];
+    size_t x = 0, y = 0;
+    renderer.pixel_to_tile_coordinates(event.x, event.y, x, y);
     buttonController->handleClick(x, y);
 }
 
@@ -133,7 +128,6 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
 }
 
 void Engine::moveAnt(ant::Ant *ant, int dx, int dy) {
-    map->clearCh(ant->x, ant->y);
     ant->updatePositionByDelta(dx, dy);
     map->updateFov();
 
@@ -192,22 +186,22 @@ void Engine::update() {
 void Engine::render()
 {
     // draw the map
-    map->render();
+    renderer.renderMap(*map);
 
     // draw the ants
     for (auto ant : ants) {
-        map->renderAnt(*ant);
+        renderer.renderAnt(*map, *ant);
     }
 
     // draw the buildings
     for (auto building : buildings) {
-        map->renderBuilding(*building);
+        renderer.renderBuilding(*building);
     }
 
     if (gameStatus == TEXT_EDITOR)
-        editor.printTextEditor();
+        renderer.renderTextEditor(editor);
 
-    editor.printHelpBoxes();
+    renderer.renderHelpBoxes();
 
-    context.present(map->root_console);
+    renderer.present();
 }

@@ -1,8 +1,6 @@
-#ifndef  __MAP_HPP
-#define  __MAP_HPP
+#pragma once
 
- #include <libtcod/console_types.hpp>
-__MAP_HPP
+#include <libtcod/console_types.hpp>
 #include <libtcod.hpp>
 #include <vector>
 #include "ant.hpp"
@@ -24,19 +22,15 @@ struct Tile {
 class Map {
 public :
     int width,height;
-    tcod::Console root_console;
 
     Map(int width, int height, std::vector<ant::Ant*>& ants, std::vector<Building*>&buildings);
     ~Map();
     Tile& getTile(int x, int y) const;
-    void clearCh(int x, int y);
     bool isWall(int x, int y) const;
     bool canWalk(int x, int y) const;
     bool isInFov(int x, int y) const; // Fov = field of view
     bool isExplored(int x, int y) const;
-    void render();
-    void renderAnt(ant::Ant& a);
-    void renderBuilding(Building& b);
+
     void updateFov();
 private :
     std::vector<ant::Ant*>& ants;
@@ -51,6 +45,3 @@ private :
     void resetFov();
     void updateTileFov();
 };
-
-
-#endif //__MAP_HPP

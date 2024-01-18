@@ -7,6 +7,11 @@
 
 namespace ant {
 
+struct PositionData {
+    int x = 0, y = 0;
+    bool requires_update = false;
+};
+
 class Ant { 
 public :
     int x, y;
@@ -14,6 +19,7 @@ public :
     char ch;
     tcod::ColorRGB col;
     std::optional<int> bldgId; // the building the player is occupying. Will not be set if player not in a building.
+    PositionData last_rendered_pos;
 
     Ant(int x, int y, int fovRadius, char ch, tcod::ColorRGB col);
     void updatePositionByDelta(int dx, int dy);

@@ -9,6 +9,7 @@
 
 #include "controller.hpp"
 #include "text_editor_handler.hpp"
+#include "render.hpp"
 
 namespace ant {
     class Ant;
@@ -35,17 +36,15 @@ public :
         std::optional<ulong> clickX, clickY; // mouse click events
     };
 
-    tcod::Context context;
     ant::Player* player;
     std::vector<ant::Ant*> ants;
     std::vector<Building*> buildings;
     std::vector<ClockController*> clockControllers;
     Map* map;
+    tcodRenderer renderer;
     TextEditorHandler editor;
     ButtonController* buttonController;
     ParserCommandsAssembler assembler;
-    int fovRadius = 10;
-    bool computeFov = true;
 
     ulong clock_timeout_1000ms;
 
