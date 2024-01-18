@@ -3,9 +3,8 @@
 #include <libtcod/console_types.hpp>
 #include <libtcod.hpp>
 #include <vector>
-#include "ant.hpp"
 
-
+class Ant;
 class Building;
 
 static const int ROOM_MAX_SIZE = 12;
@@ -23,25 +22,26 @@ class Map {
 public :
     int width,height;
 
-    Map(int width, int height, std::vector<ant::Ant*>& ants, std::vector<Building*>&buildings);
+    Map(int width, int height, std::vector<Ant*>& ants, std::vector<Building*>&buildings);
     ~Map();
-    Tile& getTile(int x, int y) const;
-    bool isWall(int x, int y) const;
-    bool canWalk(int x, int y) const;
-    bool isInFov(int x, int y) const; // Fov = field of view
-    bool isExplored(int x, int y) const;
+    void build();
+    Tile& getTile(long x, long y) const;
+    bool isWall(long x, long y) const;
+    bool canWalk(long x, long y) const;
+    bool isInFov(long x, long y) const; // Fov = field of view
+    bool isExplored(long x, long y) const;
 
     void updateFov();
 private :
-    std::vector<ant::Ant*>& ants;
+    std::vector<Ant*>& ants;
     std::vector<Building*>& buildings;
     Tile *tiles;
     TCODMap *map;
     friend class BspListener;
 
-    void dig(int x1, int y1, int x2, int y2);
-    void createRoom(bool first, int x1, int y1, int x2, int y2);
-    void setWall(int x, int y);
+    void dig(long x1, long y1, long x2, long y2);
+    void createRoom(bool first, long x1, long y1, long x2, long y2);
+    void setWall(long x, long y);
     void resetFov();
     void updateTileFov();
 };

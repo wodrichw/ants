@@ -32,15 +32,15 @@ public :
     } gameStatus;
 
     struct InputEvent {
-        int dx, dy; // keyboard move events
+        long dx, dy; // keyboard move events
         std::optional<ulong> clickX, clickY; // mouse click events
     };
 
-    ant::Player* player;
-    std::vector<ant::Ant*> ants;
+    std::vector<Ant*> ants;
+    Map* map;
+    Player* player;
     std::vector<Building*> buildings;
     std::vector<ClockController*> clockControllers;
-    Map* map;
     tcodRenderer renderer;
     TextEditorHandler editor;
     ButtonController* buttonController;
@@ -54,8 +54,7 @@ public :
     void render();
 private:
     void handleMouseClick(SDL_MouseButtonEvent event);
-    void handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy);
-    void moveAnt(ant::Ant* ant, int dx, int dy);
+    void handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy);
 };
 
 extern Engine engine;

@@ -1,13 +1,15 @@
 #pragma once 
 
-#include "globals.hpp"
 #include <functional>
 #include <unordered_map>
 #include <vector>
 #include <string>
 
+#include "globals.hpp"
+#include "ant_interactor.hpp"
+
 class Operations {
-    std::vector<std::function<void()>> _ops; 
+    std::vector<std::function<void()>> _ops;
     std::unordered_map<std::string, size_t> label_map;
 public:
     size_t op_idx;
@@ -21,6 +23,7 @@ public:
     void set_op_idx(size_t idx);
     const std::function<void()> &operator[](size_t idx);
     size_t size();
+    void handleClockPulse();
 };
 
 struct ParserStatus {
@@ -31,37 +34,24 @@ struct ParserStatus {
     ParserStatus(bool p_err, std::string err_msg);
 };
 
-struct EngineInteractor {
-    using move_ant_f = std::function<void(int dx, int dy)>;
-
-    move_ant_f move_ant;
-    ParserStatus status;
-    EngineInteractor() = default;
-    EngineInteractor(const EngineInteractor& rhs);
-};
-
-struct BrainInteractor {
-    std::function<cpu_word_size&(int idx)> get_register;
-    std::function<void(int idx, cpu_word_size value)> write_register;
-};
-
 struct NOP { void operator()(); };
 
 // load a constant to the register
 struct LoadConstantOp {
-  LoadConstantOp(cpu_word_size &reg, cpu_word_size const value);
-  void operator()();
+    LoadConstantOp(AntInteractor& interactor, long register_idx, cpu_word_size const value);
+    void operator()();
 
 private:
-  cpu_word_size &reg;
-  cpu_word_size const value;
+    AntInteractor& interactor;
+    long register_idx;
+    cpu_word_size const value;
 };
 
 struct MoveOp {
-    EngineInteractor interactor;
-    int dx, dy;
-    MoveOp(const EngineInteractor& interactor, int dx, int dy);
+    MoveOp(AntInteractor& interactor, long dx, long dy);
     void operator()();
+    AntInteractor& interactor;
+    long dx, dy;
 };
 
 struct JmpOp {

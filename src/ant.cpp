@@ -1,30 +1,58 @@
 #include <optional>
 #include <libtcod/color.hpp>
+
 #include "ant.hpp"
 #include "colors.hpp"
 
+Ant::Ant(Map* map, long x, long y, int fovRadius, char ch, tcod::ColorRGB col):
+    x(x), y(y), fovRadius(fovRadius), ch(ch), col(col), bldgId(), map(map)
+{}
 
-namespace ant {
+void Ant::move(long dx, long dy)
+{
+    x += dx;
+    y += dy;
+    last_rendered_pos.requires_update = true;
 
+    map->updateFov();
 
-    Ant::Ant(int x, int y, int fovRadius, char ch, tcod::ColorRGB col):
-        x(x), y(y), fovRadius(fovRadius), ch(ch), col(col), bldgId()
-    {}
-
-    void Ant::updatePositionByDelta(int dx, int dy)
-    {
-        x += dx;
-        y += dy;
-        last_rendered_pos.requires_update = true;
+    if (map->getTile(x, y).bldgId.has_value()) {
+        bldgId.emplace(map->getTile(x, y).bldgId.value());
+    } else {
+        bldgId.reset();
     }
+}
 
-    Player::Player(int x, int y, int fovRadius, char ch, tcod::ColorRGB col): 
-        Ant(x, y, fovRadius, ch, col)
-    {}
+bool Ant::can_move(long dx, long dy)
+{
+    return map->canWalk(x + dx, y + dy);
+}
 
-    Worker::Worker(int x, int y): 
-        Ant(x, y, 10, 'w', color::light_green)
-    {}
+Player::Player(Map* map, long x, long y, int fovRadius, char ch, tcod::ColorRGB col):
+    Ant(map, x, y, fovRadius, ch, col)
+{}
+
+Worker::Worker(Map* map, ButtonController* button_controller, long x, long y) : Ant(map, x, y, 10, 'w', color::light_green),
+    button_controller(button_controller),
+    button(button_controller->createButton(x, y, 1, 1, ButtonController::Layer::FIFTH,
+    [&](){ return toggle_color(); }, std::optional<tcod::ColorRGB>()))
+{}
 
 
+bool Worker::toggle_color()
+{
+    if( col == color::light_green ) col = color::dark_yellow;
+    else col = color::light_green;
+    return true;
+}
+
+void Worker::move(long dx, long dy)
+{
+    Ant::move(dx, dy);
+    button_controller->moveButton(button, dx, dy);
+}
+
+bool Worker::can_move(long dx, long dy)
+{
+    return Ant::can_move(dx, dy) && button_controller->canMoveButton(button, dx, dy);
 }

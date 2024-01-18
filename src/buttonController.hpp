@@ -20,7 +20,7 @@ public:
     };
 
     struct Button {
-        size_t x, y, w, h;
+        long x, y, w, h;
         Layer layer;
         // Todo: make a ClickEvent struct which holds information about the button click.
         // For instance, it can hold information like click duration and maybe which mouse
@@ -50,12 +50,13 @@ public:
     // returns true if button successfully added, false if otherwise
     // will not add a button to a location if it is already occupied 
     // by another button on the same (layer, x,y) space
-    bool addButton(Button* b);
+    Button* createButton(long x, long y, long w, long h, Layer layer, std::function<bool()>onClick, std::optional<tcod::ColorRGB> color);
     void removeButton(Button* b);
-    void handleClick(size_t x, size_t y);
-    bool canMoveButton(Button* b, int dx, int dy);
-    void moveButton(Button* b, int dx, int dy);
+    void handleClick(long x, long y);
+    bool canMoveButton(Layer layer, long x, long y, long w, long h);
+    bool canMoveButton(Button* b, long dx, long dy);
+    void moveButton(Button* b, long dx, long dy);
 
 private:
-    inline size_t idx(size_t x, size_t y) const { return x+(y*globals::COLS); }
+    inline size_t idx(long x, long y) const { return x+(y*globals::COLS); }
 };

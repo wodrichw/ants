@@ -7,7 +7,7 @@
 
 #include "globals.hpp"
 #include "operations.hpp"
-
+#include "ant_interactor.hpp"
 
 // Parser helpers
 namespace TokenParser {
@@ -22,7 +22,7 @@ namespace TokenParser {
     cpu_word_size register_idx(std::istringstream &ss);
 
     // Parse direction keyword to a dx and dy pair
-    void direction(std::istringstream &ss, int &dx, int &dy,
+    void direction(std::istringstream &ss, long &dx, long &dy,
                     ParserStatus &status);
 
     // Check that no more arguments exist to be parsed.
@@ -31,17 +31,17 @@ namespace TokenParser {
 }
 
 struct ParserArgs {
-    EngineInteractor& engine_interactor;
-    BrainInteractor& brain_interactor;
+    AntInteractor& ant_interactor;
     Operations& operations;
     std::istringstream& code_stream;
+    ParserStatus& status;
 };
 
 class ParserCommandsAssembler;
 
 class Parser {
 public:
-    enum Command { 
+    enum Command {
         JMP,
         LOAD,
         MOVE,
@@ -55,17 +55,17 @@ public:
     CommandConfig(const std::string &command_string, Command command_enum,
                   std::function<void(ParserArgs &args)> assemble);
   };
+  ParserStatus status;
 
 private:
-  void parse(EngineInteractor& engine_interactor, BrainInteractor& brain_interactor,
-    Operations& operations, std::vector<std::string>& program_code);
+  void parse(AntInteractor& ant_interactor, Operations& operations, std::vector<std::string>& program_code);
+  bool handle_label(Operations& operations, std::string const& word);
 
 public:
 
   std::unordered_map<std::string, std::function<void(ParserArgs& args)>> commands;
   Parser(ParserCommandsAssembler &commands_assember,
-         std::unordered_set<Command> command_set, EngineInteractor &interactor,
-         Operations &operations, std::vector<std::string> &program_code);
+         std::unordered_set<Command> command_set, AntInteractor& ant_interactor, Operations& operations, std::vector<std::string> &program_code);
 };
 
 class ParserCommandsAssembler {

@@ -20,11 +20,14 @@
 #include "map.hpp"
 
 Engine::Engine()
-    : player(new ant::Player(40, 25, 10, '@', color::white)), ants({player}),
-    buildings(), clockControllers(), map(new Map(globals::COLS, globals::ROWS, ants, buildings)),
-    renderer(), editor(map), buttonController(new ButtonController()), clock_timeout_1000ms(SDL_GetTicks64())
+    : ants(), map(new Map(globals::COLS, globals::ROWS, ants, buildings)),
+    player(new Player(map, 40, 25, 10, '@', color::white)),
+    buildings(), clockControllers(),  renderer(), editor(map), buttonController(new ButtonController()),
+    clock_timeout_1000ms(SDL_GetTicks64())
 {
     gameStatus = STARTUP;
+    ants.push_back(player);
+    map->build();
 }
 
 Engine::~Engine()
@@ -44,12 +47,12 @@ struct Column {
 void Engine::handleMouseClick(SDL_MouseButtonEvent event)
 {
     if ( event.button != SDL_BUTTON_LEFT ) return;
-    size_t x = 0, y = 0;
+    long x = 0, y = 0;
     renderer.pixel_to_tile_coordinates(event.x, event.y, x, y);
     buttonController->handleClick(x, y);
 }
 
-void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
+void Engine::handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy)
 {
     if (key_sym == SDLK_SLASH && gameStatus == TEXT_EDITOR) {
         gameStatus = IDLE;
@@ -75,42 +78,30 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
         //      and look for open squared there. Radius increasing will go on until
         //      an open square is found (or out of space in the map)
 
-        Building &b = *buildings[player->bldgId.value()];
-        size_t addAnt_x = b.x, addAnt_y = b.y;
-        ant::Worker* new_ant = new ant::Worker(addAnt_x, addAnt_y);
-        ButtonController::Button* new_button = new ButtonController::Button{
-            addAnt_x, addAnt_y, 1, 1, // button lives on top of the ant we are adding
-            ButtonController::Layer::FIFTH, // button lives on bottom layer and thus last priority to be clicked
-            [new_ant]() {
-                if( new_ant->col == color::light_green ) new_ant->col = color::dark_yellow;
-                else new_ant->col = color::light_green;
-                return true;
-            },
-            std::optional<tcod::ColorRGB>()
-        };
-        EngineInteractor interactor;
-        interactor.move_ant = [&, new_ant, new_button](int dx, int dy) {
-            if( map->canWalk(new_ant->x + dx, new_ant->y + dy) &&
-                buttonController->canMoveButton(new_button, dx, dy))
-            {
-                moveAnt(new_ant, dx, dy);
-                buttonController->moveButton(new_button, dx, dy);
-            }
-        };
-
-        Worker_Controller* w = new Worker_Controller(assembler, interactor,  editor.textEditorLines);
-
-        if (! interactor.status.p_err ) { // add worker ant if the textEditorLines have no parser errors
-            clockControllers.push_back(w);
-            ants.push_back(new_ant);
-            buttonController->addButton(new_button);
-        } else {
-            delete w;
-            delete new_ant;
+        Worker_Controller* w = new Worker_Controller(assembler,  editor.textEditorLines);
+        if (w->parser.status.p_err) {
             // TODO: show parse errors in the text editor box instead of a cout
             // this will likely require returning the line number, and word that caused the parse error
-            std::cout << interactor.status.err_msg << std::endl;
+            std::cout << w->parser.status.err_msg << std::endl;
+            return;
         }
+
+        Building &b = *buildings[player->bldgId.value()];
+        long addAnt_x = b.x + b.w / 2, addAnt_y = b.y + b.h / 2;
+        Worker* new_ant = new Worker(map, buttonController, addAnt_x, addAnt_y);
+
+        w->ant_interactor.try_move = [new_ant](long dx, long dy) {
+            if (new_ant->can_move(dx, dy)) new_ant->move(dx, dy);
+        };
+        w->ant_interactor.read_register = [new_ant](long idx)-> cpu_word_size const& {
+            return new_ant->cpu.registers[idx];
+        };
+        w->ant_interactor.write_register = [new_ant](long idx, cpu_word_size value) {
+            new_ant->cpu.registers[idx] = value;
+        };
+
+        ants.push_back(new_ant);
+        clockControllers.push_back(w);
 
         return;
     }
@@ -127,18 +118,8 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy)
     }
 }
 
-void Engine::moveAnt(ant::Ant *ant, int dx, int dy) {
-    ant->updatePositionByDelta(dx, dy);
-    map->updateFov();
-
-    if (map->getTile(ant->x, ant->y).bldgId.has_value()) {
-        ant->bldgId.emplace(map->getTile(ant->x, ant->y).bldgId.value());
-    } else {
-        ant->bldgId.reset();
-    }
-}
-
-void Engine::update() {
+void Engine::update()
+{
     if (gameStatus == STARTUP) {
         map->updateFov();
         render();
@@ -147,7 +128,7 @@ void Engine::update() {
         gameStatus = IDLE;
 
     SDL_Event event;
-    int dx = 0, dy = 0;
+    long dx = 0, dy = 0;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
             case SDL_QUIT:
@@ -179,7 +160,7 @@ void Engine::update() {
     if ((dx != 0 || dy != 0) &&
         map->canWalk(player->x + dx, player->y + dy))
     {
-        moveAnt(player, dx, dy);
+        player->move(dx, dy);
     }
 }
 

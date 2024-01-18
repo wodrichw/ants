@@ -3,6 +3,7 @@
 #include <ios>
 #include <sstream>
 
+#include "ant_interactor.hpp"
 #include "operations.hpp"
 #include "parser.hpp"
 
@@ -25,7 +26,7 @@ cpu_word_size TokenParser::register_idx(std::istringstream &ss) {
   // specific value like UINT_MAX to indicate an error.
   return UINT_MAX;
 }
-void TokenParser::direction(std::istringstream &ss, int &dx, int &dy,
+void TokenParser::direction(std::istringstream &ss, long &dx, long &dy,
                             ParserStatus &status) {
   std::string word;
   ss >> word;
@@ -56,18 +57,17 @@ void TokenParser::terminate(std::istringstream &ss, ParserStatus &status,
 Parser::Parser(
     ParserCommandsAssembler& commands_assember,
     std::unordered_set<Command> command_set,
-    EngineInteractor& engine_interactor,
+    AntInteractor& ant_interactor,
     Operations& operations,
     std::vector<std::string>& program_code
-): 
+):
     commands()
 {
     for( auto& command: command_set ) {
         commands.insert({commands_assember[command].command_string, commands_assember[command].assemble});
     }
 
-    BrainInteractor brain_interactor;
-    parse(engine_interactor, brain_interactor, operations, program_code);
+    parse(ant_interactor, operations, program_code);
 }
 
 struct CommentHandler {
@@ -78,11 +78,11 @@ struct CommentHandler {
     }
 };
 
-bool handle_label(EngineInteractor& interactor, Operations& operations, std::string const& word) {
+bool Parser::handle_label(Operations& operations, std::string const& word) {
     if( word[word.length() - 1] != ':' ) return false;
 
     if( word.length() == 1 ) {
-        interactor.status.error("DEFINED AN EMPTY LABEL");
+        status.error("DEFINED AN EMPTY LABEL");
         return false;
     }
     std::string label(word.substr(0, word.length()-1));
@@ -90,14 +90,13 @@ bool handle_label(EngineInteractor& interactor, Operations& operations, std::str
     return true;
 }
 
-void Parser::parse(EngineInteractor& engine_interactor, BrainInteractor& brain_interactor,
-    Operations& operations, std::vector<std::string>& program_code)
+void Parser::parse(AntInteractor& ant_interactor, Operations& operations, std::vector<std::string>& program_code)
 {
     std::unordered_map<std::string, size_t> label_map;
     bool empty_program = true;
     for (std::string& line: program_code) {
         std::istringstream word_stream(line);
-        ParserArgs args{engine_interactor, brain_interactor, operations, word_stream};
+        ParserArgs args{ant_interactor, operations, word_stream, status};
         CommentHandler comment_handler;
         do {
             std::string word;
@@ -108,22 +107,22 @@ void Parser::parse(EngineInteractor& engine_interactor, BrainInteractor& brain_i
 
             empty_program = false;
 
-            if (handle_label(engine_interactor, operations, word)) continue;
-            if (engine_interactor.status.p_err) return;
+            if (handle_label(args.operations, word)) continue;
+            if (status.p_err) return;
 
             auto c = commands.find(word);
             if (c == commands.end()) {
                 std::stringstream error_stream;
                 error_stream << "THE FOLLOWING IS NOT A VALID COMMAND: " << word;
-                engine_interactor.status.error(error_stream.str());
+                status.error(error_stream.str());
                 return;
             }
             c->second(args); // parse command
-            if( engine_interactor.status.p_err ) return; // return if error parsing command
+            if( status.p_err ) return; // return if error parsing command
         } while( word_stream && !comment_handler.has_comment );
     }
     if ( empty_program ) {
-        engine_interactor.status.error("WILL NOT ADD AN ANT WITHOUT A PROGRAM");
+        status.error("WILL NOT ADD AN ANT WITHOUT A PROGRAM");
     }
 }
 const Parser::CommandConfig &
@@ -148,7 +147,7 @@ ParserCommandsAssembler::ParserCommandsAssembler(): _map()
 
     // Load constant command to register
     insert(new Parser::CommandConfig(
-        "LOAD",
+        "LDI",
         Parser::Command::LOAD,
         LoadConstantParser()
     ));
@@ -180,7 +179,7 @@ void ParserCommandsAssembler::insert(Parser::CommandConfig *config) {
 void NOP_Parser::operator()(ParserArgs& args)
 {
     args.operations.add_op(NOP());
-    TokenParser::terminate(args.code_stream, args.engine_interactor.status,
+    TokenParser::terminate(args.code_stream, args.status,
         "NOP expects no args");
 }
 
@@ -190,21 +189,21 @@ void LoadConstantParser::operator()(ParserArgs &args)
       TokenParser::register_idx(args.code_stream);
   cpu_word_size const value = TokenParser::integer(args.code_stream);
   args.operations.add_op(
-      LoadConstantOp(args.brain_interactor.get_register(register_idx), value));
-  TokenParser::terminate(args.code_stream, args.engine_interactor.status,
+      LoadConstantOp(args.ant_interactor, register_idx, value));
+  TokenParser::terminate(args.code_stream, args.status,
          "Load constant instruction only accepts 2 arguments");
 }
 
 void MoveAntParser::operator()(ParserArgs& args)
 {
-    int dx = 0, dy = 0;
+    long dx = 0, dy = 0;
 
-    TokenParser::direction(args.code_stream, dx, dy, args.engine_interactor.status);
-    if (args.engine_interactor.status.p_err) return;
+    TokenParser::direction(args.code_stream, dx, dy, args.status);
+    if (args.status.p_err) return;
 
-    args.operations.add_op(MoveOp(args.engine_interactor, dx, dy));
+    args.operations.add_op(MoveOp(args.ant_interactor, dx, dy));
 
-    TokenParser::terminate(args.code_stream, args.engine_interactor.status, "Move ant operator expects 1 arguments.");
+    TokenParser::terminate(args.code_stream, args.status, "Move ant operator expects 1 arguments.");
 }
 
 void JumpParser::operator()(ParserArgs& args)
@@ -213,7 +212,7 @@ void JumpParser::operator()(ParserArgs& args)
     std::string address;
     args.code_stream >> address;
     if( !args.code_stream ) {
-        args.engine_interactor.status.error("NEED DIRECTION DEFINED FOR JMP COMMAND");
+        args.status.error("NEED DIRECTION DEFINED FOR JMP COMMAND");
         return;
     }
     bool is_op_idx = std::find_if(address.begin(), address.end(), [](unsigned char c) {
@@ -226,5 +225,5 @@ void JumpParser::operator()(ParserArgs& args)
         args.operations.add_op(JmpOp(address, args.operations));
     }
 
-    TokenParser::terminate(args.code_stream, args.engine_interactor.status, "JMP TAKES ONLY ONE ARGUMENT");
+    TokenParser::terminate(args.code_stream, args.status, "JMP TAKES ONLY ONE ARGUMENT");
 }

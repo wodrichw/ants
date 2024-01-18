@@ -7,10 +7,10 @@
 struct Box {
     ulong x, y, w, h;
     std::vector<std::string> &asciiGrid;
-    Box(std::vector<std::string> &asciiGrid, int x, int y, int w, int h)
+    Box(std::vector<std::string> &asciiGrid, long x, long y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {}
 
-    void populateChar(int x_idx, int y_idx, char ch)
+    void populateChar(long x_idx, long y_idx, char ch)
     {
         asciiGrid[y_idx + y][x + x_idx] = ch;
     }
@@ -59,7 +59,7 @@ tcodRenderer::tcodRenderer()
     root_console = context.new_console(globals::COLS, globals::ROWS);
 }
 
-void tcodRenderer::clearCh(int x, int y)
+void tcodRenderer::clearCh(long x, long y)
 {
   auto &tile = root_console.at(x, y);
   tile.ch = ' ';
@@ -72,8 +72,8 @@ void tcodRenderer::renderMap(Map& map)
   TCOD_ColorRGBA lightWall = color::indian_red;
   TCOD_ColorRGBA lightGround = color::grey;
 
-  for (int x = 0; x < map.width; x++) {
-    for (int y = 0; y < map.height; y++) {
+  for (long x = 0; x < map.width; x++) {
+    for (long y = 0; y < map.height; y++) {
       auto &tile = root_console.at(x, y);
       tile.ch = ' ';
       if (map.isInFov(x, y)) {
@@ -89,9 +89,9 @@ void tcodRenderer::renderMap(Map& map)
   }
 }
 
-void tcodRenderer::renderAnt(Map& map, ant::Ant &a)
+void tcodRenderer::renderAnt(Map& map, Ant &a)
 {
-    ant::PositionData& last_pos = a.last_rendered_pos;
+    PositionData& last_pos = a.last_rendered_pos;
     if (last_pos.requires_update) {
         last_pos.requires_update = false;
         clearCh(last_pos.x, last_pos.y);
@@ -108,8 +108,8 @@ void tcodRenderer::renderAnt(Map& map, ant::Ant &a)
 
 void tcodRenderer::renderBuilding(Building &b)
 {
-  for (int xi = b.x; xi < b.x + b.w; ++xi) {
-    for (int yi = b.y; yi < b.y + b.h; ++yi) {
+  for (long xi = b.x; xi < b.x + b.w; ++xi) {
+    for (long yi = b.y; yi < b.y + b.h; ++yi) {
       auto &tile = root_console.at(xi, yi);
       tile.bg = b.color;
     }
@@ -156,7 +156,7 @@ void tcodRenderer::present()
     context.present(root_console);
 }
 
-void tcodRenderer::pixel_to_tile_coordinates(int pixel_x, int pixel_y, size_t& tile_x, size_t& tile_y) {
+void tcodRenderer::pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x, long& tile_y) {
     std::array<int,2> tile = context.pixel_to_tile_coordinates(std::array<int, 2>{pixel_x, pixel_y});
     tile_x = tile[0];
     tile_y = tile[1];
