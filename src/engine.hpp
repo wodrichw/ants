@@ -8,10 +8,10 @@
 #include <vector>
 
 #include "controller.hpp"
+#include "text_editor_handler.hpp"
 
-
-namespace ant { 
-    class Ant; 
+namespace ant {
+    class Ant;
     class Player;
 }
 class Building;
@@ -41,6 +41,7 @@ public :
     std::vector<Building*> buildings;
     std::vector<ClockController*> clockControllers;
     Map* map;
+    TextEditorHandler editor;
     ButtonController* buttonController;
     ParserCommandsAssembler assembler;
     int fovRadius = 10;
@@ -53,19 +54,8 @@ public :
     void update();
     void render();
 private:
-    static const int textBoxHeight = 17;
-    static const int textBoxWidth = 23;
-    static const int regBoxWidth = 6;
-    static const int regBoxHeight = 1;
-    std::vector<std::string> textEditorLines;
-    int cursorX = 0, cursorY = 0;
-    void printTextEditor();
-    void printHelpBoxes();
-    void handleTextEditorAction(SDL_Keycode key_sym);
     void handleMouseClick(SDL_MouseButtonEvent event);
     void handleKeyPress(SDL_Keycode key_sym, int& dx, int& dy);
-    void moveToPrevNonWhiteSpace();
-    void moveToEndLine();
     void moveAnt(ant::Ant* ant, int dx, int dy);
 };
 
