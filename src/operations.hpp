@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "globals.hpp"
 #include <functional>
 #include <unordered_map>
 #include <vector>
@@ -11,26 +12,23 @@ class Operations {
 public:
     size_t op_idx;
     bool jmp_set;
-    Operations(): _ops(), label_map(), op_idx(), jmp_set() {}
+    Operations();
 
-    void add_op(const std::function<void()>&& op) { _ops.push_back(op); }
-    void add_label(std::pair<std::string, size_t>&& p) { label_map.insert(p); }
+    void add_op(const std::function<void()> &&op);
+    void add_label(std::pair<std::string, size_t> &&p);
 
-    void set_op_idx(const std::string& label) { op_idx = label_map[label]; }
-    void set_op_idx(size_t idx) { op_idx = idx; }
-    const std::function<void()>& operator[](size_t idx) { return _ops[idx]; }
-    size_t size() { return _ops.size(); }
+    void set_op_idx(const std::string &label);
+    void set_op_idx(size_t idx);
+    const std::function<void()> &operator[](size_t idx);
+    size_t size();
 };
 
 struct ParserStatus {
     bool p_err;
     std::string err_msg;
-    void error(const std::string& err_msg) {
-        this->p_err = true;
-        this->err_msg = err_msg;
-    }
-    ParserStatus(): p_err(false), err_msg("") {}
-    ParserStatus(bool p_err, std::string err_msg): p_err(p_err), err_msg(err_msg) {}
+    void error(const std::string &err_msg);
+    ParserStatus();
+    ParserStatus(bool p_err, std::string err_msg);
 };
 
 struct EngineInteractor {
@@ -40,6 +38,23 @@ struct EngineInteractor {
     ParserStatus status;
     EngineInteractor() = default;
     EngineInteractor(const EngineInteractor& rhs);
+};
+
+struct BrainInteractor {
+    std::function<cpu_word_size&(int idx)> get_register;
+    std::function<void(int idx, cpu_word_size value)> write_register;
+};
+
+struct NOP { void operator()(); };
+
+// load a constant to the register
+struct LoadConstantOp {
+  LoadConstantOp(cpu_word_size &reg, cpu_word_size const value);
+  void operator()();
+
+private:
+  cpu_word_size &reg;
+  cpu_word_size const value;
 };
 
 struct MoveOp {
@@ -63,5 +78,3 @@ struct JmpOp {
     JmpOp(size_t op_idx, Operations& operations);
     void operator()();
 };
-
-

@@ -19,13 +19,6 @@ public:
 
 class  Worker_Controller: public ClockController {
 public:
-    struct Brain {
-        int acc_reg;
-        int bak_reg;
-    };
-
-    Brain* brain;
-
     Operations operations;
     Parser parser;
 

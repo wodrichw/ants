@@ -1,6 +1,6 @@
 #pragma once
 
-
+using cpu_word_size = unsigned int;
 
 namespace globals {
     const int ROWS = 60;

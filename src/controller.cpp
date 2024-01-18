@@ -25,12 +25,14 @@ Worker_Controller::~Worker_Controller() {}
 
 void Worker_Controller::handleClockPulse()
 {
-    if( operations.op_idx == operations.size() ) return; // don't do anything if out of ops
-    operations[operations.op_idx]();
+    if( operations.size() == 0 ) return; // don't do anything if there aren't any operations
+
+    operations[operations.op_idx](); // execute operation
+
     if( operations.jmp_set ) {
         operations.jmp_set = false;
     } else {
-        ++operations.op_idx;
+        operations.op_idx = (operations.op_idx + 1) % operations.size();
     }
 }
 
