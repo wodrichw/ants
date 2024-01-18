@@ -42,7 +42,7 @@ public:
 
 class Worker: public Ant {
 public:
-    Worker(Map* map, ButtonController* button_controller, long x, long y);
+    Worker(Map* map, ButtonController* button_controller, ButtonController::ButtonData const& data);
     void move(long dx, long dy);
     bool can_move(long dx, long dy);
     bool isInFov() { return true; }

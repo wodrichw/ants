@@ -32,10 +32,9 @@ Player::Player(Map* map, long x, long y, int fovRadius, char ch, tcod::ColorRGB 
     Ant(map, x, y, fovRadius, ch, col)
 {}
 
-Worker::Worker(Map* map, ButtonController* button_controller, long x, long y) : Ant(map, x, y, 10, 'w', color::light_green),
+Worker::Worker(Map* map, ButtonController* button_controller, ButtonController::ButtonData const& data) : Ant(map, data.x, data.y, 10, 'w', color::light_green),
     button_controller(button_controller),
-    button(button_controller->createButton(x, y, 1, 1, ButtonController::Layer::FIFTH,
-    [&](){ return toggle_color(); }, std::optional<tcod::ColorRGB>()))
+    button(button_controller->createButton(data, [&](){ return toggle_color(); }, std::optional<tcod::ColorRGB>()))
 {}
 
 

@@ -78,6 +78,12 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy)
         //      and look for open squared there. Radius increasing will go on until
         //      an open square is found (or out of space in the map)
 
+        Building &b = *buildings[player->bldgId.value()];
+        long new_x = b.x + b.w / 2, new_y = b.y + b.h / 2;
+
+        ButtonController::ButtonData btn_data{new_x, new_y, 1, 1, ButtonController::Layer::FIFTH};
+        if (!buttonController->canCreateButton(btn_data)) return;
+
         Worker_Controller* w = new Worker_Controller(assembler,  editor.textEditorLines);
         if (w->parser.status.p_err) {
             // TODO: show parse errors in the text editor box instead of a cout
@@ -85,10 +91,7 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy)
             std::cout << w->parser.status.err_msg << std::endl;
             return;
         }
-
-        Building &b = *buildings[player->bldgId.value()];
-        long addAnt_x = b.x + b.w / 2, addAnt_y = b.y + b.h / 2;
-        Worker* new_ant = new Worker(map, buttonController, addAnt_x, addAnt_y);
+        Worker* new_ant = new Worker(map, buttonController, btn_data);
 
         w->ant_interactor.try_move = [new_ant](long dx, long dy) {
             if (new_ant->can_move(dx, dy)) new_ant->move(dx, dy);
