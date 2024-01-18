@@ -180,7 +180,7 @@ void Engine::render()
     }
 
     if (gameStatus == TEXT_EDITOR)
-        renderer.renderTextEditor(editor);
+        renderer.renderTextEditor(editor, ants.size());
 
     renderer.renderHelpBoxes();
 

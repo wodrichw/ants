@@ -116,7 +116,7 @@ void tcodRenderer::renderBuilding(Building &b)
   }
 }
 
-void tcodRenderer::renderTextEditor(TextEditorHandler const& editor)
+void tcodRenderer::renderTextEditor(TextEditorHandler const& editor, size_t ant_count)
 {
     std::vector<std::string> asciiGrid(editor.textBoxHeight + 2);
     for (int i = 0; i < editor.textBoxHeight + 2; ++i) {
@@ -128,10 +128,16 @@ void tcodRenderer::renderTextEditor(TextEditorHandler const& editor)
     Box accBox(asciiGrid, editor.textBoxWidth + 1, 0, editor.regBoxWidth + 2, editor.regBoxHeight + 2);
     Box bacBox(asciiGrid, editor.textBoxWidth + 1, editor.regBoxHeight + 1, editor.regBoxWidth + 2,
             editor.regBoxHeight + 2);
+    Box antBox(asciiGrid, editor.textBoxWidth + 1, (editor.regBoxHeight * 2) + 2, editor.regBoxWidth + 2, editor.regBoxHeight + 2);
 
     mainBox.populate(editor.textEditorLines);
-    accBox.populate({"ACC:0 "});
-    bacBox.populate({"BAC:1 "});
+    accBox.populate({"ACC:0   "});
+    bacBox.populate({"BAC:1   "});
+
+    int numAntsSpaces = 4 - std::to_string(ant_count).length();
+    std::ostringstream numAntsStream;
+    numAntsStream << "ANT:" << ant_count << std::string(numAntsSpaces, ' ');
+    antBox.populate({numAntsStream.str()});
 
     std::string result =
         std::accumulate(asciiGrid.begin(), asciiGrid.end(), std::string(""));
@@ -144,6 +150,8 @@ void tcodRenderer::renderTextEditor(TextEditorHandler const& editor)
     tcod::print_rect(root_console, {editor.cursorX + 1, editor.cursorY + 1, 1, 1}, " ",
             color::white, color::light_green, TCOD_LEFT, TCOD_BKGND_SET);
 }
+
+
 
 
 // TODO: display potential key presses that could be helpful.
