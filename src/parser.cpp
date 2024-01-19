@@ -45,6 +45,19 @@ void TokenParser::direction(std::istringstream &ss, long &dx, long &dy,
   }
 }
 
+void TokenParser::get_label_address(std::istringstream &ss, std::string& address, bool& is_op_idx, ParserStatus &status)
+{
+    std::string word;
+    ss >> address;
+    if( !ss ) {
+        status.error("NEED DIRECTION DEFINED FOR JMP COMMAND");
+        return;
+    }
+    is_op_idx = std::find_if(address.begin(), address.end(), [](unsigned char c) {
+        return !std::isdigit(c);
+    }) == address.end();
+}
+
 void TokenParser::terminate(std::istringstream &ss, ParserStatus &status,
                             const std::string &err_msg) {
   std::string word;
@@ -152,6 +165,41 @@ ParserCommandsAssembler::ParserCommandsAssembler(): _map()
         LoadConstantParser()
     ));
 
+    // Copy register to register
+    insert(new Parser::CommandConfig(
+        "CPY",
+        Parser::Command::COPY,
+        CopyParser()
+    ));
+
+    // Add second register to the first
+    insert(new Parser::CommandConfig(
+        "ADD",
+        Parser::Command::ADD,
+        AddParser()
+    ));
+
+    // Subtract second register from the first
+    insert(new Parser::CommandConfig(
+        "SUB",
+        Parser::Command::SUB,
+        SubParser()
+    ));
+
+    // Increment register
+    insert(new Parser::CommandConfig(
+        "INC",
+        Parser::Command::INC,
+        IncParser()
+    ));
+
+    // Decrement register
+    insert(new Parser::CommandConfig(
+        "DEC",
+        Parser::Command::DEC,
+        DecParser()
+    ));
+
     // MOVE command
     insert(new Parser::CommandConfig(
         "MOVE",
@@ -165,12 +213,18 @@ ParserCommandsAssembler::ParserCommandsAssembler(): _map()
         Parser::Command::JMP,
         JumpParser()
     ));
+
+    // JNZ command
+    insert(new Parser::CommandConfig(
+        "JNZ",
+        Parser::Command::JNZ,
+        JumpNotZeroParser()
+    ));
 }
 
 void ParserCommandsAssembler::insert(Parser::CommandConfig *config) {
   _map[config->command_enum] = config;
 }
-
 
 /************************************************************************
  ********************** COMMAND PARSING FUNCTIONS ***********************
@@ -185,13 +239,74 @@ void NOP_Parser::operator()(ParserArgs& args)
 
 void LoadConstantParser::operator()(ParserArgs &args)
 {
-  cpu_word_size const register_idx =
-      TokenParser::register_idx(args.code_stream);
-  cpu_word_size const value = TokenParser::integer(args.code_stream);
+    long const register_idx =
+        TokenParser::register_idx(args.code_stream);
+    long const value = TokenParser::integer(args.code_stream);
+
   args.operations.add_op(
-      LoadConstantOp(args.ant_interactor, register_idx, value));
-  TokenParser::terminate(args.code_stream, args.status,
-         "Load constant instruction only accepts 2 arguments");
+        LoadConstantOp(args.ant_interactor, register_idx, value));
+    TokenParser::terminate(args.code_stream, args.status,
+        "Load constant instruction only accepts 2 arguments"
+    );
+}
+
+void CopyParser::operator()(ParserArgs &args)
+{
+    long const reg_src_idx =
+        TokenParser::register_idx(args.code_stream);
+    long const reg_dst_idx =
+        TokenParser::register_idx(args.code_stream);
+    args.operations.add_op(
+        CopyOp(args.ant_interactor, reg_src_idx, reg_dst_idx));
+    TokenParser::terminate(args.code_stream, args.status,
+        "Copy instruction only accepts 2 arguments"
+    );
+}
+
+void AddParser::operator()(ParserArgs &args)
+{
+    long const reg_src_idx =
+        TokenParser::register_idx(args.code_stream);
+    long const reg_dst_idx =
+        TokenParser::register_idx(args.code_stream);
+    args.operations.add_op(
+        AddOp(args.ant_interactor, reg_src_idx, reg_dst_idx));
+    TokenParser::terminate(args.code_stream, args.status,
+        "Add instruction only accepts 2 arguments");
+}
+
+void SubParser::operator()(ParserArgs &args)
+{
+    long const reg_src_idx =
+        TokenParser::register_idx(args.code_stream);
+    long const reg_dst_idx =
+        TokenParser::register_idx(args.code_stream);
+    args.operations.add_op(
+        SubOp(args.ant_interactor, reg_src_idx, reg_dst_idx));
+    TokenParser::terminate(args.code_stream, args.status,
+        "Subtraction instruction only accepts 2 arguments");
+}
+
+void IncParser::operator()(ParserArgs &args)
+{
+    long const register_idx =
+        TokenParser::register_idx(args.code_stream);
+    args.operations.add_op(
+        IncOp(args.ant_interactor, register_idx));
+    TokenParser::terminate(args.code_stream, args.status,
+        "Increment instruction only accepts 2 arguments"
+    );
+}
+
+void DecParser::operator()(ParserArgs &args)
+{
+    long const register_idx =
+        TokenParser::register_idx(args.code_stream);
+    args.operations.add_op(
+        DecOp(args.ant_interactor, register_idx));
+    TokenParser::terminate(args.code_stream, args.status,
+        "Decrement instruction only accepts 2 arguments"
+    );
 }
 
 void MoveAntParser::operator()(ParserArgs& args)
@@ -208,16 +323,9 @@ void MoveAntParser::operator()(ParserArgs& args)
 
 void JumpParser::operator()(ParserArgs& args)
 {
-    std::string word;
     std::string address;
-    args.code_stream >> address;
-    if( !args.code_stream ) {
-        args.status.error("NEED DIRECTION DEFINED FOR JMP COMMAND");
-        return;
-    }
-    bool is_op_idx = std::find_if(address.begin(), address.end(), [](unsigned char c) {
-            return !std::isdigit(c);
-    }) == address.end();
+    bool is_op_idx;
+    TokenParser::get_label_address(args.code_stream, address, is_op_idx, args.status);
 
     if( is_op_idx ) {
         args.operations.add_op(JmpOp(std::stol(address.c_str()), args.operations));
@@ -226,4 +334,19 @@ void JumpParser::operator()(ParserArgs& args)
     }
 
     TokenParser::terminate(args.code_stream, args.status, "JMP TAKES ONLY ONE ARGUMENT");
+}
+
+void JumpNotZeroParser::operator()(ParserArgs& args)
+{
+    std::string address;
+    bool is_op_idx;
+    TokenParser::get_label_address(args.code_stream, address, is_op_idx, args.status);
+
+    if( is_op_idx ) {
+        args.operations.add_op(JnzOp(args.ant_interactor, std::stol(address.c_str()), args.operations));
+    } else {
+        args.operations.add_op(JnzOp(args.ant_interactor, address, args.operations));
+    }
+
+    TokenParser::terminate(args.code_stream, args.status, "JNZ TAKES ONLY ONE ARGUMENT");
 }

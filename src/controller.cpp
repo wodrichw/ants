@@ -8,10 +8,16 @@ Worker_Controller::Worker_Controller(
     parser(
         commands_assember,
         {
-            Parser::Command::MOVE,
+            Parser::Command::ADD,
+            Parser::Command::DEC,
+            Parser::Command::INC,
             Parser::Command::JMP,
+            Parser::Command::JNZ,
             Parser::Command::LOAD,
+            Parser::Command::MOVE,
             Parser::Command::NOP,
+            Parser::Command::SUB,
+            Parser::Command::COPY
         },
         ant_interactor,
         operations,

@@ -102,6 +102,12 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy)
         w->ant_interactor.write_register = [new_ant](long idx, cpu_word_size value) {
             new_ant->cpu.registers[idx] = value;
         };
+        w->ant_interactor.read_zero_flag = [new_ant]()-> bool const& {
+            return new_ant->cpu.zero_flag;
+        };
+        w->ant_interactor.write_zero_flag = [new_ant](bool flag) {
+            new_ant->cpu.zero_flag = flag;
+        };
 
         ants.push_back(new_ant);
         clockControllers.push_back(w);
