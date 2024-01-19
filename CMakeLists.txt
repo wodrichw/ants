@@ -49,8 +49,21 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 if(MSVC)
     add_compile_options("/W4")
 else()
-    add_compile_options("-g" "-Wall" "-Wextra")
+    add_compile_options("-Wall" "-Wextra")
 endif()
+
+
+# Check if the user wants to enable optimization flags  
+option(OPT "Enable optimization flags" OFF)  
+if(OPT)  
+    add_compile_options("-O3")
+endif()  
+  
+# Check if the user wants to enable debug flags  
+option(DBG "Enable debug flags" OFF)  
+if(DBG)  
+    add_compile_options("-g")
+endif()  
 
 # add_executable(samples_c samples_c.c)
 # target_link_libraries(samples_c ${LINK_TCOD} ${SDL2MAIN})
@@ -84,24 +97,10 @@ add_executable(ants
     src/render.hpp
     src/render.cpp
 )
-set_property(TARGET ants PROPERTY CXX_STANDARD 17)
+set_target_properties(ants PROPERTIES CXX_STANDARD 17)
 
 target_link_libraries(ants ${LINK_TCOD} ${SDL2MAIN})
 if (CONAN_FILE)
     add_dependencies(ants copy_font)
 endif()
-
-# add_executable(rad_out
-# rad/main.cpp
-# rad/bsp_helper.cpp
-# rad/bsp_helper.hpp
-# rad/rad_shader.cpp
-# rad/rad_shader.hpp
-# rad/rad_shader_photon.cpp
-# rad/rad_shader_standard.cpp
-# )
-# target_link_libraries(rad_out ${LINK_TCOD} ${SDL2MAIN})
-# if (CONAN_FILE)
-# add_dependencies(rad copy_font)
-# endif()
 
