@@ -54,6 +54,41 @@ struct MoveOp {
     long dx, dy;
 };
 
+struct CopyOp {
+    CopyOp(AntInteractor& interactor, long reg_src_idx, long reg_dst_idx);
+    void operator()();
+    AntInteractor& interactor;
+    long reg_src_idx, reg_dst_idx;
+};
+
+struct AddOp {
+    AddOp(AntInteractor& interactor, long reg_src_idx, long reg_dst_idx);
+    void operator()();
+    AntInteractor& interactor;
+    long reg_src_idx, reg_dst_idx;
+};
+
+struct SubOp {
+    SubOp(AntInteractor& interactor, long reg_src_idx, long reg_dst_idx);
+    void operator()();
+    AntInteractor& interactor;
+    long reg_src_idx, reg_dst_idx;
+};
+
+struct IncOp {
+    IncOp(AntInteractor& interactor, long register_idx);
+    void operator()();
+    AntInteractor& interactor;
+    long register_idx;
+};
+
+struct DecOp {
+    DecOp(AntInteractor& interactor, long register_idx);
+    void operator()();
+    AntInteractor& interactor;
+    long register_idx;
+};
+
 struct JmpOp {
     union Address {
         Address(std::string* str_lbl): str_lbl(str_lbl) {}
@@ -67,4 +102,11 @@ struct JmpOp {
     JmpOp(std::string label, Operations& operations);
     JmpOp(size_t op_idx, Operations& operations);
     void operator()();
+};
+
+struct JnzOp: public JmpOp {
+    JnzOp(AntInteractor& interactor, std::string label, Operations& operations);
+    JnzOp(AntInteractor& interactor, size_t op_idx, Operations& operations);
+    void operator()();
+    AntInteractor& interactor;
 };
