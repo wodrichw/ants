@@ -1,7 +1,7 @@
 #pragma once
 
-#include <libtcod/console_types.hpp>
 #include <libtcod.hpp>
+#include <libtcod/console_types.hpp>
 #include <vector>
 
 class Ant;
@@ -12,31 +12,34 @@ static const int ROOM_MIN_SIZE = 6;
 static const int MAX_ROOM_MONSTERS = 3;
 
 struct Tile {
-    bool explored; // has the player already seen this tile ?
+    bool explored;  // has the player already seen this tile ?
     bool inFov;
-    std::optional<int> bldgId; // set if to the ID of the building occupying the tile, unset if no building
+    std::optional<int> bldgId;  // set if to the ID of the building occupying
+                                // the tile, unset if no building
     Tile() : explored(false), inFov(false), bldgId() {}
 };
 
 class Map {
-public :
-    int width,height;
+   public:
+    int width, height;
 
-    Map(int width, int height, std::vector<Ant*>& ants, std::vector<Building*>&buildings);
+    Map(int width, int height, std::vector<Ant*>& ants,
+        std::vector<Building*>& buildings);
     ~Map();
     void build();
     Tile& getTile(long x, long y) const;
     bool isWall(long x, long y) const;
     bool canWalk(long x, long y) const;
-    bool isInFov(long x, long y) const; // Fov = field of view
+    bool isInFov(long x, long y) const;  // Fov = field of view
     bool isExplored(long x, long y) const;
 
     void updateFov();
-private :
+
+   private:
     std::vector<Ant*>& ants;
     std::vector<Building*>& buildings;
-    Tile *tiles;
-    TCODMap *map;
+    Tile* tiles;
+    TCODMap* map;
     friend class BspListener;
 
     void dig(long x1, long y1, long x2, long y2);

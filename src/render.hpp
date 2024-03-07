@@ -1,10 +1,11 @@
 #include <libtcod.hpp>
+
 #include "ant.hpp"
 #include "building.hpp"
 #include "text_editor_handler.hpp"
 
 class tcodRenderer {
-    public:
+   public:
     tcodRenderer();
     void renderMap(Map& map);
     void renderAnt(Map& map, Ant& a);
@@ -12,9 +13,10 @@ class tcodRenderer {
     void renderTextEditor(TextEditorHandler const& editor, size_t ant_count);
     void renderHelpBoxes();
     void present();
-    void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x, long& tile_y);
+    void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
+                                   long& tile_y);
 
-private:
+   private:
     void clearCh(long x, long y);
 
     tcod::Context context;
