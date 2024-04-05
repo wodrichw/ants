@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+
 #include "globals.hpp"
 
 struct AntInteractor {
