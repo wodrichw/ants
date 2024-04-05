@@ -9,7 +9,6 @@
 
 #include "ant.hpp"
 #include "building.hpp"
-#include "globals.hpp"
 
 class BspListener : public ITCODBspCallback {
    private:
@@ -74,7 +73,7 @@ void Map::setWall(long x, long y) { map->setProperties(x, y, false, false); }
 bool Map::isWall(long x, long y) const { return !map->isWalkable(x, y); }
 
 bool Map::canWalk(long x, long y) const {
-    if(x < 0 || x >= globals::COLS || y < 0 || y >= globals::ROWS) return false;
+    if(x < 0 || x >= width || y < 0 || y >= height) return false;
     if(isWall(x, y)) {
         return false;
     }

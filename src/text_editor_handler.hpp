@@ -14,11 +14,6 @@ class TextEditorHandler {
     int cursorX = 0, cursorY = 0;
     void handleTextEditorAction(SDL_Keycode key_sym);
 
-    static const int textBoxHeight = 17;
-    static const int textBoxWidth = 25;
-    static const int regBoxWidth = 8;
-    static const int regBoxHeight = 1;
-
    private:
     void moveToPrevNonWhiteSpace();
     void moveToEndLine();

@@ -38,6 +38,7 @@ class Engine {
     };
 
     std::vector<Ant*> ants;
+    BoxManager box_manager;
     Map* map;
     Player* player;
     std::vector<Building*> buildings;

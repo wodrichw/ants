@@ -23,7 +23,9 @@
 
 Engine::Engine()
     : ants(),
-      map(new Map(globals::COLS, globals::ROWS, ants, buildings)),
+      box_manager(globals::COLS, globals::ROWS),
+      map(new Map(box_manager.map_box->get_width(),
+                  box_manager.map_box->get_height(), ants, buildings)),
       player(new Player(map, 40, 25, 10, '@', color::white)),
       buildings(),
       clockControllers(),
@@ -179,23 +181,26 @@ void Engine::update() {
 }
 
 void Engine::render() {
+    LayoutBox& map_box = *box_manager.map_box;
+
     // draw the map
-    renderer.renderMap(*map);
+    renderer.renderMap(map_box, *map);
 
     // draw the ants
     for(auto ant : ants) {
-        renderer.renderAnt(*map, *ant);
+        renderer.renderAnt(map_box, *map, *ant);
     }
 
     // draw the buildings
     for(auto building : buildings) {
-        renderer.renderBuilding(*building);
+        renderer.renderBuilding(map_box, *building);
     }
 
     if(gameStatus == TEXT_EDITOR)
-        renderer.renderTextEditor(editor, ants.size());
+        renderer.renderTextEditor(*box_manager.text_editor_content_box, editor,
+                                  ants.size());
 
-    renderer.renderHelpBoxes();
+    // renderer.renderHelpBoxes();
 
     renderer.present();
 }
