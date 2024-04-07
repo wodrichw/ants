@@ -22,8 +22,8 @@ public:
 class ProjectArguments {
 private:
     ArgumentParser parser;
-    const std::string default_map_file_path;
-public:
-    ProjectArguments(int argc, char* argv[]);
     void help() const;
+public:
+    const std::string default_map_file_path;
+    ProjectArguments(int argc, char* argv[]);
 };

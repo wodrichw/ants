@@ -1,15 +1,20 @@
 #include "arg_parse.hpp"
 
+#include <iostream>
+
 // ArgumentParser
 // ============================================================================
 ArgumentParser::ArgumentParser(int argc, char* argv[]) {
     for(int i = 1; i < argc; i += 2) {
         // Check if the argument is a key
-        if (argv[i][0] != '-' || argv[i][1] != '-') continue;
+        if (argv[i][0] != '-' || argv[i][1] != '-'){
+            std::cerr << "Invalid argument key: " << argv[i] << std::endl;
+            exit(1);
+        }
 
         // Check if the argument does not have a value
         // It doesn't have a value if it is the last argument or the next argument is a key
-        if(i + 1 >= argc || argv[i + 1][0] != '-' || argv[i + 1][1] != '-') {
+        if(i + 1 >= argc || argv[i + 1][0] == '-' || argv[i + 1][1] == '-') {
             arguments[argv[i] + 2] = "1";
             continue;
         }

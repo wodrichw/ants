@@ -4,6 +4,8 @@
 #include <libtcod/console_types.hpp>
 #include <vector>
 
+#include "arg_parse.hpp"
+
 class Ant;
 class Building;
 
@@ -24,7 +26,7 @@ class Map {
     int width, height;
 
     Map(int width, int height, std::vector<Ant*>& ants,
-        std::vector<Building*>& buildings);
+        std::vector<Building*>& buildings, ProjectArguments &config);
     ~Map();
     void build();
     Tile& getTile(long x, long y) const;
@@ -41,10 +43,13 @@ class Map {
     Tile* tiles;
     TCODMap* map;
     friend class BspListener;
+    friend class FileMapBuilder;
 
+    std::function<void(Map&)> build_map;
     void dig(long x1, long y1, long x2, long y2);
     void createRoom(bool first, long x1, long y1, long x2, long y2);
     void setWall(long x, long y);
     void resetFov();
     void updateTileFov();
+    void set_builder(std::function<void(Map&)>& builder);
 };

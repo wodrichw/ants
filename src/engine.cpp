@@ -26,7 +26,7 @@ Engine::Engine(ProjectArguments& config)
       ants(),
       box_manager(globals::COLS, globals::ROWS),
       map(new Map(box_manager.map_box->get_width(),
-                  box_manager.map_box->get_height(), ants, buildings)),
+                  box_manager.map_box->get_height(), ants, buildings, config)),
       player(new Player(map, 40, 25, 10, '@', color::white)),
       buildings(),
       clockControllers(),
