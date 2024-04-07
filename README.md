@@ -19,7 +19,7 @@ sudo apt install libfreetype6-dev libsdl2-ttf-dev libsdl2-ttf-2.0-0 -y
 
 ## Install instructions
 1. Get vcpkg up and running by doing `git submodule init; git submodule update; ./vcpkg/bootstrap-vcpkg.sh ; ./vcpkg/vcpkg install `
-2. Get cmake to generate make file from CMakeLists.txt `cmake . `
+2. Get cmake to generate make file from CMakeLists.txt `[ -d "./build" ] || mkdir build; cmake -DOPT=1 ..`
 3. Build ants executable `make` -- this currently builds ants with debug symbols as specified in CMakeLists.txt file
 
 ## Easy install

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <numeric>
+#include <sstream>
 
 #include "globals.hpp"
 #include "text_editor_handler.hpp"

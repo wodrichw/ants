@@ -4,6 +4,8 @@
 #include "building.hpp"
 #include "text_editor_handler.hpp"
 
+using ulong = unsigned long;
+
 struct LayoutBox {
     enum Orientation { HORIZONTAL, VERTICAL };
 

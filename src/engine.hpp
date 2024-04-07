@@ -12,6 +12,8 @@
 #include "render.hpp"
 #include "text_editor_handler.hpp"
 
+using ulong = unsigned long;
+
 namespace ant {
     class Ant;
     class Player;
