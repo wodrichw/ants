@@ -24,6 +24,7 @@ private:
     void help() const;
     void setup_logging() const;
 public:
-    const std::string default_map_file_path;
+    std::string const default_map_file_path;
+    bool const is_render;
     ProjectArguments(int argc, char* argv[]);
 };

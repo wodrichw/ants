@@ -208,7 +208,7 @@ Map::~Map() {
 void Map::build() { build_map(*this); }
 
 Tile &Map::getTile(long x, long y) const {
-    SPDLOG_TRACE("Getting tile at ({}, {})", x, y);
+    // SPDLOG_TRACE("Getting tile at ({}, {})", x, y);
     return tiles[x + y * width];
 }
 
@@ -218,7 +218,7 @@ void Map::setWall(long x, long y) {
 }
 
 bool Map::isWall(long x, long y) const {
-    SPDLOG_TRACE("Checking if wall at ({}, {}): {}", x, y, !map->isWalkable(x, y));
+    // SPDLOG_TRACE("Checking if wall at ({}, {}): {}", x, y, !map->isWalkable(x, y));
     return !map->isWalkable(x, y);
 }
 
@@ -232,7 +232,7 @@ bool Map::canWalk(long x, long y) const {
         SPDLOG_DEBUG("Cannot walk - wall");
         return false;
     }
-    SPDLOG_TRACE("Checking if actor will collide with another ant at ({}, {})");
+    SPDLOG_TRACE("Checking if ant will collide with another ant at ({}, {})");
     for(auto ant : ants) {
         if(ant->x == x && ant->y == y) {
             SPDLOG_DEBUG("Cannot walk - ant collision");
@@ -247,27 +247,27 @@ bool Map::canWalk(long x, long y) const {
 bool Map::isInFov(long x, long y) const {
     Tile &tile = getTile(x, y);
     if(tile.inFov) {
-        SPDLOG_TRACE("Tile at ({}, {}) is in FOV - setting to explored", x, y);
+        // SPDLOG_TRACE("Tile at ({}, {}) is in FOV - setting to explored", x, y);
         tile.explored = true;
         return true;
     }
-    SPDLOG_TRACE("Tile at ({}, {}) is not in FOV", x, y);
+    // SPDLOG_TRACE("Tile at ({}, {}) is not in FOV", x, y);
     return false;
 }
 
 bool Map::isExplored(long x, long y) const {
-    SPDLOG_TRACE("Checking if tile at ({}, {}) is explored", x, y); 
+    // SPDLOG_TRACE("Checking if tile at ({}, {}) is explored", x, y); 
     return getTile(x, y).explored;
 }
 
 void Map::resetFov() {
-    SPDLOG_DEBUG("Resetting FOV on map");
+    SPDLOG_TRACE("Resetting FOV on map");
     for(long x = 0; x < width; x++) {
         for(long y = 0; y < height; y++) {
             getTile(x, y).inFov = false;
         }
     }
-    SPDLOG_DEBUG("Resetting FOV on ants");
+    SPDLOG_TRACE("Resetting FOV on ants");
     for(auto ant : ants) {
         ant->resetFov();
     }

@@ -47,7 +47,7 @@ class Engine {
     Player* player;
     std::vector<Building*> buildings;
     std::vector<ClockController*> clockControllers;
-    tcodRenderer renderer;
+    Renderer* renderer;
     TextEditorHandler editor;
     ButtonController* buttonController;
     ParserCommandsAssembler assembler;

@@ -16,6 +16,7 @@ ArgumentParser::ArgumentParser(int argc, char* argv[]) {
         // It doesn't have a value if it is the last argument or the next argument is a key
         if(i + 1 >= argc || argv[i + 1][0] == '-' || argv[i + 1][1] == '-') {
             arguments[argv[i] + 2] = "1";
+            --i; // decrement i so that the next iteration will not skip an argument
             continue;
         }
 
@@ -60,7 +61,8 @@ bool ArgumentParser::getBool(const std::string& key, bool default_value) const {
 // ============================================================================
 
 ProjectArguments::ProjectArguments(int argc, char* argv[]): parser(argc, argv),
-    default_map_file_path(parser.getString("map_path")) {
+    default_map_file_path(parser.getString("map_path")),
+    is_render(!parser.getBool("no_render", false)) {
 
     if (parser.hasKey("help")) {
         help();

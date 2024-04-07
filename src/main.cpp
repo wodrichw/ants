@@ -14,6 +14,9 @@ int main(int argc, char* argv[]) {
     ProjectArguments config(argc, argv);
     SPDLOG_DEBUG("Configurations loaded");
 
+    SPDLOG_DEBUG("Project configs: render enabled: {}", config.is_render ? "YES" : "NO");
+    SPDLOG_DEBUG("Project configs: default map file path: {}", config.default_map_file_path);
+
     SPDLOG_DEBUG("Defined globals: COLS: {}, ROWS: {}, NUM_BUTTON_LAYERS: {}",
                  globals::COLS, globals::ROWS, globals::NUM_BUTTON_LAYERS);
     SPDLOG_DEBUG("Defined globals: TEXTBOXHEIGHT: {}, TEXTBOXWIDTH: {}, REGBOXWIDTH: {}, REGBOXHEIGHT: {}",

@@ -29,7 +29,7 @@ void TextEditorHandler::moveToEndLine() {
 }
 
 void TextEditorHandler::handleTextEditorAction(SDL_Keycode key_sym) {
-    SPDLOG_DEBUG("handleTextEditorAction - key_sym: {}", key_sym);
+    SPDLOG_DEBUG("Handling text editor key: {}", (char)key_sym);
     bool key_is_printable = cursorX < (globals::TEXTBOXWIDTH - 1) &&
                             ((key_sym >= SDLK_a && key_sym <= SDLK_z) ||
                              (key_sym >= SDLK_0 && key_sym <= SDLK_9) ||

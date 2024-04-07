@@ -12,16 +12,16 @@ struct Box {
     std::vector<std::string> &asciiGrid;
     Box(std::vector<std::string> &asciiGrid, long x, long y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {
-            SPDLOG_TRACE("Box created at ({}, {}) with dimensions {}x{}", x, y, w, h);
+            // SPDLOG_TRACE("Box created at ({}, {}) with dimensions {}x{}", x, y, w, h);
         }
 
     void populateChar(long x_idx, long y_idx, char ch) {
         asciiGrid[y_idx + y][x + x_idx] = ch;
-        SPDLOG_TRACE("Populated char {} at ({}, {})", ch, x_idx, y_idx);
+        // SPDLOG_TRACE("Populated char {} at ({}, {})", ch, x_idx, y_idx);
     }
 
     void checkInputText(const std::vector<std::string> &text) {
-        SPDLOG_TRACE("Checking input text");
+        // SPDLOG_TRACE("Checking input text");
         assert(text.size() == h - 2);
         bool checkStrLengths = std::all_of(
             text.begin(), text.end(),
@@ -30,11 +30,11 @@ struct Box {
     }
 
     void populate(const std::vector<std::string> &text) {
-        SPDLOG_DEBUG("Populating box with {} lines", text.size());
+        // SPDLOG_TRACE("Populating box with {} lines", text.size());
         checkInputText(text);
 
         // render corners
-        SPDLOG_DEBUG("Rendering corners");
+        // SPDLOG_DEBUG("Rendering corners");
         populateChar(0, 0, '+');
         populateChar(0, h - 1, '+');
         populateChar(w - 1, 0, '+');
@@ -71,7 +71,7 @@ tcodRenderer::tcodRenderer() {
 }
 
 void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
-    SPDLOG_TRACE("Rendering map");
+    // SPDLOG_TRACE("Rendering map");
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA darkGround = color::dark_grey;
     TCOD_ColorRGBA lightWall = color::indian_red;
@@ -91,11 +91,11 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
             }
         }
     }
-    SPDLOG_TRACE("Map rendered");
+    // SPDLOG_TRACE("Map rendered");
 }
 
 void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, Ant &a) {
-    SPDLOG_TRACE("Rendering ant at ({}, {})", a.x, a.y);
+    // SPDLOG_TRACE("Rendering ant at ({}, {})", a.x, a.y);
     PositionData &last_pos = a.last_rendered_pos;
     if(last_pos.requires_update) {
         SPDLOG_TRACE("Clearing last position for ant at ({}, {})", last_pos.x, last_pos.y);
@@ -104,31 +104,31 @@ void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, Ant &a) {
     }
 
     if(map.isInFov(a.x, a.y)) {
-        SPDLOG_TRACE("Rendering ant in FOV at ({}, {})", a.x, a.y);
+        // SPDLOG_TRACE("Rendering ant in FOV at ({}, {})", a.x, a.y);
         auto &tile = get_tile(box, a.x, a.y);
         tile.ch = a.ch;
         tile.fg = a.col;
         last_pos.x = a.x;
         last_pos.y = a.y;
     }
-    SPDLOG_TRACE("Ant rendered");
+    // SPDLOG_TRACE("Ant rendered");
 }
 
 void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b) {
-    SPDLOG_TRACE("Rendering building at ({}, {})", b.x, b.y);
+    // SPDLOG_TRACE("Rendering building at ({}, {})", b.x, b.y);
     for(long xi = b.x; xi < b.x + b.w; ++xi) {
         for(long yi = b.y; yi < b.y + b.h; ++yi) {
             auto &tile = get_tile(box, xi, yi);
             tile.bg = b.color;
         }
     }
-    SPDLOG_TRACE("Building rendered");
+    // SPDLOG_TRACE("Building rendered");
 }
 
 void tcodRenderer::renderTextEditor(LayoutBox const &box,
                                     TextEditorHandler const &editor,
                                     size_t ant_count) {
-    SPDLOG_TRACE("Rendering text editor");
+    // SPDLOG_TRACE("Rendering text editor");
     std::vector<std::string> asciiGrid(globals::TEXTBOXHEIGHT + 2);
     for(int i = 0; i < globals::TEXTBOXHEIGHT + 2; ++i) {
         asciiGrid[i] =
@@ -168,18 +168,18 @@ void tcodRenderer::renderTextEditor(LayoutBox const &box,
         root_console,
         get_rect(box, editor.cursorX + 1, editor.cursorY + 1, 1, 1), " ",
         color::white, color::light_green, TCOD_LEFT, TCOD_BKGND_SET);
-    SPDLOG_TRACE("Text editor rendered");
+    // SPDLOG_TRACE("Text editor rendered");
 }
 
 // TODO: display potential key presses that could be helpful.
 // For instance, when standing in a nursery, display keys to produce new
 // workers. This could be replaced with something else in the future.
-void tcodRenderer::renderHelpBoxes(LayoutBox const &box) {}
+void tcodRenderer::renderHelpBoxes(LayoutBox const&) {}
 
 void tcodRenderer::present() {
-    SPDLOG_TRACE("Presenting tcod context");
+    // SPDLOG_TRACE("Presenting tcod context");
     context.present(root_console);
-    SPDLOG_TRACE("Presented tcod context");
+    // SPDLOG_TRACE("Presented tcod context");
 }
 
 void tcodRenderer::pixel_to_tile_coordinates(int pixel_x, int pixel_y,
@@ -191,14 +191,14 @@ void tcodRenderer::pixel_to_tile_coordinates(int pixel_x, int pixel_y,
 }
 
 TCOD_ConsoleTile &tcodRenderer::clearCh(LayoutBox const &box, long x, long y) {
-    SPDLOG_TRACE("Clearing tile at ({}, {})", x, y);
+    // SPDLOG_TRACE("Clearing tile at ({}, {})", x, y);
     auto &tile = get_tile(box, x, y);
     tile.ch = ' ';
     return tile;
 }
 
 TCOD_ConsoleTile &tcodRenderer::get_tile(LayoutBox const &box, long x, long y) {
-    SPDLOG_TRACE("Getting tile at ({}, {})", x, y);
+    // SPDLOG_TRACE("Getting tile at ({}, {})", x, y);
     long abs_x = 0, abs_y = 0;
     box.get_abs_pos(x, y, abs_x, abs_y);
     return root_console.at(abs_x, abs_y);
@@ -206,7 +206,7 @@ TCOD_ConsoleTile &tcodRenderer::get_tile(LayoutBox const &box, long x, long y) {
 
 const std::array<int, 4> tcodRenderer::get_rect(LayoutBox const &box, long x,
                                                 long y, int w, int h) {
-    SPDLOG_TRACE("Getting rect at ({}, {}) with dimensions {}x{}", x, y, w, h);
+    // SPDLOG_TRACE("Getting rect at ({}, {}) with dimensions {}x{}", x, y, w, h);
     long abs_x = 0, abs_y = 0;
     box.get_abs_pos(x, y, abs_x, abs_y);
     return {(int)abs_x, (int)abs_y, w, h};

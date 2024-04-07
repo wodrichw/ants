@@ -30,12 +30,12 @@ Engine::Engine(ProjectArguments& config)
       player(new Player(map, 40, 25, 10, '@', color::white)),
       buildings(),
       clockControllers(),
-      renderer(),
+      renderer(config.is_render ? static_cast<Renderer*>(new tcodRenderer()) : static_cast<Renderer*>(new NoneRenderer())),
       editor(map),
       buttonController(new ButtonController()),
       clock_timeout_1000ms(SDL_GetTicks64()) {
 
-    SPDLOG_TRACE("Setting game status to STARTUP");
+    SPDLOG_DEBUG("Setting game status to STARTUP");
     gameStatus = STARTUP;
 
     SPDLOG_TRACE("Adding player to the list of ants");
@@ -67,13 +67,12 @@ void Engine::handleMouseClick(SDL_MouseButtonEvent event) {
 
     SPDLOG_INFO("Left mouse click at ({}, {})", event.x, event.y);
     long x = 0, y = 0;
-    renderer.pixel_to_tile_coordinates(event.x, event.y, x, y);
+    renderer->pixel_to_tile_coordinates(event.x, event.y, x, y);
     buttonController->handleClick(x, y);
     SPDLOG_TRACE("Mouse click handled");
 }
 
 void Engine::handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy) {
-    SPDLOG_TRACE("Handling key press: {}", key_sym);
     if(key_sym == SDLK_SLASH && gameStatus == TEXT_EDITOR) {
         SPDLOG_INFO("Detected '/' key press, exiting text editor");
         gameStatus = IDLE;
@@ -175,7 +174,7 @@ void Engine::handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy) {
 }
 
 void Engine::update() {
-    SPDLOG_TRACE("Updating engine");
+    // SPDLOG_TRACE("Updating engine");
     if(gameStatus == STARTUP) {
         SPDLOG_TRACE("Detected game status STARTUP");
         map->updateFov();
@@ -188,7 +187,7 @@ void Engine::update() {
 
     SDL_Event event;
     long dx = 0, dy = 0;
-    SPDLOG_TRACE("Polling for events");
+    // SPDLOG_TRACE("Polling for events");
     while(SDL_PollEvent(&event)) {
         switch(event.type) {
             case SDL_QUIT:
@@ -201,7 +200,7 @@ void Engine::update() {
 
             case SDL_KEYDOWN:
                 // fix keypress syms to account for shift key
-                SPDLOG_TRACE("Detected SDL_KEYDOWN event");
+                SPDLOG_TRACE("Handling key press event");
                 if(event.key.keysym.mod & (KMOD_RSHIFT | KMOD_LSHIFT)) {
                     if(event.key.keysym.sym == SDLK_3)
                         event.key.keysym.sym = SDLK_HASH;
@@ -213,51 +212,51 @@ void Engine::update() {
         }
     }
 
-    SPDLOG_TRACE("Checking for clock pulse");
+    // SPDLOG_TRACE("Checking for clock pulse");
     if(clock_timeout_1000ms < SDL_GetTicks64()) {
-        SPDLOG_TRACE("Detected clock pulse");
+        // SPDLOG_TRACE("Detected clock pulse");
         for(ClockController* c : clockControllers) {
             c->handleClockPulse();
         }
         clock_timeout_1000ms += 1000;
     }
 
-    SPDLOG_TRACE("Checking for player movement");
+    // SPDLOG_TRACE("Checking for player movement");
     if((dx != 0 || dy != 0) && map->canWalk(player->x + dx, player->y + dy)) {
         SPDLOG_DEBUG("Player can move to ({}, {})", player->x + dx,
                      player->y + dy);
         player->move(dx, dy);
     }
-    SPDLOG_TRACE("Engine update complete");
+    // SPDLOG_TRACE("Engine update complete");
 }
 
 void Engine::render() {
-    SPDLOG_TRACE("Rendering engine");
+    // SPDLOG_TRACE("Rendering engine");
     LayoutBox& map_box = *box_manager.map_box;
 
     // draw the map
-    renderer.renderMap(map_box, *map);
+    renderer->renderMap(map_box, *map);
 
     // draw the ants
-    SPDLOG_TRACE("Rendering {} ants", ants.size());
+    // SPDLOG_TRACE("Rendering {} ants", ants.size());
     for(auto ant : ants) {
-        renderer.renderAnt(map_box, *map, *ant);
+        renderer->renderAnt(map_box, *map, *ant);
     }
 
     // draw the buildings
-    SPDLOG_TRACE("Rendering {} buildings", buildings.size());
+    // SPDLOG_TRACE("Rendering {} buildings", buildings.size());
     for(auto building : buildings) {
-        renderer.renderBuilding(map_box, *building);
+        renderer->renderBuilding(map_box, *building);
     }
 
     if(gameStatus == TEXT_EDITOR){
-        SPDLOG_TRACE("Rendering text editor");
-        renderer.renderTextEditor(*box_manager.text_editor_content_box, editor,
+        // SPDLOG_TRACE("Rendering text editor");
+        renderer->renderTextEditor(*box_manager.text_editor_content_box, editor,
                                   ants.size());
     }
 
-    // renderer.renderHelpBoxes();
+    // renderer->renderHelpBoxes();
 
-    renderer.present();
-    SPDLOG_TRACE("Render complete");
+    renderer->present();
+    // SPDLOG_TRACE("Render complete");
 }

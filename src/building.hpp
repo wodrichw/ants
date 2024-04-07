@@ -13,7 +13,7 @@ class Building {
     Building(long x, long y, int w, int h, int id, tcod::ColorRGB color,
              Map& map)
         : x(x), y(y), w(w), h(h), id(id), color(color) {
-        SPDLOG_DEBUG("Building created at ({}, {})", x, y);
+        SPDLOG_TRACE("Building created at ({}, {})", x, y);
         SPDLOG_TRACE("Building width: {}, height: {}", w, h);
         // Mark building location in map
         for(long xi = x; xi < x + w; ++xi) {

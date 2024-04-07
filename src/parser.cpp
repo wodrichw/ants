@@ -223,7 +223,7 @@ ParserCommandsAssembler::ParserCommandsAssembler() : _map() {
 }
 
 void ParserCommandsAssembler::insert(Parser::CommandConfig *config) {
-    SPDLOG_TRACE("Inserting command config for command: {}", config->command_string);
+    // SPDLOG_TRACE("Inserting command config for command: {}", config->command_string);
     _map[config->command_enum] = config;
 }
 

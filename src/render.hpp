@@ -42,7 +42,32 @@ struct BoxManager {
     LayoutBox text_editor_root;
 };
 
-class tcodRenderer {
+class Renderer {
+   public:
+    virtual void renderMap(LayoutBox const& box, Map& map) = 0;
+    virtual void renderAnt(LayoutBox const& box, Map& map, Ant& a) = 0;
+    virtual void renderBuilding(LayoutBox const& box, Building& b) = 0;
+    virtual void renderTextEditor(LayoutBox const& box, TextEditorHandler const& editor,
+                          size_t ant_count) = 0;
+    virtual void renderHelpBoxes(LayoutBox const& box) = 0;
+    virtual void present() = 0;
+    virtual void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
+                                   long& tile_y) = 0;
+};
+
+class NoneRenderer: public Renderer {
+   public:
+    NoneRenderer() { SPDLOG_INFO("NoneRenderer initialized"); }
+    void renderMap(LayoutBox const&, Map&) {};
+    void renderAnt(LayoutBox const&, Map&, Ant&) {};
+    void renderBuilding(LayoutBox const&, Building&) {};
+    void renderTextEditor(LayoutBox const&, TextEditorHandler const&, size_t) {};
+    void renderHelpBoxes(LayoutBox const&) {};
+    void present() {};
+    void pixel_to_tile_coordinates(int, int, long& tile_x, long& tile_y) { tile_x = 0; tile_y = 0; };
+};
+
+class tcodRenderer: public Renderer {
    public:
     tcodRenderer();
     void renderMap(LayoutBox const& box, Map& map);
@@ -50,7 +75,7 @@ class tcodRenderer {
     void renderBuilding(LayoutBox const& box, Building& b);
     void renderTextEditor(LayoutBox const& box, TextEditorHandler const& editor,
                           size_t ant_count);
-    void renderHelpBoxes(LayoutBox const& box);
+    void renderHelpBoxes(LayoutBox const&);
     void present();
     void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
                                    long& tile_y);
@@ -63,7 +88,4 @@ class tcodRenderer {
 
     tcod::Context context;
     tcod::Console root_console;
-
-    int fovRadius = 10;
-    bool computeFov = true;
 };
