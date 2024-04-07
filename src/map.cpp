@@ -37,7 +37,7 @@ class BspListener : public ITCODBspCallback {
             h = rng->getInt(ROOM_MIN_SIZE, node->h - 2);
             x = rng->getInt(node->x + 1, node->x + node->w - w - 1);
             y = rng->getInt(node->y + 1, node->y + node->h - h - 1);
-            SPDLOG_DEBUG("Creating room {} at ({}, {}) to ({}, {})", roomNum, x, y, x + w - 1, y + h - 1);
+            SPDLOG_TRACE("Creating room {} at ({}, {}) to ({}, {})", roomNum, x, y, x + w - 1, y + h - 1);
             map.createRoom(roomNum == 0, x, y, x + w - 1, y + h - 1);
             if(roomNum != 0) {
                 SPDLOG_DEBUG("Digging corridor from ({}, {}) to ({}, {})", lastx, lasty, x + w / 2, lasty);
@@ -195,7 +195,7 @@ Map::Map(int width, int height, std::vector<Ant *> &ants,
         SPDLOG_INFO("Creating map of size {}x{}", width, height);
         if (config.default_map_file_path.empty()) build_map = RandomMapBuilder();
         else build_map = FileMapBuilder(config.default_map_file_path);
-        SPDLOG_DEBUG("Map created");
+        SPDLOG_TRACE("Map created");
       }
 
 Map::~Map() {
@@ -240,7 +240,7 @@ bool Map::canWalk(long x, long y) const {
             return false;
         }
     }
-    SPDLOG_DEBUG("Ant can walk");
+    SPDLOG_TRACE("Ant can walk");
     return true;
 }
 
@@ -275,7 +275,7 @@ void Map::resetFov() {
 }
 
 void Map::updateTileFov() {
-    SPDLOG_DEBUG("Updating FOV on map tiles");
+    SPDLOG_TRACE("Updating FOV on map tiles");
     for(long x = 0; x < width; x++) {
         for(long y = 0; y < height; y++) {
             if(map->isInFov(x, y)) {
@@ -287,10 +287,10 @@ void Map::updateTileFov() {
 }
 
 void Map::updateFov() {
-    SPDLOG_DEBUG("Updating FOV on map");
+    SPDLOG_DEBUG("Updating FOV");
     resetFov();
 
-    SPDLOG_DEBUG("Updating FOV on ants");
+    SPDLOG_TRACE("Updating FOV on ants");
     for(auto ant : ants) {
         map->computeFov(ant->x, ant->y, ant->fovRadius);
         updateTileFov();
@@ -302,7 +302,7 @@ void Map::updateFov() {
  * dig makes a rectangle of map specified by two x,y points as walkable
  */
 void Map::dig(long x1, long y1, long x2, long y2) {
-    SPDLOG_DEBUG("Digging from ({}, {}) to ({}, {})", x1, y1, x2, y2);
+    SPDLOG_TRACE("Digging from ({}, {}) to ({}, {})", x1, y1, x2, y2);
     if(x2 < x1) {
         int tmp = x2;
         x2 = x1;
