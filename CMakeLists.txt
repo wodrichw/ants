@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.13...3.21)
 set (CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 # Set the default toolchain to use a Vcpkg submodule.
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/lib/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 project (ants C CXX)
 
@@ -73,6 +73,36 @@ endif()
 # Suppress MSVC warnings for POSIX C functions such as strdup.  This is only for the C samples.
 # target_compile_definitions(samples_c PRIVATE "$<$<C_COMPILER_ID:MSVC>:_CRT_NONSTDC_NO_DEPRECATE>")
 
+message(STATUS "DBG is set to ${DBG}")
+message(STATUS "LOG is set to ${LOG}")
+
+# spdlog
+if(DBG)
+    if(NOT DEFINED LOG)
+        set(LOG "INFO")
+    endif()
+    if(LOG STREQUAL "TRACE")
+        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+    elseif(LOG STREQUAL "DEBUG")
+        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+    elseif(LOG STREQUAL "INFO")
+        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO)
+    elseif(LOG STREQUAL "WARN")
+        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_WARN)
+    elseif(LOG STREQUAL "ERROR")
+        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR)
+    elseif(LOG STREQUAL "CRITICAL")
+        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_CRITICAL)
+    elseif(LOG STREQUAL "OFF")
+        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF)
+    endif()
+else()
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF)
+endif()
+
+include_directories(${PROJECT_SOURCE_DIR}/lib/spdlog/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/spdlog)
+
 add_executable(ants
     src/main.cpp
     src/ant.cpp
@@ -101,8 +131,7 @@ add_executable(ants
 )
 set_target_properties(ants PROPERTIES CXX_STANDARD 17)
 
-target_link_libraries(ants ${LINK_TCOD} ${SDL2MAIN})
+target_link_libraries(ants ${LINK_TCOD} ${SDL2MAIN} spdlog::spdlog)
 if (CONAN_FILE)
     add_dependencies(ants copy_font)
 endif()
-
