@@ -8,6 +8,7 @@
 #include <libtcod/console.hpp>
 #include <vector>
 
+#include "arg_parse.hpp"
 #include "controller.hpp"
 #include "render.hpp"
 #include "text_editor_handler.hpp"
@@ -39,6 +40,7 @@ class Engine {
         std::optional<ulong> clickX, clickY;  // mouse click events
     };
 
+    ProjectArguments& config;
     std::vector<Ant*> ants;
     BoxManager box_manager;
     Map* map;
@@ -52,7 +54,7 @@ class Engine {
 
     ulong clock_timeout_1000ms;
 
-    Engine();
+    Engine(ProjectArguments& config);
     ~Engine();
     void update();
     void render();

@@ -21,8 +21,9 @@
 #include "globals.hpp"
 #include "map.hpp"
 
-Engine::Engine()
-    : ants(),
+Engine::Engine(ProjectArguments& config)
+    : config(config),
+      ants(),
       box_manager(globals::COLS, globals::ROWS),
       map(new Map(box_manager.map_box->get_width(),
                   box_manager.map_box->get_height(), ants, buildings)),
