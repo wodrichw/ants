@@ -52,18 +52,62 @@ else()
     add_compile_options("-Wall" "-Wextra")
 endif()
 
+# Set OPT/DBG/LOG flags based on the cmake variant
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "Building in Release mode")
+    set(OPT ON)
+    set(DBG OFF)
+    set(LOG OFF)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Building in Debug mode")
+    set(OPT OFF)
+    set(DBG ON)
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    message(STATUS "Building in Release with Debug Info mode")
+    set(OPT ON)
+    set(DBG ON)
+elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    message(STATUS "Building in Minimum Size Release mode")
+    set(OPT ON)
+    set(DBG OFF)
+    set(LOG OFF)
+endif()
 
-# Check if the user wants to enable optimization flags  
-option(OPT "Enable optimization flags" OFF)  
-if(OPT)  
+# Check if the user wants to enable optimization flags
+option(OPT "Enable optimization flags" OFF)
+if(OPT)
+    message(STATUS "Enabling optimization flags")
     add_compile_options("-O3")
-endif()  
-  
-# Check if the user wants to enable debug flags  
-option(DBG "Enable debug flags" OFF)  
-if(DBG)  
+endif()
+
+# Check if the user wants to enable debug flags
+option(DBG "Enable debug flags" OFF)
+if(DBG)
+    message(STATUS "Enabling debug flags")
     add_compile_options("-g")
-endif()  
+endif()
+
+# Set the compile time log level for the project
+option(LOG "Set compile time log level" "INFO")
+message(STATUS "Setting log level to ${LOG}")
+if(LOG STREQUAL "TRACE")
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+elseif(LOG STREQUAL "DEBUG")
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+elseif(LOG STREQUAL "INFO")
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO)
+elseif(LOG STREQUAL "WARN")
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_WARN)
+elseif(LOG STREQUAL "ERROR")
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR)
+elseif(LOG STREQUAL "CRITICAL")
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_CRITICAL)
+else()
+    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF)
+endif()
+
+include_directories(${PROJECT_SOURCE_DIR}/lib/spdlog/include)
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/spdlog)
 
 # add_executable(samples_c samples_c.c)
 # target_link_libraries(samples_c ${LINK_TCOD} ${SDL2MAIN})
@@ -72,36 +116,6 @@ if (CONAN_FILE)
 endif()
 # Suppress MSVC warnings for POSIX C functions such as strdup.  This is only for the C samples.
 # target_compile_definitions(samples_c PRIVATE "$<$<C_COMPILER_ID:MSVC>:_CRT_NONSTDC_NO_DEPRECATE>")
-
-message(STATUS "DBG is set to ${DBG}")
-message(STATUS "LOG is set to ${LOG}")
-
-# spdlog
-if(DBG)
-    if(NOT DEFINED LOG)
-        set(LOG "INFO")
-    endif()
-    if(LOG STREQUAL "TRACE")
-        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
-    elseif(LOG STREQUAL "DEBUG")
-        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
-    elseif(LOG STREQUAL "INFO")
-        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO)
-    elseif(LOG STREQUAL "WARN")
-        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_WARN)
-    elseif(LOG STREQUAL "ERROR")
-        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR)
-    elseif(LOG STREQUAL "CRITICAL")
-        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_CRITICAL)
-    elseif(LOG STREQUAL "OFF")
-        add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF)
-    endif()
-else()
-    add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF)
-endif()
-
-include_directories(${PROJECT_SOURCE_DIR}/lib/spdlog/include)
-add_subdirectory(${CMAKE_SOURCE_DIR}/lib/spdlog)
 
 add_executable(ants
     src/main.cpp
