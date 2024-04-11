@@ -9,3 +9,4 @@ ants
 *.log
 build
 .vscode
+venv
