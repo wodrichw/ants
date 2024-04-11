@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "map.hpp"
+#include "entity/map.hpp"
 
 class TextEditorHandler {
    public:

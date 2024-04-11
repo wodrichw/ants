@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "globals.hpp"
+#include "app/globals.hpp"
 
 struct AntInteractor {
     std::function<void(long dx, long dy)> try_move;

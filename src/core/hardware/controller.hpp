@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "parser.hpp"
+#include "hardware/parser.hpp"
 
 class ClockController {
    public:

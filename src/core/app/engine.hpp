@@ -8,10 +8,11 @@
 #include <libtcod/console.hpp>
 #include <vector>
 
-#include "arg_parse.hpp"
-#include "controller.hpp"
-#include "render.hpp"
-#include "text_editor_handler.hpp"
+#include "app/arg_parse.hpp"
+#include "hardware/controller.hpp"
+
+#include "ui/render.hpp"
+#include "ui/text_editor_handler.hpp"
 
 using ulong = unsigned long;
 

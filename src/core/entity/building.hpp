@@ -3,8 +3,8 @@
 
 #include <libtcod/color.hpp>
 
-#include "colors.hpp"
-#include "map.hpp"
+#include "ui/colors.hpp"
+#include "entity/map.hpp"
 #include "spdlog/spdlog.h"
 
 class Building {

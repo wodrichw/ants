@@ -3,7 +3,7 @@
 #include <libtcod/color.hpp>
 #include <optional>
 
-#include "colors.hpp"
+#include "ui/colors.hpp"
 #include "spdlog/spdlog.h"
 
 Ant::Ant(Map* map, long x, long y, int fovRadius, char ch, tcod::ColorRGB col)

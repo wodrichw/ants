@@ -1,4 +1,4 @@
-#include "facade.hpp"
+#include "app/facade.hpp"
 
 // TODO: pull in the tcod clock to notify when to update worker ants
 // This clock speed shoud be able to be set by an interface rendered

@@ -4,7 +4,7 @@
 #include <optional>
 #include <unordered_set>
 
-#include "globals.hpp"
+#include "app/globals.hpp"
 
 // Button Controller manages all the buttons that are present. The
 // buttons are managed in layers so that if a mouse clicks on an

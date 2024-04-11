@@ -9,9 +9,9 @@
 #include <fstream>
 #include <sstream>
 
-#include "ant.hpp"
-#include "building.hpp"
-#include "arg_parse.hpp"
+#include "entity/ant.hpp"
+#include "entity/building.hpp"
+#include "app/arg_parse.hpp"
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;

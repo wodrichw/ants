@@ -1,5 +1,5 @@
 #include <SDL_timer.h>
-#include "facade.hpp"
+#include "app/facade.hpp"
 
 AntGameFacade::AntGameFacade() : config(0, nullptr), engine(config) {
     initialize();

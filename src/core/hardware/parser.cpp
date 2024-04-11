@@ -1,12 +1,12 @@
-#include "parser.hpp"
+#include "hardware/parser.hpp"
 
 #include <climits>
 #include <cstdlib>
 #include <ios>
 #include <sstream>
 
-#include "ant_interactor.hpp"
-#include "operations.hpp"
+#include "hardware/ant_interactor.hpp"
+#include "hardware/operations.hpp"
 #include "spdlog/spdlog.h"
 
 cpu_word_size TokenParser::integer(std::istringstream &ss) {

@@ -1,3 +1,4 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core)
 pybind11_add_module(ant_core py_wrapper.cpp)
 target_link_libraries(ant_core PRIVATE ants_src ${Python3_LIBRARIES} ${LINK_TCOD} ${SDL2MAIN} spdlog::spdlog)
 

@@ -5,8 +5,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ant_interactor.hpp"
-#include "globals.hpp"
+#include "hardware/ant_interactor.hpp"
+#include "app/globals.hpp"
 
 class Operations {
     std::vector<std::function<void()>> _ops;

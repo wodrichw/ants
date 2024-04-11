@@ -12,13 +12,13 @@
 #include <libtcod/console.hpp>
 #include <libtcod/context.hpp>
 
-#include "ant.hpp"
-#include "building.hpp"
-#include "buttonController.hpp"
-#include "colors.hpp"
-#include "controller.hpp"
-#include "globals.hpp"
-#include "map.hpp"
+#include "entity/ant.hpp"
+#include "entity/building.hpp"
+#include "ui/buttonController.hpp"
+#include "ui/colors.hpp"
+#include "hardware/controller.hpp"
+#include "app/globals.hpp"
+#include "entity/map.hpp"
 #include "spdlog/spdlog.h"
 
 Engine::Engine(ProjectArguments& config)

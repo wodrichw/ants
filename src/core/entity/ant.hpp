@@ -3,10 +3,10 @@
 #include <libtcod/color.hpp>
 #include <optional>
 
-#include "brain.hpp"
-#include "buttonController.hpp"
-#include "map.hpp"
-#include "operations.hpp"
+#include "hardware/brain.hpp"
+#include "ui/buttonController.hpp"
+#include "entity/map.hpp"
+#include "hardware/operations.hpp"
 
 struct PositionData {
     long x = 0, y = 0;

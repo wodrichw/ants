@@ -1,6 +1,6 @@
-#include "buttonController.hpp"
+#include "ui/buttonController.hpp"
 
-#include "globals.hpp"
+#include "app/globals.hpp"
 #include "spdlog/spdlog.h"
 
 ButtonController::ButtonController() : buttons() {

@@ -1,9 +1,9 @@
-#include "operations.hpp"
+#include "hardware/operations.hpp"
 
 #include <string>
 
-#include "ant_interactor.hpp"
-#include "globals.hpp"
+#include "app/globals.hpp"
+#include "hardware/ant_interactor.hpp"
 #include "spdlog/spdlog.h"
 
 Operations::Operations() : _ops(), label_map(), op_idx(), jmp_set() { SPDLOG_DEBUG("Operations created"); }

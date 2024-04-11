@@ -1,4 +1,4 @@
-#include "globals.hpp"
+#include "app/globals.hpp"
 
 struct DualRegisters {
     cpu_word_size registers[2];

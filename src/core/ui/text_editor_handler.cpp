@@ -1,6 +1,6 @@
-#include "text_editor_handler.hpp"
+#include "ui/text_editor_handler.hpp"
 
-#include "globals.hpp"
+#include "app/globals.hpp"
 #include "spdlog/spdlog.h"
 
 TextEditorHandler::TextEditorHandler(Map* map)

@@ -1,6 +1,6 @@
 #include <unordered_set>
 
-#include "controller.hpp"
+#include "hardware/controller.hpp"
 #include "spdlog/spdlog.h"
 
 Worker_Controller::Worker_Controller(ParserCommandsAssembler& commands_assember,

@@ -4,7 +4,7 @@
 #include <libtcod/console_types.hpp>
 #include <vector>
 
-#include "arg_parse.hpp"
+#include "app/arg_parse.hpp"
 
 class Ant;
 class Building;

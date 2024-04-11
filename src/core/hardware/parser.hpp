@@ -5,9 +5,9 @@
 #include <string>
 #include <unordered_set>
 
-#include "ant_interactor.hpp"
-#include "globals.hpp"
-#include "operations.hpp"
+#include "app/globals.hpp"
+#include "hardware/ant_interactor.hpp"
+#include "hardware/operations.hpp"
 
 // Parser helpers
 namespace TokenParser {

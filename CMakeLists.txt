@@ -122,6 +122,7 @@ endif()
 # target_compile_definitions(samples_c PRIVATE "$<$<C_COMPILER_ID:MSVC>:_CRT_NONSTDC_NO_DEPRECATE>")
 
 add_subdirectory(src)
+include_directories(${PROJECT_SOURCE_DIR}/src/core)
 add_executable(ants src/main.cpp)
 set_target_properties(ants PROPERTIES CXX_STANDARD 17)
 target_link_libraries(ants ants_src)

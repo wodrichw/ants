@@ -1,12 +1,13 @@
-#include "render.hpp"
+#include "ui/render.hpp"
 
 #include <cassert>
 #include <numeric>
 #include <sstream>
 
-#include "globals.hpp"
-#include "text_editor_handler.hpp"
+#include "app/globals.hpp"
+#include "ui/text_editor_handler.hpp"
 #include "spdlog/spdlog.h"
+
 struct Box {
     ulong x, y, w, h;
     std::vector<std::string> &asciiGrid;

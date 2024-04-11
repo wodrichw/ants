@@ -1,8 +1,8 @@
 #include <libtcod.hpp>
 
-#include "ant.hpp"
-#include "building.hpp"
-#include "text_editor_handler.hpp"
+#include "entity/ant.hpp"
+#include "entity/building.hpp"
+#include "ui/text_editor_handler.hpp"
 
 using ulong = unsigned long;
 
