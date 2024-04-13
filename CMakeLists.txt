@@ -4,6 +4,7 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 # Set the default toolchain to use a Vcpkg submodule.
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/lib/vcpkg/scripts/buildsystems/vcpkg.cmake")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") 
 
 project (ants C CXX)
 

@@ -3,6 +3,7 @@
 
 #include <SDL_events.h>
 #include <SDL_keycode.h>
+#include <stddef.h>
 
 #include <libtcod.hpp>
 #include <libtcod/console.hpp>
@@ -10,11 +11,8 @@
 
 #include "app/arg_parse.hpp"
 #include "hardware/controller.hpp"
-
 #include "ui/render.hpp"
 #include "ui/text_editor_handler.hpp"
-
-using ulong = unsigned long;
 
 namespace ant {
     class Ant;

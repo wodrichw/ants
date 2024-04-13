@@ -13,10 +13,13 @@ sudo apt install libibus-1.0-dev -y
 
 git submodule init
 git submodule update
+
+./shell_scripts/setup_venv.sh
+source venv/bin/activate
+
 ./lib/vcpkg/bootstrap-vcpkg.sh
 ./lib/vcpkg/vcpkg install
 
-./shell_scripts/setup_venv.sh
 
 [ -d build ] || mkdir build
 (cd build; cmake -DOPT=1 .. && make; )

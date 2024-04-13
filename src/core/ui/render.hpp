@@ -1,10 +1,10 @@
+#include <stddef.h>
+
 #include <libtcod.hpp>
 
 #include "entity/ant.hpp"
 #include "entity/building.hpp"
 #include "ui/text_editor_handler.hpp"
-
-using ulong = unsigned long;
 
 struct LayoutBox {
     enum Orientation { HORIZONTAL, VERTICAL };
@@ -47,27 +47,31 @@ class Renderer {
     virtual void renderMap(LayoutBox const& box, Map& map) = 0;
     virtual void renderAnt(LayoutBox const& box, Map& map, Ant& a) = 0;
     virtual void renderBuilding(LayoutBox const& box, Building& b) = 0;
-    virtual void renderTextEditor(LayoutBox const& box, TextEditorHandler const& editor,
-                          size_t ant_count) = 0;
+    virtual void renderTextEditor(LayoutBox const& box,
+                                  TextEditorHandler const& editor,
+                                  size_t ant_count) = 0;
     virtual void renderHelpBoxes(LayoutBox const& box) = 0;
     virtual void present() = 0;
-    virtual void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
-                                   long& tile_y) = 0;
+    virtual void pixel_to_tile_coordinates(int pixel_x, int pixel_y,
+                                           long& tile_x, long& tile_y) = 0;
 };
 
-class NoneRenderer: public Renderer {
+class NoneRenderer : public Renderer {
    public:
     NoneRenderer() { SPDLOG_INFO("NoneRenderer initialized"); }
-    void renderMap(LayoutBox const&, Map&) {};
-    void renderAnt(LayoutBox const&, Map&, Ant&) {};
-    void renderBuilding(LayoutBox const&, Building&) {};
-    void renderTextEditor(LayoutBox const&, TextEditorHandler const&, size_t) {};
-    void renderHelpBoxes(LayoutBox const&) {};
-    void present() {};
-    void pixel_to_tile_coordinates(int, int, long& tile_x, long& tile_y) { tile_x = 0; tile_y = 0; };
+    void renderMap(LayoutBox const&, Map&){};
+    void renderAnt(LayoutBox const&, Map&, Ant&){};
+    void renderBuilding(LayoutBox const&, Building&){};
+    void renderTextEditor(LayoutBox const&, TextEditorHandler const&, size_t){};
+    void renderHelpBoxes(LayoutBox const&){};
+    void present(){};
+    void pixel_to_tile_coordinates(int, int, long& tile_x, long& tile_y) {
+        tile_x = 0;
+        tile_y = 0;
+    };
 };
 
-class tcodRenderer: public Renderer {
+class tcodRenderer : public Renderer {
    public:
     tcodRenderer();
     void renderMap(LayoutBox const& box, Map& map);
