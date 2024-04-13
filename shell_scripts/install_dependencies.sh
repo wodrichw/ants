@@ -9,6 +9,9 @@ sudo apt install libfreetype6-dev libsdl2-ttf-dev libsdl2-ttf-2.0-0 -y
 sudo apt install libx11-dev libxft-dev libxext-dev -y
 sudo apt install libwayland-dev libxkbcommon-dev libegl1-mesa-dev -y
 sudo apt install libibus-1.0-dev -y
+sudo apt install autoconf -y
+sudo apt install libtool -y
+sudo apt install python3.11-dev -y
 
 
 git submodule init
