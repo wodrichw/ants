@@ -11,6 +11,7 @@ else
     python3 -m venv "$VENV_DIR"
     if [ $? -eq 0 ]; then
         echo "Virtual environment created successfully."
+        $VENV_DIR/bin/pip install -r requirements.txt
     else
         echo "Error creating virtual environment."
         exit 1
