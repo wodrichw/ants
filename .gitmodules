@@ -1,3 +1,10 @@
-[submodule "vcpkg"]
-	path = vcpkg
+[submodule "lib/vcpkg"]
+	path = lib/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "lib/spdlog"]
+	path = lib/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "lib/pybind11"]
+	path = lib/pybind11
+	url = ../../pybind/pybind11
+	branch = stable
