@@ -8,7 +8,7 @@
 #include "spdlog/spdlog.h"
 
 Operations::Operations() : _ops(), label_map(), op_idx() { SPDLOG_DEBUG("Operations created"); }
-void Operations::add_op(std::function<void()> const& op) {
+void Operations::add_op(std::function<bool()> const& op) {
     _ops.push_back(op);
 }
 void Operations::add_label(std::string const& label, size_t idx) {
@@ -37,7 +37,7 @@ void Operations::set_op_idx(size_t idx) {
     SPDLOG_DEBUG("Setting op_idx to {}", idx);
     op_idx = idx;
 }
-const std::function<void()>& Operations::operator[](size_t idx) {
+const std::function<bool()>& Operations::operator[](size_t idx) {
     SPDLOG_TRACE("Getting operation at index {}", idx);
     return _ops[idx];
 }
@@ -45,16 +45,12 @@ size_t Operations::size() { return _ops.size(); }
 
 void Operations::handleClockPulse() {
     SPDLOG_TRACE("Handling clock pulse for operations");
-    if(op_idx >= size()) {
-        SPDLOG_TRACE("No more operations to execute");
-        return;  // don't do anything if there aren't anymore instructions
+    bool op_result = true;
+    for (int i = 0; i < 500 && op_idx < size() && op_result; ++i) {
+        op_result = (*this)[op_idx]();
+        ++op_idx;
+        SPDLOG_TRACE("Incrementing op_idx to {}", op_idx);
     }
-
-    SPDLOG_TRACE("Executing operation at index {}", op_idx);
-    (*this)[op_idx]();  // execute operation
-
-    ++op_idx;
-    SPDLOG_TRACE("Incrementing op_idx to {}", op_idx);
 
     SPDLOG_TRACE("Clock pulse handled for operations");
 }

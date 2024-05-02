@@ -347,7 +347,9 @@ void JumpNotZeroParser::operator()(ParseLine &parse_line) {
     SPDLOG_TRACE("Parsing Jump Not Zero command");
     ParserArgs &args = parse_line.args;
     std::string label = TokenParser::get_label(parse_line.code_stream, parse_line.status);
-    args.operations.add_op(JnzOp(args.operations.op_idx, args.operations.get_label_idx(label), args.registers.zero_flag));
+    size_t label_idx = args.operations.get_label_idx(label);
+    SPDLOG_TRACE("JNZ jumps to op idx: {}", label_idx);
+    args.operations.add_op(JnzOp(args.operations.op_idx, label_idx, args.registers.zero_flag));
 
     TokenParser::terminate(parse_line.code_stream, parse_line.status,
                            "JNZ TAKES ONLY ONE ARGUMENT");

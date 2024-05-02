@@ -88,7 +88,7 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
             }
         }
     }
-    SPDLOG_TRACE("Map rendered");
+    // SPDLOG_TRACE("Map rendered");
 }
 
 void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, MapData &a) {
