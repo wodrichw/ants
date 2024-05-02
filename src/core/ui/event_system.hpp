@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
@@ -109,10 +108,6 @@ private:
         KeyboardEventType type = get_keyboard_type(event.sym);
         keyboard_events.notify(KeyboardEvent(type));
 
-        if (type == UNKNOWN_KEY_EVENT) {
-            return;
-        }
-
         SDL_Keycode key = get_keyboard_key(event);
         char_keyboard_events.notify(CharKeyboardEvent(key));
     }
@@ -153,6 +148,7 @@ private:
             case SDLK_RETURN: return RETURN_KEY_EVENT;
             case SDLK_BACKSPACE: return BACKSPACE_KEY_EVENT;
             case SDLK_SPACE: return SPACE_KEY_EVENT;
+            case SDLK_COLON: return COLON_KEY_EVENT;
             default: return UNKNOWN_KEY_EVENT;
         }
     }
