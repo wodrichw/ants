@@ -1,4 +1,4 @@
-#include "engine.hpp"
+#include "app/engine.hpp"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
@@ -13,114 +13,76 @@
 
 #include "hardware/controller.hpp"
 #include "app/globals.hpp"
-#include "ui/buttonController.hpp"
 #include "ui/ui_handlers.hpp"
 #include "spdlog/spdlog.h"
 
-Engine::Engine(ProjectArguments& config)
-    : config(config),
+Engine::Engine(ProjectArguments& config) : 
         box_manager(globals::COLS, globals::ROWS),
-        clockControllers(),
-        renderer(config.is_render ? static_cast<Renderer*>(new tcodRenderer()) : static_cast<Renderer*>(new NoneRenderer())),
         editor(),
+        renderer(config.is_render ? static_cast<Renderer*>(new tcodRenderer()) : static_cast<Renderer*>(new NoneRenderer())),
+        assembler(),
         entity_manager(box_manager.map_box->get_width(), box_manager.map_box->get_height(), config),
-        eventSystem(),
-        clock_timeout_1000ms(SDL_GetTicks64()) {
+        root_event_system(),
+        primary_mode(*box_manager.map_box, entity_manager, *renderer, editor),
+        editor_mode(*renderer, *box_manager.text_editor_content_box, editor, entity_manager.ants),
+        state(&primary_mode, &editor_mode)
+        {
 
     SPDLOG_DEBUG("Setting game status to STARTUP");
-    gameStatus = STARTUP;
-
     add_listeners();
-
     SPDLOG_DEBUG("Engine initialized");
 }
 
 Engine::~Engine() {
     SPDLOG_INFO("Destructing engine");
-    delete buttonController;
     SPDLOG_TRACE("Engine destructed");
 }
 
 void Engine::add_listeners() {
-
-    // player movement listeners
-    // TODO: the player cant move when the editor is active - pass in a callback to the player to decide if the editor
-    eventSystem.keyboard_events.add(LEFT_KEY_EVENT, new MoveLeftHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(RIGHT_KEY_EVENT, new MoveRightHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(UP_KEY_EVENT, new MoveUpHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(DOWN_KEY_EVENT, new MoveDownHandler(entity_manager.map, entity_manager.player, editor.is_active));
-
-    eventSystem.keyboard_events.add(H_KEY_EVENT, new MoveLeftHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(L_KEY_EVENT, new MoveRightHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(K_KEY_EVENT, new MoveUpHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(J_KEY_EVENT, new MoveDownHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(A_KEY_EVENT, new CreateAntHandler(entity_manager, clockControllers, editor));
-
-    // click listeners
-    eventSystem.mouse_events.add(LEFT_MOUSE_EVENT, new ClickHandler(entity_manager.map, *renderer, editor.is_active));
-
-    // text editor listeners
-    eventSystem.keyboard_events.add(RETURN_KEY_EVENT, new NewLineHandler(editor));
-    eventSystem.keyboard_events.add(BACKSPACE_KEY_EVENT, new BackspaceHandler(editor));
-    eventSystem.keyboard_events.add(LEFT_KEY_EVENT, new MoveCursorLeftHandler(editor));
-    eventSystem.keyboard_events.add(RIGHT_KEY_EVENT, new MoveCursorRightHandler(editor));
-    eventSystem.keyboard_events.add(UP_KEY_EVENT, new MoveCursorUpHandler(editor));
-    eventSystem.keyboard_events.add(DOWN_KEY_EVENT, new MoveCursorDownHandler(editor));
-    eventSystem.keyboard_events.add(SLASH_KEY_EVENT, new TextEditorTriggerHandler(editor));
-
-    // text editor printable char listener
-    eventSystem.char_keyboard_events.add(CHAR_KEY_EVENT, new EditorKeyHandler(editor));
-
+    root_event_system.keyboard_events.add(SLASH_KEY_EVENT, new TextEditorTriggerHandler(state));
 }
 
 void Engine::update() {
     // SPDLOG_TRACE("Updating engine");
 
-    eventSystem.update();
+    SDL_Event event;
+    MouseEvent mouse_event;
+    KeyboardEvent keyboad_event;
+    CharKeyboardEvent char_keyboad_event;
+    
+    while(SDL_PollEvent(&event)) {
+        switch(event.type) {
+            case SDL_QUIT:
+                handle_quit_event();
+                break;
 
-    // SPDLOG_TRACE("Checking for clock pulse");
-    if(clock_timeout_1000ms < SDL_GetTicks64()) {
-        // SPDLOG_TRACE("Detected clock pulse");
-        for(ClockController* c : clockControllers) {
-            c->handleClockPulse();
+            case SDL_MOUSEBUTTONDOWN:
+                get_mouse_event(event.button, mouse_event);
+                root_event_system.mouse_events.notify(mouse_event);
+                state.get_mouse_publisher().notify(mouse_event);
+                break;
+
+            case SDL_KEYDOWN:
+                get_keyboard_event(event.key.keysym, keyboad_event);
+                root_event_system.keyboard_events.notify(keyboad_event);
+                state.get_keyboard_publisher().notify(keyboad_event);
+
+                get_char_keyboard_event(event.key.keysym, char_keyboad_event);
+                root_event_system.char_keyboard_events.notify(char_keyboad_event);
+                state.get_char_keyboard_publisher().notify(char_keyboad_event);
+                break;
         }
-        clock_timeout_1000ms += 1000;
     }
+    state.update();
 
     // SPDLOG_TRACE("Engine update complete");
 }
 
 void Engine::render() {
-    // SPDLOG_TRACE("Rendering engine");
-    LayoutBox& map_box = *box_manager.map_box;
 
-    entity_manager.compute_fov();
-
-    // draw the map
-    renderer->renderMap(map_box, entity_manager.map);
-
-
-    // draw the buildings
-    // SPDLOG_TRACE("Rendering {} buildings", buildings.size());
-    for(auto building : entity_manager.buildings) {
-        renderer->renderBuilding(map_box, *building);
-    }
-
-    // draw the ants
-    // SPDLOG_TRACE("Rendering {} ants", ants.size());
-    for(auto ant : entity_manager.ants) {
-        renderer->renderAnt(map_box, entity_manager.map, ant->get_data());
-    }
-
-    if( editor.is_active ){
-        // SPDLOG_TRACE("Rendering text editor");
-        renderer->renderTextEditor(*box_manager.text_editor_content_box, editor,
-                                  entity_manager.ants.size());
-    }
-
-    // renderer->renderHelpBoxes();
-
+    state.render();
     renderer->present();
+
     // SPDLOG_TRACE("Render complete");
 }
 

@@ -8,24 +8,13 @@
 #include "spdlog/spdlog.h"
 #include "app/globals.hpp"
 #include "ui/subscriber.hpp"
-
-struct TextEditor {
-    std::vector<std::string> lines;
-    int cursorX = 0, cursorY = 0;
-    bool is_active = false;
-
-    TextEditor();
-    void moveToPrevNonWhiteSpace();
-    void moveToEndLine();
-};
-
+#include "app/game_state.hpp"
 
 class NewLineHandler: public Subscriber<KeyboardEvent> {
     TextEditor& editor;
 public:
-    NewLineHandler(TextEditor& editor) : editor(editor) {}
+    NewLineHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (!editor.is_active) return;
         if (editor.cursorY >= (globals::TEXTBOXHEIGHT - 1)) return;
     
         SPDLOG_TRACE("Adding new line at cursorY: {}", editor.cursorY);
@@ -41,10 +30,8 @@ public:
 class BackspaceHandler: public Subscriber<KeyboardEvent> {
     TextEditor& editor;
 public:
-    BackspaceHandler(TextEditor& editor) : editor(editor) {}
+    BackspaceHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (!editor.is_active) return;
-
         SPDLOG_DEBUG("Backspace key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
         if(editor.cursorX > 0) {
             SPDLOG_TRACE("Erasing character at cursorX: {}", editor.cursorX);
@@ -65,10 +52,8 @@ public:
 class MoveCursorLeftHandler: public Subscriber<KeyboardEvent> {
     TextEditor& editor;
 public:
-    MoveCursorLeftHandler(TextEditor& editor) : editor(editor) {}
+    MoveCursorLeftHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (!editor.is_active) return;
-
         SPDLOG_DEBUG("Left key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
         if(editor.cursorX > 0) {
             SPDLOG_TRACE("Moving cursor left");
@@ -84,10 +69,8 @@ public:
 class MoveCursorRightHandler: public Subscriber<KeyboardEvent> {
     TextEditor& editor;
 public:
-    MoveCursorRightHandler(TextEditor& editor) : editor(editor) {}
+    MoveCursorRightHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (!editor.is_active) return;
-
         SPDLOG_DEBUG("Right key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
         if(editor.cursorX < (globals::TEXTBOXWIDTH - 1)) {
             SPDLOG_TRACE("Moving cursor right");
@@ -104,9 +87,8 @@ public:
 class MoveCursorUpHandler: public Subscriber<KeyboardEvent> {
     TextEditor& editor;
 public:
-    MoveCursorUpHandler(TextEditor& editor) : editor(editor) {}
+    MoveCursorUpHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (!editor.is_active) return;
         if (editor.cursorY <= 0) return;
 
         SPDLOG_DEBUG("Up key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
@@ -119,9 +101,8 @@ public:
 class MoveCursorDownHandler: public Subscriber<KeyboardEvent> {
     TextEditor& editor;
 public:
-    MoveCursorDownHandler(TextEditor& editor) : editor(editor) {}
+    MoveCursorDownHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (!editor.is_active) return;
         if (editor.cursorY >= (globals::TEXTBOXHEIGHT - 1)) return;
 
         SPDLOG_DEBUG("Down key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
@@ -133,20 +114,19 @@ public:
 };
 
 class TextEditorTriggerHandler: public Subscriber<KeyboardEvent> {
-    TextEditor& editor;
+    GameState& state;
 public:
-    TextEditorTriggerHandler(TextEditor& editor) : editor(editor) {}
+    TextEditorTriggerHandler(GameState& state): state(state) {}
     void operator()(KeyboardEvent const&) {
-        editor.is_active = !editor.is_active;
+        state.toggle_editor();
     }
 };
 
 class EditorKeyHandler: public Subscriber<CharKeyboardEvent> {
     TextEditor& editor;
 public:
-    EditorKeyHandler(TextEditor& editor) : editor(editor) {}
+    EditorKeyHandler(TextEditor& editor) : editor(editor){}
     void operator()(CharKeyboardEvent const& event) {
-        if (!editor.is_active) return;
         if (editor.cursorX >= (globals::TEXTBOXWIDTH - 1)) return;
 
         if (!(((event.key >= 'a' && event.key <= 'z') ||
@@ -159,4 +139,3 @@ public:
         editor.cursorX++;
     }
 };
-

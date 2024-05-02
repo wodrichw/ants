@@ -6,7 +6,7 @@
 #include "entity/building.hpp"
 #include "entity/map.hpp"
 #include "entity/map_entity.hpp"
-#include "ui/text_editor_handler.hpp"
+#include "ui/text_editor.hpp"
 
 struct LayoutBox {
     enum Orientation { HORIZONTAL, VERTICAL };

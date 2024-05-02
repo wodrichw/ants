@@ -26,22 +26,19 @@ enum CharKeyboardEventType
 
 struct MouseEvent
 {
-    long x, y;
-    MouseEventType type;
-    MouseEvent(long x, long y, MouseEventType type) : x(x), y(y), type(type) {}
+    long x = 0, y = 0;
+    MouseEventType type = UNKNOWN_MOUSE_EVENT;
 };
 
 struct KeyboardEvent
 {
-    KeyboardEventType type;
-    KeyboardEvent(KeyboardEventType type) : type(type) {}
+    KeyboardEventType type = UNKNOWN_KEY_EVENT;
 };
 
 struct CharKeyboardEvent
 {
     CharKeyboardEventType type = CHAR_KEY_EVENT;
-    char key;
-    CharKeyboardEvent(char key) : key(key) {}
+    char key = 0;
 };
 
 template <typename Event>

@@ -1,4 +1,4 @@
-#include "ui/text_editor_handler.hpp"
+#include "ui/text_editor.hpp"
 
 #include "app/globals.hpp"
 #include "ui/event_system.hpp"
