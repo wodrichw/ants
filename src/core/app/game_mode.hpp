@@ -105,26 +105,27 @@ public:
 
     void render() override {
         // SPDLOG_TRACE("Rendering engine");
-        entity_manager.compute_fov();
-
+ 
         // draw the map
-        renderer.renderMap(box, entity_manager.map);
+        renderer.renderMap(box, entity_manager.map, entity_manager.map_window);
 
 
         // draw the buildings
         // SPDLOG_TRACE("Rendering {} buildings", buildings.size());
         for(auto building : entity_manager.buildings) {
-            renderer.renderBuilding(box, *building);
+            renderer.renderBuilding(box, *building, entity_manager.map_window);
         }
 
         // draw the ants
         // SPDLOG_TRACE("Rendering {} ants", ants.size());
         for(auto ant : entity_manager.ants) {
-            renderer.renderAnt(box, entity_manager.map, ant->get_data());
+            renderer.renderAnt(box, entity_manager.map, ant->get_data(), entity_manager.map_window);
         }
     }
 
     void update() override {
+       entity_manager.update();
+
         // SPDLOG_TRACE("Checking for clock pulse");
         if(clock_timeout_1000ms < SDL_GetTicks64()) {
             // SPDLOG_TRACE("Detected clock pulse");

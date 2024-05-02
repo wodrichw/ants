@@ -4,22 +4,23 @@
 #include <optional>
 
 #include "ui/colors.hpp"
+#include "entity/map_entity.hpp"
 #include "spdlog/spdlog.h"
 
-Player::Player(MapData const& data)
+Player::Player(EntityData const& data)
     : data(data) {
         SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
 }
 
-MapData& Player::get_data() {
+EntityData& Player::get_data() {
     return data;
 }
 
-Worker::Worker(MapData const& data)
+Worker::Worker(EntityData const& data)
     : data(data), operations(), cpu() {
 }
 
-MapData& Worker::get_data() {
+EntityData& Worker::get_data() {
     return data;
 }
 

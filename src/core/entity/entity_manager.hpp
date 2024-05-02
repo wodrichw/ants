@@ -7,51 +7,109 @@
 #include "entity/map.hpp"
 #include "ui/colors.hpp"
 #include "hardware/controller.hpp"
+#include "entity/map_section_data.hpp"
 
 struct EntityManager {
     Player player;
     std::vector<MapEntity*> ants;
     std::vector<Building*> buildings;
-    MapBuilder builder;
+    MapWindow map_window;
     Map map;
 
     EntityManager(int map_width, int map_height, ProjectArguments& config):
-        player(MapData(40, 25, '@', 10, color::white)),
-        builder(map_width, map_height),
-        map(builder, config)
+        player(EntityData(40, 25, '@', 10, color::white)),
+        map_window(Rect::from_center(player.get_data().x, player.get_data().y, map_width, map_height)),
+        map(map_window.border)
     {
-
-        if ( config.default_map_file_path.empty() && builder.get_first_room() ) {
-            // Set the initial nursery and player position for the case 
-            // where the map was randomly generated.
-            RoomRect* first_room = builder.get_first_room();
-            int center_x = first_room->center_x, center_y = first_room->center_y;
-
-            buildings.push_back(new Nursery(center_x-1, center_y-1, 0));
-            player.data.x = center_x, player.data.y = center_y;
-            map.add_building(*buildings[0]);
-            map.add_entity(player);
-        }
-
-
         ants.push_back(&player);
+
+        MapSectionData section;
+        if (config.default_map_file_path.empty()) {
+            RandomMapBuilder(Rect::from_top_left(0, 0, map_width, map_height))(section);
+        } else {
+            FileMapBuilder(config.default_map_file_path)(section);
+        }
+        map.load_section(section);
+        SPDLOG_DEBUG("Loaded map section data");
+        
+        if (section.rooms.empty()) {
+            SPDLOG_ERROR("No rooms found in the map section data");
+            return;
+        }
+        
+        SPDLOG_DEBUG("Creating nursery building");
+        Rect& first_room = section.rooms[0];
+        int center_x = first_room.center_x, center_y = first_room.center_y;
+
+        buildings.push_back(new Nursery(center_x-1, center_y-1, 0));
+        SPDLOG_INFO("Moving player to nursery building: ({}, {})", center_x, center_y);
+        player.data.x = center_x, player.data.y = center_y;
+        map.add_building(*buildings[0]);
+
+        SPDLOG_DEBUG("Adding player entity to the map");
+        map.add_entity(player);
+        map_window.set_center(player.get_data().x, player.get_data().y);
     }
 
     ~EntityManager() {
+        SPDLOG_DEBUG("Destroying EntityManager");
         for(auto ant : ants) delete ant;
         for(auto building : buildings) delete building;
+        SPDLOG_TRACE("Destroyed ants and buildings");
     }
 
-    void compute_fov() {
-        if (!map.need_update_fov) return;
-        map.need_update_fov = false;
-
-        map.reset_fov();
-        for(auto ant : ants) {
-            MapData& d = ant->get_data();
-            map.compute_fov(d.x, d.y, d.fov_radius);
-            map.update_fov();
+    void update_fov() {
+        // SPDLOG_TRACE("Updating FOV");
+        // map.reset_fov();
+        for (long x = map_window.border.x1; x < map_window.border.x2; x++) {
+            for (long y = map_window.border.y1; y < map_window.border.y2; y++) {
+                map.reset_tile(x, y);
+            }
         }
+        for(auto ant : ants) {
+            EntityData& d = ant->get_data();
+
+            map_window.compute_fov(d.x, d.y, d.fov_radius);
+            for (long x = map_window.border.x1; x < map_window.border.x2; x++) {
+                for (long y = map_window.border.y1; y < map_window.border.y2; y++) {
+                    if (!map_window.in_fov(x, y)) continue;
+
+                    map.explore(x, y);
+                }
+            }
+        }
+        // SPDLOG_TRACE("FOV updated");
+    }
+
+    void set_window_tiles() {
+        SPDLOG_TRACE("Setting window tiles");
+        long wall_count = 0, floor_count = 0;
+        for (long local_x = 0; local_x < map_window.border.w; local_x++) {
+            for (long local_y = 0; local_y < map_window.border.h; local_y++) {
+                long x = local_x + map_window.border.x1, y = local_y + map_window.border.y1;
+                // SPDLOG_TRACE("Setting tile at ({}, {}) - local ({}, {})", x, y, local_x, local_y);
+
+                if (map.is_wall(x, y)) {
+                    map_window.set_wall(x, y);
+                    wall_count++;
+                } else {
+                    map_window.set_floor(x, y);
+                    floor_count++;
+                }
+            }
+        }
+        SPDLOG_TRACE("Window tiles set - walls: {}, floors: {}", wall_count, floor_count);
+    }
+
+    void update() {
+        if (!map.needs_update) return;
+        SPDLOG_TRACE("Updating EntityManager");
+        map.needs_update = false;
+    
+        map_window.set_center(player.get_data().x, player.get_data().y);
+        map.update_chunks(map_window.border);
+        set_window_tiles();
+        update_fov();
     }
 
     void create_ant(std::vector<ClockController*>& controllers, std::vector<std::string>& lines) {
@@ -79,7 +137,7 @@ struct EntityManager {
 
         SPDLOG_DEBUG("Creating worker controller");
         ParserCommandsAssembler assembler;
-        Worker* new_ant = new Worker(MapData(new_x, new_y, 'w', 10, color::light_green));
+        Worker* new_ant = new Worker(EntityData(new_x, new_y, 'w', 10, color::light_green));
         Worker_Controller* w =
             new Worker_Controller(assembler, new_ant->cpu, *new_ant, map, lines);
         if(w->parser.status.p_err) {

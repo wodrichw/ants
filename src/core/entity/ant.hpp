@@ -5,10 +5,10 @@
 #include "entity/map_entity.hpp"
 
 struct Player: public MapEntity {
-    MapData data;
+    EntityData data;
 
-    Player(MapData const& data);
-    MapData& get_data();
+    Player(EntityData const& data);
+    EntityData& get_data();
     ~Player()=default;
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
@@ -16,13 +16,13 @@ struct Player: public MapEntity {
 };
 
 struct Worker: public MapEntity {
-    MapData data;
+    EntityData data;
     Operations operations;
     DualRegisters cpu;
 
-    Worker(MapData const& data);
+    Worker(EntityData const& data);
     ~Worker()=default;
-    MapData& get_data();
+    EntityData& get_data();
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
 };

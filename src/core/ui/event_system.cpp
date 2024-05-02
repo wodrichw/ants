@@ -26,6 +26,7 @@ MouseEventType get_mouse_type(char button) {
 }
 
 void get_mouse_event(SDL_MouseButtonEvent const& event, MouseEvent& mouse_event) {
+    SPDLOG_DEBUG("Getting mouse event: x={}, y={}, button={}", event.x, event.y, event.button);
     mouse_event.x = event.x;
     mouse_event.y = event.y;
     mouse_event.type = get_mouse_type(event.button);
@@ -73,6 +74,7 @@ KeyboardEventType get_keyboard_type(SDL_Keycode event) {
 }
 
 void get_keyboard_event(SDL_Keysym const& event, KeyboardEvent& keyboard_event) {
+    SPDLOG_DEBUG("Getting keyboard event: key={}, mod={}", event.sym, event.mod);
     keyboard_event.type = get_keyboard_type(event.sym);
 }
 
@@ -85,4 +87,5 @@ SDL_Keycode get_keyboard_key(SDL_Keysym const& event) {
 
 void get_char_keyboard_event(SDL_Keysym const& event, CharKeyboardEvent& char_keyboard_event) {
     char_keyboard_event.key = get_keyboard_key(event);
+    SPDLOG_DEBUG("Getting char keyboard event: key={}, mod={}", char_keyboard_event.key, event.mod);
 }

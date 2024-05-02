@@ -318,7 +318,7 @@ void DecParser::operator()(ParseLine &parse_line) {
 }
 
 void MoveAntParser::operator()(ParseLine &parse_line) {
-    SPDLOG_TRACE("Parsing Move MapData command");
+    SPDLOG_TRACE("Parsing Move EntityData command");
     ParserArgs &args = parse_line.args;
     long dx = 0, dy = 0;
 
@@ -329,7 +329,7 @@ void MoveAntParser::operator()(ParseLine &parse_line) {
 
     TokenParser::terminate(parse_line.code_stream, parse_line.status,
                            "Move ant operator expects 1 arguments.");
-    SPDLOG_TRACE("Move MapData command parsed");
+    SPDLOG_TRACE("Move EntityData command parsed");
 }
 
 void JumpParser::operator()(ParseLine &parse_line) {

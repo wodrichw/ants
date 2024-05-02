@@ -1,62 +1,163 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 
 #include "app/arg_parse.hpp"
-#include "entity/map_builder.hpp"
+#include "app/globals.hpp"
+#include "entity/map_window.hpp"
 #include "entity/building.hpp"
 #include "entity/map_entity.hpp"
-#include "entity/map_reader.hpp"
+#include "entity/map_builder.hpp"
+
+using ulong = unsigned long;
 
 struct Tile {
     MapEntity* entity = nullptr;
     Building* building = nullptr;
-    bool is_explored = false;  // has the player already seen this tile ?
-    bool in_fov = false;
+    bool is_explored = false;  // has this tile already been seen by the player ?
+    bool in_fov = false; // is the tile currently visible to the player ?
+    bool is_wall = true;
+    Tile() = default;
+};
+
+struct Chunk {
+    long x = 0, y = 0;
+    bool update_parity = true;
+    long const width = 8, height = 8, length = width * height;
+    std::vector<Tile> tiles;
+    Chunk() = default;
+    Chunk(long x, long y, bool update_parity): x(x), y(y), update_parity(update_parity), tiles(width * height) {}
+    Tile& operator[](long idx) { return tiles[idx]; }
+    Tile const& operator[](long idx) const { return tiles[idx]; }
+};
+
+class Chunks {
+    using ChunkMap = std::unordered_map<ulong, Chunk>;
+
+    public:
+
+    class tile_iterator {
+        using TileVector = std::vector<Tile>;
+
+        public:
+        tile_iterator(ChunkMap::iterator const& map_it): map_it(map_it), tile_idx(0) {}
+
+        tile_iterator& operator++() {
+            ++tile_idx;
+            // SPDLOG_TRACE("Incrementing tile iterator: {}", tile_idx);
+            if (tile_idx >= get_tiles().size()) {
+                ++map_it;
+                tile_idx = 0;
+            }
+            return *this;
+        }
+
+        Tile& operator*() { return get_tiles()[tile_idx]; }
+        bool operator!=(tile_iterator const& other) { return map_it != other.map_it || (tile_idx != other.tile_idx);}
+
+        private:
+        TileVector& get_tiles() { return map_it->second.tiles; }
+
+        ChunkMap::iterator map_it;
+        ulong tile_idx;
+
+    };
+
+    tile_iterator begin_tile() { return tile_iterator(chunks.begin()); }
+    tile_iterator end_tile() { return tile_iterator(chunks.end()); }
+
+    ChunkMap::iterator begin() { return chunks.begin(); }
+    ChunkMap::const_iterator begin() const { return chunks.begin(); }
+    ChunkMap::iterator end() { return chunks.end(); }
+    ChunkMap::const_iterator end() const { return chunks.end(); }
+
+    ChunkMap::iterator find(ulong chunk_id) { return chunks.find(chunk_id); }
+    ChunkMap::const_iterator find(ulong chunk_id) const { return chunks.find(chunk_id); }
+
+    void erase(ChunkMap::iterator it) { chunks.erase(it); }
+    Chunk& operator[](ulong chunk_id) { return chunks[chunk_id]; }
+    Chunk const& operator[](ulong chunk_id) const { return chunks.at(chunk_id); }
+    void emplace(ulong chunk_id, Chunk const& chunk) { chunks.emplace(chunk_id, chunk); }
+
+    private:
+    ChunkMap chunks;
 };
 
 class Map {
 public:
-    int width, height;
-    bool need_update_fov;
+    bool needs_update = true;
+    bool chunk_update_parity = false;
 
-    Map(MapBuilder& builder, ProjectArguments &config):
-        width(builder.width),
-        height(builder.height),
-        need_update_fov(true),
-        tiles_list(width * height),
-        builder(builder)
-    {
-        if (config.default_map_file_path.empty()) {
-            RandomMapReader()(builder);
-            RoomRect* first_room = builder.get_first_room();
-            if( !first_room ) return;
-            // add_building(Building &building)
-        } else {
-            FileMapReader(config.default_map_file_path)(builder);
+    Map(Rect const& border) {
+        SPDLOG_INFO("Creating map with border: ({}, {}) - {}x{}", border.x1, border.y1, border.w, border.h);
+        add_missing_chunks(border);
+    }
+
+    void load_section(MapSectionData const& section_data) {
+        SPDLOG_INFO("Loading section data into map: ({}, {}) - {}x{}", section_data.border.x1, section_data.border.y1, section_data.border.w, section_data.border.h);
+        add_missing_chunks(section_data.border);
+
+        long origin_x = section_data.border.x1, origin_y = section_data.border.y1;
+        for (auto const& room: section_data.rooms) {
+            dig(origin_x + room.x1, origin_y + room.y1,
+                origin_x + room.x2, origin_y + room.y2);
+        }
+
+        for (auto const& corridor: section_data.corridors) {
+            dig(origin_x + corridor.x1, origin_y + corridor.y1,
+                origin_x + corridor.x2, origin_y + corridor.y2);
         }
     }
 
-    bool can_place(long x, long y) {
-        return get_tile(x, y).entity == nullptr && builder.can_place(x, y);
+    void dig(long x1, long y1, long x2, long y2) {
+        if(x2 < x1) std::swap(x1, x2);
+        if(y2 < y1) std::swap(y1, y2);
+        SPDLOG_TRACE("Digging from ({}, {}) to ({}, {})", x1, y1, x2, y2);
+
+        // SPDLOG_TRACE("Setting properties for tiles");
+        for(int tilex = x1 - 1; tilex <= x2 + 1; tilex++) {
+            bool is_horizontal_wall = tilex < x1 || tilex > x2;
+    
+            for(int tiley = y1 - 1; tiley <= y2 + 1; tiley++) {
+                bool is_vertical_wall = tiley < y1 || tiley > y2;
+
+                Tile& tile = get_tile(tilex, tiley);
+                if (!tile.is_wall) continue;
+
+                tile.is_wall = is_horizontal_wall || is_vertical_wall;
+                // SPDLOG_TRACE("Setting tile at ({}, {}) - wall: {}, floor: {}", tilex, tiley, tile.is_wall);
+            }
+        }
+        SPDLOG_TRACE("Digging complete");
+    }
+
+    bool can_place(long x, long y) const {
+        Tile const& tile = get_tile_const(x, y);
+        if (tile.is_wall) return false;
+        if (tile.entity != nullptr) return false;
+        return true;
     }
 
     void add_entity(MapEntity& entity) {
-        MapData& data = entity.get_data();
+        EntityData& data = entity.get_data();
         set_entity(data.x, data.y, &entity);
     }
 
     void remove_entity(MapEntity& entity) {
-        MapData& data = entity.get_data();
+        EntityData& data = entity.get_data();
         set_entity(data.x, data.y, nullptr);
     }
 
     bool move_entity(MapEntity& entity, long dx, long dy) {
-        MapData& data = entity.get_data();
+        EntityData& data = entity.get_data();
         long x = data.x, y = data.y;
 
         long new_x = x + dx, new_y = y + dy;
-        if (!can_place(new_x, new_y)) return false;
+        // if (!can_place(new_x, new_y)) {
+        //     SPDLOG_TRACE("Cannot move entity to ({}, {})", new_x, new_y);
+        //     return false;
+        // }
     
         set_entity(new_x, new_y, &entity);
         remove_entity(entity);
@@ -76,45 +177,83 @@ public:
     }
 
     Building* get_building(MapEntity& entity) {
-        MapData& data = entity.get_data();
+        EntityData& data = entity.get_data();
         return get_tile(data.x, data.y).building;
     }
 
-    void compute_fov(long x, long y, long radius) {
-        builder.compute_fov(x, y, radius);
+    void add_missing_chunks(Rect const& rect) {
+        SPDLOG_DEBUG("Loading missing chunks: ({}, {}) - ({}, {})", rect.x1, rect.y1, rect.x2, rect.y2);
+        long x1 = rect.x1 - globals::CHUNK_LENGTH, y1 = rect.y1 - globals::CHUNK_LENGTH,
+            x2 = rect.x2 + globals::CHUNK_LENGTH, y2 = rect.y2 + globals::CHUNK_LENGTH;
+        for (long x = x1; x <= x2; x += globals::CHUNK_LENGTH) {
+            for (long y = y1; y <= y2; y += globals::CHUNK_LENGTH) {
+                long const chunk_id = get_chunk_idx(x, y);
+                auto it = chunks.find(chunk_id);
+                if (it != chunks.end()) {
+                    Chunk& chunk = it->second;
+                    chunk.update_parity = chunk_update_parity;
+                    continue;
+                }
+
+                SPDLOG_DEBUG("Adding chunk ({}, {}) - id: {}", x, y, chunk_id);
+                chunks.emplace(chunk_id, Chunk(x, y, chunk_update_parity));
+            }
+        }
+        SPDLOG_TRACE("Finished loading missing chunks");
+    }
+
+    void remove_unused_chunks() {
+        SPDLOG_TRACE("Removing unused chunks");
+        for (auto it = chunks.begin(); it != chunks.end();) {
+            Chunk& chunk = it->second;
+            if (chunk.update_parity == chunk_update_parity) {
+                ++it;
+                continue;
+            }
+
+            chunks.erase(it++);
+        }
+        SPDLOG_TRACE("Finished removing unused chunks");
+    }
+
+    void update_chunks(Rect const& rect) {
+        SPDLOG_DEBUG("Updating chunks: ({}, {}) - ({}, {})", rect.x1, rect.y1, rect.x2, rect.y2);
+        chunk_update_parity = !chunk_update_parity;
+        add_missing_chunks(rect);
+        // remove_unused_chunks();
+        SPDLOG_TRACE("Finished updating chunks");
     }
 
     void reset_fov() {
-        for(long x = 0; x < width; x++) {
-            for(long y = 0; y < height; y++) {
-                Tile& tile = get_tile(x, y);
-                tile.in_fov = false;
-            }
+        for (auto it = chunks.begin_tile(); it != chunks.end_tile(); ++it) {
+            Tile& tile = *it;
+            tile.in_fov = false;
         }
     }
 
-    void update_fov() {
-        for (long x = 0; x < builder.width; ++x) {
-            for (long y = 0; y < builder.height; ++y) {
-                if (!builder.in_fov(x, y)) continue;
-                Tile& tile = get_tile(x, y);
-                tile.in_fov = tile.is_explored = true;
-            }
-        }
+    void reset_tile(long x, long y) {
+        Tile& tile = get_tile(x, y);
+        tile.in_fov = false;
+    }
+
+    void explore(long x, long y) {
+        Tile& tile = get_tile(x, y);
+        tile.is_explored = true;
+        tile.in_fov = true;
     }
 
     bool in_fov(long x, long y) const {
         // SPDLOG_TRACE("Checking if tile at ({}, {}) is in fov", x, y); 
-        return get_tile(x, y).in_fov;
+        return get_tile_const(x, y).in_fov;
     }
 
     bool is_explored(long x, long y) const {
         // SPDLOG_TRACE("Checking if tile at ({}, {}) is explored", x, y); 
-        return get_tile(x, y).is_explored;
+        return get_tile_const(x, y).is_explored;
     }
 
     bool is_wall(long x, long y) const {
-        return builder.is_wall(x, y);
+        return get_tile_const(x, y).is_wall;
     }
 
     bool click(long x, long y) {
@@ -125,14 +264,45 @@ public:
     }
 
 private:
-    Tile& get_tile(long x, long y) { return tiles_list[x + y * builder.width]; }
-    Tile const& get_tile(long x, long y) const { return tiles_list[x + y * builder.width]; }
-    void set_entity(long x, long y, MapEntity* entity) {
-        get_tile(x, y).entity = entity;
-        need_update_fov = true;
+    long get_chunk_idx(long x, long y) const {
+        long chunk_x = x / globals::CHUNK_LENGTH, chunk_y = y / globals::CHUNK_LENGTH;
+        long chunk_depth = std::max(std::abs(chunk_x), std::abs(chunk_y));
+
+        long offset = chunk_y == -chunk_depth || chunk_x == -chunk_depth ? 0 : 1;
+        long depth_sqrt_idx = 2 * (chunk_depth -  offset) + 1;
+        long depth_idx = depth_sqrt_idx * depth_sqrt_idx + offset - 1;
+        long chunk_idx = depth_idx + (offset * 2 - 1) * (2 * chunk_depth - chunk_x + chunk_y - offset);
+        // SPDLOG_TRACE("Chunk index for tile ({}, {}) is {}", x, y, chunk_idx);
+        return chunk_idx;
     }
 
-    std::vector<Tile> tiles_list;
-    MapBuilder& builder;
-};
+    Chunk& get_chunk(long x, long y) {
+        return chunks[get_chunk_idx(x, y)];
+    }
+
+    Chunk const& get_chunk_const(long x, long y) const {
+        return chunks[get_chunk_idx(x, y)];
+    }
+
+    long get_local_idx(long x, long y) const {
+        long local_x = x % globals::CHUNK_LENGTH, local_y = y % globals::CHUNK_LENGTH;
+        long local_idx = local_x + local_y * globals::CHUNK_LENGTH;
+        // SPDLOG_TRACE("Local index for tile ({}, {}) is {}", x, y, local_idx);
+        return local_idx;
+    }
+
+    Tile& get_tile(long x, long y) {
+        return get_chunk(x, y)[get_local_idx(x, y)];
+    }
+    Tile const& get_tile_const(long x, long y) const {
+        return get_chunk_const(x, y)[get_local_idx(x, y)];
+   }
+    void set_entity(long x, long y, MapEntity* entity) {
+        SPDLOG_DEBUG("Setting entity at ({}, {})", x, y);
+        get_tile(x, y).entity = entity;
+        needs_update = true;
+    }
+
+    Chunks chunks;
+ };
 

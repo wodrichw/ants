@@ -71,16 +71,21 @@ tcodRenderer::tcodRenderer() {
     SPDLOG_TRACE("Created root console - completed creating tcod renderer"); 
 }
 
-void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
+void tcodRenderer::renderMap(LayoutBox const &box, Map const& map, MapWindow const& window) {
     // SPDLOG_TRACE("Rendering map");
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA darkGround = color::dark_grey;
     TCOD_ColorRGBA lightWall = color::indian_red;
     TCOD_ColorRGBA lightGround = color::grey;
 
-    for(long x = 0; x < map.width; x++) {
-        for(long y = 0; y < map.height; y++) {
-            auto &tile = clearCh(box, x, y);
+    // SPDLOG_TRACE("Rendering map with border ({}, {}) - {}x{}", window.border.x1, window.border.y1, window.border.w, window.border.h);
+    for(long local_x = 0; local_x < window.border.w; ++local_x) {
+        for(long local_y = 0; local_y < window.border.h; ++local_y) {
+            long x = local_x + window.border.x1;
+            long y = local_y + window.border.y1;
+
+            // SPDLOG_TRACE("Rendering tile at ({}, {}) - local ({}, {})", x, y, local_x, local_y);
+            auto &tile = clearCh(box, local_x, local_y);
             if(map.in_fov(x, y)) {
                 tile.bg = map.is_wall(x, y) ? lightWall : lightGround;
             } else {
@@ -91,31 +96,54 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
     // SPDLOG_TRACE("Map rendered");
 }
 
-void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, MapData &a) {
+void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, EntityData &a, MapWindow const& window) {
     // SPDLOG_TRACE("Rendering ant at ({}, {})", a.x, a.y);
+    long x, y;
+    bool is_valid;
+    window.to_local_coords(a.x, a.y, x, y, is_valid);
+    if (!is_valid) {
+        SPDLOG_ERROR("Invalid coordinates ({}, {}) when rendering ant", a.x, a.y);
+        return;
+    }
+
     RenderPosition &last_pos = a.last_rendered_pos;
     if(last_pos.requires_update) {
-        SPDLOG_TRACE("Clearing last position for ant at ({}, {})", last_pos.x, last_pos.y);
+        // SPDLOG_TRACE("Clearing last position for ant at ({}, {})", last_pos.x, last_pos.y);
         last_pos.requires_update = false;
-        clearCh(box, last_pos.x, last_pos.y);
+
+        long last_x, last_y;
+        window.to_local_coords(last_pos.x, last_pos.y, last_x, last_y, is_valid);
+        if (!is_valid) {
+            // SPDLOG_ERROR("Invalid coordinates ({}, {}) when clearing last position for ant", last_pos.x, last_pos.y);
+            return;
+        }
+
+        clearCh(box, last_x, last_y);
     }
 
     if(map.in_fov(a.x, a.y)) {
         // SPDLOG_TRACE("Rendering ant in FOV at ({}, {})", a.x, a.y);
-        auto &tile = get_tile(box, a.x, a.y);
+        auto &tile = get_tile(box, x, y);
         tile.ch = a.ch;
         tile.fg = a.col;
         last_pos.x = a.x;
         last_pos.y = a.y;
+    } else {
+        // SPDLOG_ERROR("Ant at ({}, {}) is not in FOV", a.x, a.y);
     }
-    // SPDLOG_TRACE("MapData rendered");
+    // SPDLOG_TRACE("EntityData rendered");
 }
 
-void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b) {
+void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b, MapWindow const& window) {
     // SPDLOG_TRACE("Rendering building at ({}, {})", b.x, b.y);
     for(long xi = b.x; xi < b.x + b.w; ++xi) {
         for(long yi = b.y; yi < b.y + b.h; ++yi) {
-            auto &tile = get_tile(box, xi, yi);
+            long x, y;
+            bool is_valid;
+            window.to_local_coords(xi, yi, x, y, is_valid);
+            if (!is_valid) continue;
+
+            auto &tile = get_tile(box, x, y);
             tile.bg = b.color;
         }
     }
@@ -198,6 +226,7 @@ TCOD_ConsoleTile &tcodRenderer::get_tile(LayoutBox const &box, long x, long y) {
     // SPDLOG_TRACE("Getting tile at ({}, {})", x, y);
     long abs_x = 0, abs_y = 0;
     box.get_abs_pos(x, y, abs_x, abs_y);
+    // SPDLOG_TRACE("Getting tile at ({}, {}) -> abs ({}, {})", x, y, abs_x, abs_y);
     return root_console.at(abs_x, abs_y);
 }
 
@@ -228,7 +257,6 @@ void LayoutBox::get_abs_pos(long x0, long y0, long &x1, long &y1) const {
 
 long LayoutBox::get_width() const { return this->w; }
 long LayoutBox::get_height() const { return this->h; }
-
 std::pair<LayoutBox *, LayoutBox *> &LayoutBox::split(ulong percentage,
                                                       Orientation orientation) {
     if(orientation == Orientation::HORIZONTAL) {

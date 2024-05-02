@@ -6,7 +6,7 @@ struct RenderPosition {
     bool requires_update = false;
 };
 
-struct MapData {
+struct EntityData {
    public:
     long x, y;
 
@@ -15,12 +15,12 @@ struct MapData {
     tcod::ColorRGB col;
     RenderPosition last_rendered_pos;
 
-    MapData(long x, long y, char ch, int fov_radius, tcod::ColorRGB col);
-    ~MapData()=default;
+    EntityData(long x, long y, char ch, int fov_radius, tcod::ColorRGB col);
+    ~EntityData()=default;
 };
 
 struct MapEntity {
-    virtual MapData& get_data() = 0;
+    virtual EntityData& get_data() = 0;
     virtual void move_callback(long x, long y, long new_x, long new_y) = 0;
     virtual void click_callback(long x, long y) = 0;
     virtual ~MapEntity() {};
