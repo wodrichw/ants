@@ -14,12 +14,13 @@
 #include "ui/render.hpp"
 #include "ui/text_editor_handler.hpp"
 #include "ui/event_system.hpp"
+#include "entity/entity_manager.hpp"
 
 namespace ant {
-    class Ant;
+    class MapEntity;
     class Player;
 }  // namespace ant
-class Building;
+struct Building;
 class ClockController;
 class Map;
 class ButtonController;
@@ -41,16 +42,13 @@ class Engine {
     };
 
     ProjectArguments& config;
-    std::vector<Ant*> ants;
     BoxManager box_manager;
-    Map* map;
-    Player* player;
-    std::vector<Building*> buildings;
     std::vector<ClockController*> clockControllers;
     Renderer* renderer;
-    TextEditorHandler editor;
+    TextEditor editor;
     ButtonController* buttonController;
     ParserCommandsAssembler assembler;
+    EntityManager entity_manager;
     EventSystem eventSystem;
 
     ulong clock_timeout_1000ms;
@@ -63,6 +61,7 @@ class Engine {
    private:
     void handleMouseClick(SDL_MouseButtonEvent event);
     void handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy);
+    void add_listeners();
 };
 
 extern Engine engine;

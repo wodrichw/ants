@@ -1,61 +1,30 @@
 #pragma once
 
-#include <libtcod/color.hpp>
-#include <optional>
-
 #include "hardware/brain.hpp"
 #include "ui/buttonController.hpp"
-#include "entity/map.hpp"
 #include "hardware/operations.hpp"
+#include "ui/subscriber.hpp"
+#include "entity/map_entity.hpp"
 
-struct PositionData {
-    long x = 0, y = 0;
-    bool requires_update = false;
+struct Player: public MapEntity {
+    MapData data;
+
+    Player(MapData const& data);
+    MapData& get_data();
+    ~Player()=default;
+    void move_callback(long x, long y, long new_x, long new_y);
+    void click_callback(long x, long y);
+    
 };
 
-class Ant {
-   public:
-    long x, y, fovRadius;
-    char ch;
-    tcod::ColorRGB col;
-    std::optional<int> bldgId;  // the building the player is occupying. Will
-                                // not be set if player not in a building.
-    PositionData last_rendered_pos;
-
-    Ant(Map* map, long x, long y, int fovRadius, char ch, tcod::ColorRGB col);
-    bool can_move(long dx, long dy);
-    void move(long dx, long dy);
-
-    virtual bool isInFov() = 0;
-    virtual void resetFov() { return; }
-
-    virtual ~Ant() = default;
-
-   private:
-    Map* map;
-};
-
-class Player : public Ant {
-   public:
-    Player(Map* map, long x, long y, int fovRadius, char ch,
-           tcod::ColorRGB col);
-    bool isInFov() { return true; }
-};
-
-class Worker : public Ant {
-   public:
-    Worker(Map* map, ButtonController* button_controller,
-           ButtonController::ButtonData const& data);
-    void move(long dx, long dy);
-    bool can_move(long dx, long dy);
-    bool isInFov() { return true; }
-    bool toggle_color();
-
+struct Worker: public MapEntity {
+    MapData data;
     Operations operations;
     DualRegisters cpu;
 
-   private:
-    ButtonController* button_controller;
-    ButtonController::Button* button;
-    Map* map;
+    Worker(MapData const& data);
+    ~Worker()=default;
+    MapData& get_data();
+    void move_callback(long x, long y, long new_x, long new_y);
+    void click_callback(long x, long y);
 };

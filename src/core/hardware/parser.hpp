@@ -6,8 +6,10 @@
 #include <unordered_set>
 
 #include "app/globals.hpp"
-#include "hardware/ant_interactor.hpp"
 #include "hardware/operations.hpp"
+#include "hardware/brain.hpp"
+#include "entity/map_entity.hpp"
+#include "entity/map.hpp"
 
 // Parser helpers
 namespace TokenParser {
@@ -25,8 +27,7 @@ namespace TokenParser {
     void direction(std::istringstream &ss, long &dx, long &dy,
                    ParserStatus &status);
 
-    void get_label_address(std::istringstream &ss, std::string &address,
-                           bool &is_op_idx, ParserStatus &status);
+    std::string get_label(std::istringstream &ss, ParserStatus &status);
 
     // Check that no more arguments exist to be parsed.
     void terminate(std::istringstream &ss, ParserStatus &status,
@@ -34,10 +35,19 @@ namespace TokenParser {
 }  // namespace TokenParser
 
 struct ParserArgs {
-    AntInteractor &ant_interactor;
-    Operations &operations;
+    DualRegisters& registers;
+    MapEntity& entity;
+    Map& map;
+    Operations& operations;
+    ParserArgs(DualRegisters& registers, MapEntity& entity, Map& map,
+               Operations& operations): registers(registers), entity(entity),
+                map(map), operations(operations) {}
+};
+
+struct ParseLine {
     std::istringstream &code_stream;
     ParserStatus &status;
+    ParserArgs& args;
 };
 
 class ParserCommandsAssembler;
@@ -49,24 +59,25 @@ class Parser {
     struct CommandConfig {
         std::string command_string;
         Command command_enum;
-        std::function<void(ParserArgs &args)> assemble;
+        std::function<void(ParseLine &args)> assemble;
         CommandConfig(const std::string &command_string, Command command_enum,
-                      std::function<void(ParserArgs &args)> assemble);
+                      std::function<void(ParseLine &args)> assemble);
     };
     ParserStatus status;
 
    private:
-    void parse(AntInteractor &ant_interactor, Operations &operations,
-               std::vector<std::string> &program_code);
+    void parse(std::vector<std::string> &program_code, ParserArgs &args);
     bool handle_label(Operations &operations, std::string const &word);
+    void assemble_commands(ParserCommandsAssembler& commands_assember,
+        std::unordered_set<Command> command_set);
 
    public:
-    std::unordered_map<std::string, std::function<void(ParserArgs &args)>>
+    std::unordered_map<std::string, std::function<void(ParseLine &parse_line)>>
         commands;
     Parser(ParserCommandsAssembler &commands_assember,
            std::unordered_set<Command> command_set,
-           AntInteractor &ant_interactor, Operations &operations,
-           std::vector<std::string> &program_code);
+           std::vector<std::string> &program_code,
+           ParserArgs &args);
 };
 
 class ParserCommandsAssembler {
@@ -82,7 +93,7 @@ class ParserCommandsAssembler {
 // - Kevin 01/18/2024
 #define DEFINE_PARSER(T)                   \
     struct T {                             \
-        void operator()(ParserArgs &args); \
+        void operator()(ParseLine &parse_line); \
     }
 
 DEFINE_PARSER(NOP_Parser);

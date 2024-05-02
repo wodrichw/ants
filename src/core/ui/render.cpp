@@ -81,11 +81,11 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
     for(long x = 0; x < map.width; x++) {
         for(long y = 0; y < map.height; y++) {
             auto &tile = clearCh(box, x, y);
-            if(map.isInFov(x, y)) {
-                tile.bg = map.isWall(x, y) ? lightWall : lightGround;
+            if(map.in_fov(x, y)) {
+                tile.bg = map.is_wall(x, y) ? lightWall : lightGround;
             } else {
-                if(map.isExplored(x, y)) {
-                    tile.bg = map.isWall(x, y) ? darkWall : darkGround;
+                if(map.is_explored(x, y)) {
+                    tile.bg = map.is_wall(x, y) ? darkWall : darkGround;
                 } else {
                     tile.bg = darkWall;
                 }
@@ -95,16 +95,16 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
     // SPDLOG_TRACE("Map rendered");
 }
 
-void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, Ant &a) {
+void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, MapData &a) {
     // SPDLOG_TRACE("Rendering ant at ({}, {})", a.x, a.y);
-    PositionData &last_pos = a.last_rendered_pos;
+    RenderPosition &last_pos = a.last_rendered_pos;
     if(last_pos.requires_update) {
         SPDLOG_TRACE("Clearing last position for ant at ({}, {})", last_pos.x, last_pos.y);
         last_pos.requires_update = false;
         clearCh(box, last_pos.x, last_pos.y);
     }
 
-    if(map.isInFov(a.x, a.y)) {
+    if(map.in_fov(a.x, a.y)) {
         // SPDLOG_TRACE("Rendering ant in FOV at ({}, {})", a.x, a.y);
         auto &tile = get_tile(box, a.x, a.y);
         tile.ch = a.ch;
@@ -112,7 +112,7 @@ void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, Ant &a) {
         last_pos.x = a.x;
         last_pos.y = a.y;
     }
-    // SPDLOG_TRACE("Ant rendered");
+    // SPDLOG_TRACE("MapData rendered");
 }
 
 void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b) {
@@ -127,7 +127,7 @@ void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b) {
 }
 
 void tcodRenderer::renderTextEditor(LayoutBox const &box,
-                                    TextEditorHandler const &editor,
+                                    TextEditor const &editor,
                                     size_t ant_count) {
     // SPDLOG_TRACE("Rendering text editor");
     std::vector<std::string> asciiGrid(globals::TEXTBOXHEIGHT + 2);
@@ -147,7 +147,7 @@ void tcodRenderer::renderTextEditor(LayoutBox const &box,
                (globals::REGBOXHEIGHT * 2) + 2, globals::REGBOXWIDTH + 2,
                globals::REGBOXHEIGHT + 2);
 
-    mainBox.populate(editor.textEditorLines);
+    mainBox.populate(editor.lines);
     accBox.populate({"ACC:0   "});
     bacBox.populate({"BAC:1   "});
 

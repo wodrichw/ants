@@ -13,12 +13,14 @@ class ClockController {
 
 class Worker_Controller : public ClockController {
    public:
-    AntInteractor ant_interactor;
     Operations operations;
+    ParserArgs parser_args;
     Parser parser;
 
-    Worker_Controller(ParserCommandsAssembler& commands_assember,
-                      std::vector<std::string>& program_code);
+    Worker_Controller(
+        ParserCommandsAssembler& commands_assember,
+        DualRegisters& registers, MapEntity& entity, Map& map,
+        std::vector<std::string>& program_code);
     ~Worker_Controller();
 
     void handleClockPulse() override;
