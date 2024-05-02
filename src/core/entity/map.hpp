@@ -108,6 +108,14 @@ public:
         }
     }
 
+    void update_explored() {
+        for (long x = 0; x < builder.width; ++x) {
+            for (long y = 0; y < builder.height; ++y) {
+                if( builder.in_fov(x, y) ) explore(x, y);
+            }
+        }
+    }
+
     bool in_fov(long x, long y) const {
         // SPDLOG_TRACE("Checking if tile at ({}, {}) is in fov", x, y); 
         return get_tile(x, y).in_fov;

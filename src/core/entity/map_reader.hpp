@@ -11,11 +11,11 @@
 class BspListener : public ITCODBspCallback {
    private:
     MapBuilder &builder;          // a builder to dig
-    int roomNum;       // room number
+    int room_num;       // room number
     int lastx, lasty;  // center of the last room
 
    public:
-    BspListener(MapBuilder &builder) : builder(builder), roomNum(0) {
+    BspListener(MapBuilder &builder) : builder(builder), room_num(0) {
         SPDLOG_TRACE("BspListener created");
     }
 
@@ -33,7 +33,7 @@ class BspListener : public ITCODBspCallback {
         SPDLOG_TRACE("Creating room {} at ({}, {}) to ({}, {})", roomNum, x, y, x + w - 1, y + h - 1);
         builder.create_room(RoomRect::from_top_left(x, y, w, h));
 
-        if(roomNum != 0) {
+        if(room_num != 0) {
             SPDLOG_DEBUG("Digging corridor from ({}, {}) to ({}, {})", lastx, lasty, x + w / 2, lasty);
             // dig a corridor from last room
             builder.create_corridor(RoomRect::from_corners(lastx, lasty, x + w / 2, lasty));
@@ -41,7 +41,7 @@ class BspListener : public ITCODBspCallback {
         }
         lastx = x + w / 2;
         lasty = y + h / 2;
-        roomNum++;
+        room_num++;
 
         return true;
     }

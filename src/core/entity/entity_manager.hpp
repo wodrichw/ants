@@ -53,6 +53,7 @@ struct EntityManager {
             builder.compute_fov(d.x, d.y, d.fov_radius);
         }
         map.update_fov();
+        map.update_explored();
     }
 
     void create_ant(std::vector<ClockController*>& controllers, std::vector<std::string>& lines) {

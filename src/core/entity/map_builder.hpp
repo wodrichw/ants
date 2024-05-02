@@ -27,7 +27,7 @@ struct RoomRect {
     
     static RoomRect from_corners(long x1, long y1, long x2, long y2) {
         SPDLOG_TRACE("Creating room from corners: {}, {}, {}, {}", x1, y1, x2, y2);
-        return RoomRect(x1, y2, x2 - x1 + 1, y2 - y1 + 1);
+        return RoomRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
     }
 };
 
@@ -48,6 +48,7 @@ class MapBuilder {
     void compute_fov(long x, long y, long radius);
     void create_room(RoomRect const& room);
     void create_corridor(RoomRect const& corridor);
+    void dig(long x1, long y1, long x2, long y2);
     RoomRect* get_first_room();
 
    private:
@@ -55,5 +56,4 @@ class MapBuilder {
     TCODMap* map;
 
     void set_wall(long x, long y);
-    void dig(long x1, long y1, long x2, long y2);
 };
