@@ -13,6 +13,7 @@
 #include "hardware/controller.hpp"
 #include "ui/render.hpp"
 #include "ui/text_editor_handler.hpp"
+#include "ui/event_system.hpp"
 
 namespace ant {
     class Ant;
@@ -50,6 +51,7 @@ class Engine {
     TextEditorHandler editor;
     ButtonController* buttonController;
     ParserCommandsAssembler assembler;
+    EventSystem eventSystem;
 
     ulong clock_timeout_1000ms;
 
