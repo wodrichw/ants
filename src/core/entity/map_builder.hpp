@@ -44,7 +44,6 @@ class MapBuilder {
     bool is_wall(long x, long y) const;
     bool can_place(long x, long y) const;
     bool in_fov(long x, long y) const;  // Fov = field of view
-    void reset_fov(long x, long y);
     void compute_fov(long x, long y, long radius);
     void create_room(RoomRect const& room);
     void create_corridor(RoomRect const& corridor);

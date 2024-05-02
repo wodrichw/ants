@@ -80,13 +80,6 @@ public:
         return get_tile(data.x, data.y).building;
     }
 
-    void explore(long x, long y) {
-        Tile &tile = get_tile(x, y);
-        if (!tile.in_fov) return;
-    
-        tile.is_explored = true;
-    }
-
     void compute_fov(long x, long y, long radius) {
         builder.compute_fov(x, y, radius);
     }
@@ -94,8 +87,8 @@ public:
     void reset_fov() {
         for(long x = 0; x < width; x++) {
             for(long y = 0; y < height; y++) {
-                get_tile(x, y).in_fov = false;
-                builder.reset_fov(x, y);
+                Tile& tile = get_tile(x, y);
+                tile.in_fov = false;
             }
         }
     }
@@ -103,15 +96,9 @@ public:
     void update_fov() {
         for (long x = 0; x < builder.width; ++x) {
             for (long y = 0; y < builder.height; ++y) {
-                get_tile(x, y).in_fov = builder.in_fov(x, y);
-            }
-        }
-    }
-
-    void update_explored() {
-        for (long x = 0; x < builder.width; ++x) {
-            for (long y = 0; y < builder.height; ++y) {
-                if( builder.in_fov(x, y) ) explore(x, y);
+                if (!builder.in_fov(x, y)) continue;
+                Tile& tile = get_tile(x, y);
+                tile.in_fov = tile.is_explored = true;
             }
         }
     }
@@ -140,7 +127,10 @@ public:
 private:
     Tile& get_tile(long x, long y) { return tiles_list[x + y * builder.width]; }
     Tile const& get_tile(long x, long y) const { return tiles_list[x + y * builder.width]; }
-    void set_entity(long x, long y, MapEntity* entity) { get_tile(x, y).entity = entity; }
+    void set_entity(long x, long y, MapEntity* entity) {
+        get_tile(x, y).entity = entity;
+        need_update_fov = true;
+    }
 
     std::vector<Tile> tiles_list;
     MapBuilder& builder;

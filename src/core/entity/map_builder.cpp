@@ -30,11 +30,11 @@ bool MapBuilder::is_wall(long x, long y) const {
 bool MapBuilder::can_place(long x, long y) const {
     SPDLOG_TRACE("Checking if can walk at ({}, {})", x, y);
     if(x < 0 || x >= width || y < 0 || y >= height){
-        SPDLOG_DEBUG("Cannot walk - out of bounds");
+        SPDLOG_TRACE("Cannot walk - out of bounds");
         return false;
     }
     if(is_wall(x, y)) {
-        SPDLOG_DEBUG("Cannot walk - wall");
+        SPDLOG_TRACE("Cannot walk - wall");
         return false;
     }
     return true;
@@ -42,10 +42,6 @@ bool MapBuilder::can_place(long x, long y) const {
 
 bool MapBuilder::in_fov(long x, long y) const {
     return map->isInFov(x, y);
-}
-
-void MapBuilder::reset_fov(long x, long y) {
-    map->setInFov(x, y, false);
 }
 
 void MapBuilder::compute_fov(long x, long y, long radius) {

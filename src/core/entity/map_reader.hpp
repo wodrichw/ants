@@ -30,7 +30,7 @@ class BspListener : public ITCODBspCallback {
         long x = rng->getInt(node->x + 1, node->x + node->w - w - 1);
         long y = rng->getInt(node->y + 1, node->y + node->h - h - 1);
 
-        SPDLOG_TRACE("Creating room {} at ({}, {}) to ({}, {})", roomNum, x, y, x + w - 1, y + h - 1);
+        SPDLOG_TRACE("Creating room {} at ({}, {}) to ({}, {})", room_num, x, y, x + w - 1, y + h - 1);
         builder.create_room(RoomRect::from_top_left(x, y, w, h));
 
         if(room_num != 0) {

@@ -25,9 +25,7 @@ struct EntityManager {
             // Set the initial nursery and player position for the case 
             // where the map was randomly generated.
             RoomRect* first_room = builder.get_first_room();
-            int x1 = first_room->x1, x2 = first_room->x2;
-            int y1 = first_room->y1, y2 = first_room->y2;
-            int center_x = (x1 + x2) / 2, center_y = (y1 + y2) / 2;
+            int center_x = first_room->center_x, center_y = first_room->center_y;
 
             buildings.push_back(new Nursery(center_x-1, center_y-1, 0));
             player.data.x = center_x, player.data.y = center_y;
@@ -45,15 +43,15 @@ struct EntityManager {
     }
 
     void compute_fov() {
-        if(! map.need_update_fov ) return;
+        if (!map.need_update_fov) return;
         map.need_update_fov = false;
+
         map.reset_fov();
         for(auto ant : ants) {
             MapData& d = ant->get_data();
-            builder.compute_fov(d.x, d.y, d.fov_radius);
+            map.compute_fov(d.x, d.y, d.fov_radius);
+            map.update_fov();
         }
-        map.update_fov();
-        map.update_explored();
     }
 
     void create_ant(std::vector<ClockController*>& controllers, std::vector<std::string>& lines) {

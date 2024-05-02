@@ -84,11 +84,7 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
             if(map.in_fov(x, y)) {
                 tile.bg = map.is_wall(x, y) ? lightWall : lightGround;
             } else {
-                if(map.is_explored(x, y)) {
-                    tile.bg = map.is_wall(x, y) ? darkWall : darkGround;
-                } else {
-                    tile.bg = darkWall;
-                }
+                tile.bg = map.is_wall(x, y) || !map.is_explored(x, y) ? darkWall : darkGround;
             }
         }
     }

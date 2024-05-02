@@ -19,7 +19,6 @@ public:
     void operator()(KeyboardEvent const&) { 
         if( text_editor_active ) return;
         map.move_entity(entity, -1, 0);
-        map.need_update_fov = true;
     }
 };
 
@@ -37,7 +36,6 @@ public:
     void operator()(KeyboardEvent const&) {
         if( text_editor_active ) return;
         map.move_entity(entity, 1, 0);
-        map.need_update_fov = true;
     }
 };
 
@@ -55,7 +53,6 @@ public:
     void operator()(KeyboardEvent const&) {
         if( text_editor_active ) return;
         map.move_entity(entity, 0, -1);
-        map.need_update_fov = true;
     }
 };
 
@@ -73,7 +70,6 @@ public:
     void operator()(KeyboardEvent const&) {
         if( text_editor_active ) return;
         map.move_entity(entity, 0, 1);
-        map.need_update_fov = true;
     }
 };
 

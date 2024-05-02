@@ -54,7 +54,7 @@ void Engine::add_listeners() {
     eventSystem.keyboard_events.add(L_KEY_EVENT, new MoveRightHandler(entity_manager.map, entity_manager.player, editor.is_active));
     eventSystem.keyboard_events.add(K_KEY_EVENT, new MoveUpHandler(entity_manager.map, entity_manager.player, editor.is_active));
     eventSystem.keyboard_events.add(J_KEY_EVENT, new MoveDownHandler(entity_manager.map, entity_manager.player, editor.is_active));
-    eventSystem.keyboard_events.add(C_KEY_EVENT, new CreateAntHandler(entity_manager, clockControllers, editor));
+    eventSystem.keyboard_events.add(A_KEY_EVENT, new CreateAntHandler(entity_manager, clockControllers, editor));
 
     // click listeners
     eventSystem.mouse_events.add(LEFT_MOUSE_EVENT, new ClickHandler(entity_manager.map, *renderer, editor.is_active));
