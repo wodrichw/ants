@@ -13,6 +13,7 @@
 
 #include "hardware/controller.hpp"
 #include "app/globals.hpp"
+#include "ui/buttonController.hpp"
 #include "ui/ui_handlers.hpp"
 #include "spdlog/spdlog.h"
 
@@ -44,19 +45,19 @@ void Engine::add_listeners() {
 
     // player movement listeners
     // TODO: the player cant move when the editor is active - pass in a callback to the player to decide if the editor
-    eventSystem.keyboard_events.add(LEFT_KEY_EVENT, new MoveLeftHandler(entity_manager.map, entity_manager.player));
-    eventSystem.keyboard_events.add(RIGHT_KEY_EVENT, new MoveRightHandler(entity_manager.map, entity_manager.player));
-    eventSystem.keyboard_events.add(UP_KEY_EVENT, new MoveUpHandler(entity_manager.map, entity_manager.player));
-    eventSystem.keyboard_events.add(DOWN_KEY_EVENT, new MoveDownHandler(entity_manager.map, entity_manager.player));
+    eventSystem.keyboard_events.add(LEFT_KEY_EVENT, new MoveLeftHandler(entity_manager.map, entity_manager.player, editor.is_active));
+    eventSystem.keyboard_events.add(RIGHT_KEY_EVENT, new MoveRightHandler(entity_manager.map, entity_manager.player, editor.is_active));
+    eventSystem.keyboard_events.add(UP_KEY_EVENT, new MoveUpHandler(entity_manager.map, entity_manager.player, editor.is_active));
+    eventSystem.keyboard_events.add(DOWN_KEY_EVENT, new MoveDownHandler(entity_manager.map, entity_manager.player, editor.is_active));
 
-    eventSystem.keyboard_events.add(H_KEY_EVENT, new MoveLeftHandler(entity_manager.map, entity_manager.player));
-    eventSystem.keyboard_events.add(L_KEY_EVENT, new MoveRightHandler(entity_manager.map, entity_manager.player));
-    eventSystem.keyboard_events.add(K_KEY_EVENT, new MoveUpHandler(entity_manager.map, entity_manager.player));
-    eventSystem.keyboard_events.add(J_KEY_EVENT, new MoveDownHandler(entity_manager.map, entity_manager.player));
+    eventSystem.keyboard_events.add(H_KEY_EVENT, new MoveLeftHandler(entity_manager.map, entity_manager.player, editor.is_active));
+    eventSystem.keyboard_events.add(L_KEY_EVENT, new MoveRightHandler(entity_manager.map, entity_manager.player, editor.is_active));
+    eventSystem.keyboard_events.add(K_KEY_EVENT, new MoveUpHandler(entity_manager.map, entity_manager.player, editor.is_active));
+    eventSystem.keyboard_events.add(J_KEY_EVENT, new MoveDownHandler(entity_manager.map, entity_manager.player, editor.is_active));
     eventSystem.keyboard_events.add(C_KEY_EVENT, new CreateAntHandler(entity_manager, clockControllers, editor));
 
     // click listeners
-    eventSystem.mouse_events.add(LEFT_MOUSE_EVENT, new ClickHandler(entity_manager.map, *renderer));
+    eventSystem.mouse_events.add(LEFT_MOUSE_EVENT, new ClickHandler(entity_manager.map, *renderer, editor.is_active));
 
     // text editor listeners
     eventSystem.keyboard_events.add(RETURN_KEY_EVENT, new NewLineHandler(editor));
@@ -111,7 +112,7 @@ void Engine::render() {
         renderer->renderAnt(map_box, entity_manager.map, ant->get_data());
     }
 
-    if(gameStatus == TEXT_EDITOR){
+    if( editor.is_active ){
         // SPDLOG_TRACE("Rendering text editor");
         renderer->renderTextEditor(*box_manager.text_editor_content_box, editor,
                                   entity_manager.ants.size());
