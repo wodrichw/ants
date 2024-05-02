@@ -10,4 +10,8 @@ if(APPLE)
         LINK_FLAGS "-undefined dynamic_lookup"
         SUFFIX ".so"  # Force .so extension on macOS
     )
+else()
+    set_target_properties(ant_core PROPERTIES
+        SUFFIX ".so"  # Force .so extension
+    )
 endif()

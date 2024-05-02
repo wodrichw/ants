@@ -79,12 +79,8 @@ option(OPT "Enable optimization flags" OFF)
 if(OPT)
     message(STATUS "Enabling optimization flags")
     add_compile_options("-O3")
-endif()
-
-# Check if the user wants to enable optimization flags
-option(NOOPT "Disable optimization flags" OFF)
-if(NOOPT)
-    message(STATUS "Enabling optimization flags")
+else()
+    message(STATUS "Disabling optimization flags")
     add_compile_options("-O0")
 endif()
 
