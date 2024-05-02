@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "entity/map.hpp"
 #include "spdlog/spdlog.h"
 #include "app/globals.hpp"
+#include "ui/subscriber.hpp"
 
 struct TextEditor {
     std::vector<std::string> lines;
@@ -159,3 +159,4 @@ public:
         editor.cursorX++;
     }
 };
+

@@ -49,3 +49,4 @@ struct Subscriber
 {
     virtual void operator()(Event const& event) = 0;
 };
+

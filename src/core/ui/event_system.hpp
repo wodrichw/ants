@@ -18,7 +18,7 @@ struct EventPublisher
 
     void remove(Enum key, Subscriber<Event>* subscriber) {
         auto it = subscriber_map.find(key);
-        if (it != subscriber_map.end()) {
+        if (it == subscriber_map.end()) {
             return;
         }
 
@@ -28,7 +28,7 @@ struct EventPublisher
 
     void notify(Event const& event) {
         auto it = subscriber_map.find(event.type);
-        if (it != subscriber_map.end()) {
+        if (it == subscriber_map.end()) {
             return;
         }
         for (auto& subscriber : *it->second) {

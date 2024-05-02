@@ -4,7 +4,6 @@
 #include <libtcod/console_types.hpp>
 #include <vector>
 
-#include "app/arg_parse.hpp"
 #include "spdlog/spdlog.h"
 
 struct RoomRect {

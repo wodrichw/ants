@@ -1,14 +1,11 @@
 #pragma once
 
-#include <stddef.h>
 #include <vector>
 
 #include "app/arg_parse.hpp"
-#include "ui/subscriber.hpp"
 #include "entity/map_builder.hpp"
 #include "entity/building.hpp"
 #include "entity/map_entity.hpp"
-#include "spdlog/spdlog.h"
 #include "entity/map_reader.hpp"
 
 struct Tile {
@@ -121,3 +118,4 @@ private:
     std::vector<Tile> tiles_list;
     MapBuilder& builder;
 };
+
