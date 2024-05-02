@@ -81,6 +81,13 @@ if(OPT)
     add_compile_options("-O3")
 endif()
 
+# Check if the user wants to enable optimization flags
+option(NOOPT "Disable optimization flags" OFF)
+if(NOOPT)
+    message(STATUS "Enabling optimization flags")
+    add_compile_options("-O0")
+endif()
+
 # Check if the user wants to enable debug flags
 option(DBG "Enable debug flags" OFF)
 if(DBG)

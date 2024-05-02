@@ -1,9 +1,7 @@
 #pragma once
 
 #include "hardware/brain.hpp"
-#include "ui/buttonController.hpp"
 #include "hardware/operations.hpp"
-#include "ui/subscriber.hpp"
 #include "entity/map_entity.hpp"
 
 struct Player: public MapEntity {

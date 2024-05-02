@@ -44,6 +44,10 @@ bool MapBuilder::in_fov(long x, long y) const {
     return map->isInFov(x, y);
 }
 
+void MapBuilder::reset_fov(long x, long y) {
+    map->setInFov(x, y, false);
+}
+
 void MapBuilder::compute_fov(long x, long y, long radius) {
     map->computeFov(x, y, radius);
 }
@@ -56,6 +60,11 @@ void MapBuilder::create_room(RoomRect const& rect) {
 void MapBuilder::create_corridor(RoomRect const& rect) {
     corridors.push_back(rect);
     dig(rect.x1, rect.y1, rect.x2, rect.y2);
+}
+
+RoomRect* MapBuilder::get_first_room() {
+    if( rooms.size() == 0 ) return nullptr;
+    return &rooms[0];
 }
 
 void MapBuilder::set_wall(long x, long y) {

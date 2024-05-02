@@ -5,9 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "app/globals.hpp"
-#include "entity/map.hpp"
-
 class Operations {
     std::vector<std::function<void()>> _ops;
     std::unordered_map<std::string, size_t> label_map;

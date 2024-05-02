@@ -10,7 +10,10 @@ class MoveLeftHandler: public Subscriber<KeyboardEvent> {
     MapEntity& entity;
 public:
     MoveLeftHandler(Map& map, MapEntity& entity): map(map), entity(entity) {}
-    void operator()(KeyboardEvent const&) { map.move_entity(entity, -1, 0); }
+    void operator()(KeyboardEvent const&) { 
+        map.move_entity(entity, -1, 0);
+        map.need_update_fov = true;
+    }
 };
 
 class MoveRightHandler: public Subscriber<KeyboardEvent> {
@@ -18,7 +21,10 @@ class MoveRightHandler: public Subscriber<KeyboardEvent> {
     MapEntity& entity;
 public:
     MoveRightHandler(Map& map, MapEntity& entity): map(map), entity(entity) {}
-    void operator()(KeyboardEvent const&) { map.move_entity(entity, 1, 0); }
+    void operator()(KeyboardEvent const&) {
+        map.move_entity(entity, 1, 0);
+        map.need_update_fov = true;
+    }
 };
 
 class MoveUpHandler: public Subscriber<KeyboardEvent> {
@@ -26,7 +32,10 @@ class MoveUpHandler: public Subscriber<KeyboardEvent> {
     MapEntity& entity;
 public:
     MoveUpHandler(Map& map, MapEntity& entity): map(map), entity(entity) {}
-    void operator()(KeyboardEvent const&) { map.move_entity(entity, 0, -1); }
+    void operator()(KeyboardEvent const&) {
+        map.move_entity(entity, 0, -1);
+        map.need_update_fov = true;
+    }
 };
 
 class MoveDownHandler: public Subscriber<KeyboardEvent> {
@@ -34,7 +43,10 @@ class MoveDownHandler: public Subscriber<KeyboardEvent> {
     MapEntity& entity;
 public:
     MoveDownHandler(Map& map, MapEntity& entity): map(map), entity(entity) {}
-    void operator()(KeyboardEvent const&) { map.move_entity(entity, 0, 1); }
+    void operator()(KeyboardEvent const&) {
+        map.move_entity(entity, 0, 1);
+        map.need_update_fov = true;
+    }
 };
 
 class ClickHandler: public Subscriber<MouseEvent> {

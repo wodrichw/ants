@@ -6,19 +6,13 @@
 #include <libtcod/context.h>
 #include <libtcod/context_init.h>
 
-#include <cstdlib>
 #include <libtcod.hpp>
 #include <libtcod/color.hpp>
 #include <libtcod/console.hpp>
 #include <libtcod/context.hpp>
 
-#include "entity/ant.hpp"
-#include "entity/building.hpp"
-#include "ui/buttonController.hpp"
-#include "ui/colors.hpp"
 #include "hardware/controller.hpp"
 #include "app/globals.hpp"
-#include "entity/map.hpp"
 #include "ui/ui_handlers.hpp"
 #include "spdlog/spdlog.h"
 
@@ -99,19 +93,22 @@ void Engine::render() {
     // SPDLOG_TRACE("Rendering engine");
     LayoutBox& map_box = *box_manager.map_box;
 
+    entity_manager.compute_fov();
+
     // draw the map
     renderer->renderMap(map_box, entity_manager.map);
 
-    // draw the ants
-    // SPDLOG_TRACE("Rendering {} ants", ants.size());
-    for(auto ant : entity_manager.ants) {
-        renderer->renderAnt(map_box, entity_manager.map, ant->get_data());
-    }
 
     // draw the buildings
     // SPDLOG_TRACE("Rendering {} buildings", buildings.size());
     for(auto building : entity_manager.buildings) {
         renderer->renderBuilding(map_box, *building);
+    }
+
+    // draw the ants
+    // SPDLOG_TRACE("Rendering {} ants", ants.size());
+    for(auto ant : entity_manager.ants) {
+        renderer->renderAnt(map_box, entity_manager.map, ant->get_data());
     }
 
     if(gameStatus == TEXT_EDITOR){
@@ -125,3 +122,4 @@ void Engine::render() {
     renderer->present();
     // SPDLOG_TRACE("Render complete");
 }
+

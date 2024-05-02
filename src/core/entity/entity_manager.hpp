@@ -15,10 +15,26 @@ struct EntityManager {
     MapBuilder builder;
     Map map;
 
-    EntityManager(int map_width, int map_height, ProjectArguments& config)
-        : player(MapData(40, 25, 10, '@', color::white)),
-            builder(map_width, map_height),
-            map(builder, config) {
+    EntityManager(int map_width, int map_height, ProjectArguments& config):
+        player(MapData(40, 25, '@', 10, color::white)),
+        builder(map_width, map_height),
+        map(builder, config)
+    {
+
+        if ( config.default_map_file_path.empty() && builder.get_first_room() ) {
+            // Set the initial nursery and player position for the case 
+            // where the map was randomly generated.
+            RoomRect* first_room = builder.get_first_room();
+            int x1 = first_room->x1, x2 = first_room->x2;
+            int y1 = first_room->y1, y2 = first_room->y2;
+            int center_x = (x1 + x2) / 2, center_y = (y1 + y2) / 2;
+
+            buildings.push_back(new Nursery(center_x-1, center_y-1, 0));
+            player.data.x = center_x, player.data.y = center_y;
+            map.add_building(*buildings[0]);
+            map.add_entity(player);
+        }
+
 
         ants.push_back(&player);
     }
@@ -29,9 +45,12 @@ struct EntityManager {
     }
 
     void compute_fov() {
-        for (MapEntity* ant : ants) {
-            MapData const& data = ant->get_data();
-            map.compute_fov(data.x, data.y, data.fov_radius);
+        if(! map.need_update_fov ) return;
+        map.need_update_fov = false;
+        map.reset_fov();
+        for(auto ant : ants) {
+            MapData& d = ant->get_data();
+            builder.compute_fov(d.x, d.y, d.fov_radius);
         }
         map.update_fov();
     }

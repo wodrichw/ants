@@ -18,10 +18,20 @@ struct Tile {
 class Map {
 public:
     int width, height;
+    bool need_update_fov;
 
-    Map(MapBuilder& builder, ProjectArguments &config) : width(builder.width), height(builder.height), tiles_list(width * height), builder(builder) {
+    Map(MapBuilder& builder, ProjectArguments &config):
+        width(builder.width),
+        height(builder.height),
+        need_update_fov(true),
+        tiles_list(width * height),
+        builder(builder)
+    {
         if (config.default_map_file_path.empty()) {
             RandomMapReader()(builder);
+            RoomRect* first_room = builder.get_first_room();
+            if( !first_room ) return;
+            // add_building(Building &building)
         } else {
             FileMapReader(config.default_map_file_path)(builder);
         }
@@ -79,6 +89,15 @@ public:
 
     void compute_fov(long x, long y, long radius) {
         builder.compute_fov(x, y, radius);
+    }
+
+    void reset_fov() {
+        for(long x = 0; x < width; x++) {
+            for(long y = 0; y < height; y++) {
+                get_tile(x, y).in_fov = false;
+                builder.reset_fov(x, y);
+            }
+        }
     }
 
     void update_fov() {
