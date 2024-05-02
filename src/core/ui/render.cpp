@@ -91,6 +91,50 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map const& map, MapWindow con
             } else {
                 tile.bg = map.is_wall(x, y) || !map.is_explored(x, y) ? darkWall : darkGround;
             }
+
+            // debug chunk id
+
+            // make sure the values are positive for modulus operations
+            long pos_y = y;
+            while (pos_y < 0) pos_y += 8000;
+            long y_mod = pos_y % globals::CHUNK_LENGTH;
+            if (y_mod > 0) continue;
+
+
+            long pos_x = x;
+            while (pos_x < 0) pos_x += 8000;
+            long x_mod = pos_x % globals::CHUNK_LENGTH;
+            if (x_mod > 6) continue;
+
+            long true_x = x - x_mod;
+            long true_y = y - y_mod;
+    
+            long chunk_id = map.get_chunk_idx(true_x, true_y);
+            if (x_mod == 0) {
+                char id = y_mod == 0 ? 'C' : (y_mod == 1 ? 'X' : 'Y');
+                tile.ch = id;
+                continue;
+            }
+            if (x_mod == 1) {
+                tile.ch = ':';
+                continue;
+            }
+    
+            long value = y_mod == 0 ? chunk_id : (y_mod == 1 ? std::abs(true_x) : std::abs(true_y));
+            if (x_mod == 2) {
+                if (value >= 0) continue;
+
+                tile.ch = '-';
+                continue;
+            }
+
+            long power = 1000;
+            for (long i = 3; i < x_mod; ++i) power /= 10;
+    
+            char digit = '0' + (value / power) % 10;
+
+            tile.ch = digit;
+
         }
     }
     // SPDLOG_TRACE("Map rendered");

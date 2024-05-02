@@ -9,6 +9,7 @@
 #include "entity/building.hpp"
 #include "entity/map_entity.hpp"
 #include "entity/map_builder.hpp"
+#include "utils/math.hpp"
 
 using ulong = unsigned long;
 
@@ -181,22 +182,31 @@ public:
         return get_tile(data.x, data.y).building;
     }
 
+    void create_chunk(long x, long y) {
+        long const chunk_id = get_chunk_idx(x, y);
+        auto it = chunks.find(chunk_id);
+        if (it != chunks.end()) {
+            Chunk& chunk = it->second;
+            chunk.update_parity = chunk_update_parity;
+            return;
+        }
+
+        long aligned_x = (x / globals::CHUNK_LENGTH) * globals::CHUNK_LENGTH,
+             aligned_y = (y / globals::CHUNK_LENGTH) * globals::CHUNK_LENGTH;
+
+        SPDLOG_DEBUG("Adding chunk ({}, {}) - id: {}", x, y, chunk_id);
+        chunks.emplace(chunk_id, Chunk(aligned_x, aligned_y, chunk_update_parity));
+    }
+
     void add_missing_chunks(Rect const& rect) {
         SPDLOG_DEBUG("Loading missing chunks: ({}, {}) - ({}, {})", rect.x1, rect.y1, rect.x2, rect.y2);
-        long x1 = rect.x1 - globals::CHUNK_LENGTH, y1 = rect.y1 - globals::CHUNK_LENGTH,
-            x2 = rect.x2 + globals::CHUNK_LENGTH, y2 = rect.y2 + globals::CHUNK_LENGTH;
+        long buffer = 5;
+        long x1 = (rect.x1 / globals::CHUNK_LENGTH - buffer) * globals::CHUNK_LENGTH,
+             y1 = (rect.y1 / globals::CHUNK_LENGTH - buffer) * globals::CHUNK_LENGTH;
+        long x2 = rect.x2 + buffer * globals::CHUNK_LENGTH, y2 = rect.y2 + buffer * globals::CHUNK_LENGTH;
         for (long x = x1; x <= x2; x += globals::CHUNK_LENGTH) {
             for (long y = y1; y <= y2; y += globals::CHUNK_LENGTH) {
-                long const chunk_id = get_chunk_idx(x, y);
-                auto it = chunks.find(chunk_id);
-                if (it != chunks.end()) {
-                    Chunk& chunk = it->second;
-                    chunk.update_parity = chunk_update_parity;
-                    continue;
-                }
-
-                SPDLOG_DEBUG("Adding chunk ({}, {}) - id: {}", x, y, chunk_id);
-                chunks.emplace(chunk_id, Chunk(x, y, chunk_update_parity));
+                create_chunk(x, y);
             }
         }
         SPDLOG_TRACE("Finished loading missing chunks");
@@ -263,9 +273,9 @@ public:
         return true;
     }
 
-private:
     long get_chunk_idx(long x, long y) const {
-        long chunk_x = x / globals::CHUNK_LENGTH, chunk_y = y / globals::CHUNK_LENGTH;
+        long chunk_x = div_floor(x, globals::CHUNK_LENGTH);
+        long chunk_y = div_floor(y, globals::CHUNK_LENGTH);
         long chunk_depth = std::max(std::abs(chunk_x), std::abs(chunk_y));
 
         long offset = chunk_y == -chunk_depth || chunk_x == -chunk_depth ? 0 : 1;
@@ -275,8 +285,10 @@ private:
         // SPDLOG_TRACE("Chunk index for tile ({}, {}) is {}", x, y, chunk_idx);
         return chunk_idx;
     }
+private:
 
     Chunk& get_chunk(long x, long y) {
+        create_chunk(x, y);
         return chunks[get_chunk_idx(x, y)];
     }
 
