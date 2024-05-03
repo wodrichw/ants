@@ -23,7 +23,7 @@ struct EntityManager {
         : player(EntityData(40, 25, '@', 10, color::white)),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
-          map(map_window.border) {
+          map(map_window.border, config.is_walls_enabled) {
         ants.push_back(&player);
 
         MapSectionData section;

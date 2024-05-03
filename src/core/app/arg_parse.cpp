@@ -69,7 +69,8 @@ ProjectArguments::ProjectArguments(int argc, char* argv[])
     : parser(argc, argv),
       default_map_file_path(parser.getString("map_path")),
       is_render(!parser.getBool("no_render", false)),
-      is_debug_graphics(parser.getBool("debug_graphics", false)) {
+      is_debug_graphics(parser.getBool("debug_graphics", false)),
+      is_walls_enabled(!parser.getBool("disable_walls", false)) {
     if(parser.hasKey("help")) {
         help();
         exit(0);

@@ -103,7 +103,8 @@ class Map {
     bool needs_update = true;
     bool chunk_update_parity = false;
 
-    Map(Rect const& border) {
+    Map(Rect const& border, bool is_walls_enabled)
+        : is_walls_enabled(is_walls_enabled) {
         SPDLOG_INFO("Creating map with border: ({}, {}) - {}x{}", border.x1,
                     border.y1, border.w, border.h);
         add_missing_chunks(border);
@@ -173,7 +174,7 @@ class Map {
         long x = data.x, y = data.y;
 
         long new_x = x + dx, new_y = y + dy;
-        if(!can_place(new_x, new_y)) {
+        if(is_walls_enabled && !can_place(new_x, new_y)) {
             SPDLOG_TRACE("Cannot move entity to ({}, {})", new_x, new_y);
             return false;
         }
@@ -345,4 +346,5 @@ class Map {
     }
 
     Chunks chunks;
+    bool is_walls_enabled;
 };
