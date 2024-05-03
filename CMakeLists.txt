@@ -4,7 +4,7 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 # Set the default toolchain to use a Vcpkg submodule.
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/lib/vcpkg/scripts/buildsystems/vcpkg.cmake")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 project (ants C CXX)
 
@@ -59,19 +59,23 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(OPT ON)
     set(DBG OFF)
     set(LOG OFF)
+    set(DBG_GRAPHICS OFF)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Building in Debug mode")
     set(OPT OFF)
     set(DBG ON)
+    set(DBG_GRAPHICS ON)
 elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     message(STATUS "Building in Release with Debug Info mode")
     set(OPT ON)
     set(DBG ON)
+    set(DBG_GRAPHICS OFF)
 elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     message(STATUS "Building in Minimum Size Release mode")
     set(OPT ON)
     set(DBG OFF)
     set(LOG OFF)
+    set(DBG_GRAPHICS OFF)
 endif()
 
 # Check if the user wants to enable optimization flags
@@ -89,6 +93,11 @@ option(DBG "Enable debug flags" OFF)
 if(DBG)
     message(STATUS "Enabling debug flags")
     add_compile_options("-g")
+endif()
+
+if (DBG_GRAPHICS)
+    message(STATUS "Enabling debug graphics")
+    add_compile_options("-DDBG_GRAPHICS")
 endif()
 
 # Set the compile time log level for the project

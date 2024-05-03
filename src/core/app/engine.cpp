@@ -11,23 +11,23 @@
 #include <libtcod/console.hpp>
 #include <libtcod/context.hpp>
 
-#include "hardware/controller.hpp"
 #include "app/globals.hpp"
-#include "ui/ui_handlers.hpp"
 #include "spdlog/spdlog.h"
 
-Engine::Engine(ProjectArguments& config) : 
-        box_manager(globals::COLS, globals::ROWS),
-        editor(),
-        renderer(config.is_render ? static_cast<Renderer*>(new tcodRenderer()) : static_cast<Renderer*>(new NoneRenderer())),
-        assembler(),
-        entity_manager(box_manager.map_box->get_width(), box_manager.map_box->get_height(), config),
-        root_event_system(),
-        primary_mode(*box_manager.map_box, entity_manager, *renderer, editor),
-        editor_mode(*renderer, *box_manager.text_editor_content_box, editor, entity_manager.ants),
-        state(&primary_mode, &editor_mode)
-        {
-
+Engine::Engine(ProjectArguments& config)
+    : box_manager(globals::COLS, globals::ROWS),
+      editor(),
+      renderer(config.is_render ? static_cast<Renderer*>(new tcodRenderer(
+                                      config.is_debug_graphics))
+                                : static_cast<Renderer*>(new NoneRenderer())),
+      assembler(),
+      entity_manager(box_manager.map_box->get_width(),
+                     box_manager.map_box->get_height(), config),
+      root_event_system(),
+      primary_mode(*box_manager.map_box, entity_manager, *renderer, editor),
+      editor_mode(*renderer, *box_manager.text_editor_content_box, editor,
+                  entity_manager.ants),
+      state(&primary_mode, &editor_mode) {
     SPDLOG_DEBUG("Setting game status to STARTUP");
     add_listeners();
     SPDLOG_DEBUG("Engine initialized");
@@ -39,7 +39,8 @@ Engine::~Engine() {
 }
 
 void Engine::add_listeners() {
-    root_event_system.keyboard_events.add(SLASH_KEY_EVENT, new TextEditorTriggerHandler(state));
+    root_event_system.keyboard_events.add(SLASH_KEY_EVENT,
+                                          new TextEditorTriggerHandler(state));
 }
 
 void Engine::update() {
@@ -49,7 +50,7 @@ void Engine::update() {
     MouseEvent mouse_event;
     KeyboardEvent keyboad_event;
     CharKeyboardEvent char_keyboad_event;
-    
+
     while(SDL_PollEvent(&event)) {
         switch(event.type) {
             case SDL_QUIT:
@@ -68,7 +69,8 @@ void Engine::update() {
                 state.get_keyboard_publisher().notify(keyboad_event);
 
                 get_char_keyboard_event(event.key.keysym, char_keyboad_event);
-                root_event_system.char_keyboard_events.notify(char_keyboad_event);
+                root_event_system.char_keyboard_events.notify(
+                    char_keyboad_event);
                 state.get_char_keyboard_publisher().notify(char_keyboad_event);
                 break;
         }
@@ -79,10 +81,8 @@ void Engine::update() {
 }
 
 void Engine::render() {
-
     state.render();
     renderer->present();
 
     // SPDLOG_TRACE("Render complete");
 }
-

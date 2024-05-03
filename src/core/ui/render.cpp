@@ -6,7 +6,7 @@
 
 #include "app/globals.hpp"
 #include "spdlog/spdlog.h"
-#include "ui/text_editor_handler.hpp"
+#include "ui/debug_graphics.hpp"
 
 struct Box {
     ulong x, y, w, h;
@@ -17,48 +17,49 @@ struct Box {
         // w, h);
     }
 
-    void populateChar(long x_idx, long y_idx, char ch) {
+    void populate_char(long x_idx, long y_idx, char ch) {
         asciiGrid[y_idx + y][x + x_idx] = ch;
         // SPDLOG_TRACE("Populated char {} at ({}, {})", ch, x_idx, y_idx);
     }
 
-    void checkInputText(const std::vector<std::string> &text) {
+    void check_input_text(const std::vector<std::string> &text) {
         // SPDLOG_TRACE("Checking input text");
+        (void)text;
         assert(text.size() == h - 2);
-        bool checkStrLengths = std::all_of(
+        assert(std::all_of(
             text.begin(), text.end(),
-            [this](const std::string &str) { return str.length() == w - 2; });
-        assert(checkStrLengths);
+            [this](const std::string &str) { return str.length() == w - 2; }));
     }
 
     void populate(const std::vector<std::string> &text) {
         // SPDLOG_TRACE("Populating box with {} lines", text.size());
-        checkInputText(text);
+        check_input_text(text);
 
         // render corners
         // SPDLOG_DEBUG("Rendering corners");
-        populateChar(0, 0, '+');
-        populateChar(0, h - 1, '+');
-        populateChar(w - 1, 0, '+');
-        populateChar(w - 1, h - 1, '+');
+        populate_char(0, 0, '+');
+        populate_char(0, h - 1, '+');
+        populate_char(w - 1, 0, '+');
+        populate_char(w - 1, h - 1, '+');
         for(ulong i = 1; i < h - 1; ++i) {
-            populateChar(0, i, '|');
-            populateChar(w - 1, i, '|');
+            populate_char(0, i, '|');
+            populate_char(w - 1, i, '|');
         }
         for(ulong i = 1; i < w - 1; ++i) {
-            populateChar(i, 0, '-');
-            populateChar(i, h - 1, '-');
+            populate_char(i, 0, '-');
+            populate_char(i, h - 1, '-');
         }
 
         for(ulong i = 1; i < h - 1; ++i) {
             for(ulong j = 1; j < w - 1; ++j) {
-                populateChar(j, i, text[i - 1][j - 1]);
+                populate_char(j, i, text[i - 1][j - 1]);
             }
         }
     }
 };
 
-tcodRenderer::tcodRenderer() {
+tcodRenderer::tcodRenderer(bool is_debug_graphics)
+    : is_debug_graphics(is_debug_graphics) {
     SPDLOG_DEBUG("Creating tcod renderer");
     auto params = TCOD_ContextParams();
     params.columns = globals::COLS, params.rows = globals::ROWS,
@@ -70,10 +71,12 @@ tcodRenderer::tcodRenderer() {
     context = tcod::Context(params);
     root_console = context.new_console(globals::COLS, globals::ROWS);
     SPDLOG_TRACE("Created root console - completed creating tcod renderer");
+
+    (void)this->is_debug_graphics;
 }
 
-void tcodRenderer::renderMap(LayoutBox const &box, Map const &map,
-                             MapWindow const &window) {
+void tcodRenderer::render_map(LayoutBox const &box, Map const &map,
+                              MapWindow const &window) {
     // SPDLOG_TRACE("Rendering map");
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA darkGround = color::dark_grey;
@@ -81,7 +84,6 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map const &map,
     TCOD_ColorRGBA lightGround = color::grey;
 
     // SPDLOG_TRACE("Rendering map with border ({}, {}) - {}x{}",
-    // window.border.x1, window.border.y1, window.border.w, window.border.h);
     for(long local_x = 0; local_x < window.border.w; ++local_x) {
         for(long local_y = 0; local_y < window.border.h; ++local_y) {
             long x = local_x + window.border.x1;
@@ -89,7 +91,7 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map const &map,
 
             // SPDLOG_TRACE("Rendering tile at ({}, {}) - local ({}, {})", x, y,
             // local_x, local_y);
-            auto &tile = clearCh(box, local_x, local_y);
+            auto &tile = clear_tile(box, local_x, local_y);
             if(map.in_fov(x, y)) {
                 tile.bg = map.is_wall(x, y) ? lightWall : lightGround;
             } else {
@@ -97,55 +99,21 @@ void tcodRenderer::renderMap(LayoutBox const &box, Map const &map,
                               ? darkWall
                               : darkGround;
             }
-
-            // debug chunk id
-
-            // // make sure the values are positive for modulus operations
-            // long pos_y = y;
-            // while (pos_y < 0) pos_y += 8000;
-            // long y_mod = pos_y % globals::CHUNK_LENGTH;
-            // if (y_mod > 2) continue;
-
-            // long pos_x = x;
-            // while (pos_x < 0) pos_x += 8000;
-            // long x_mod = pos_x % globals::CHUNK_LENGTH;
-            // if (x_mod > 6) continue;
-
-            // long true_x = x - x_mod;
-            // long true_y = y - y_mod;
-
-            // long chunk_id = map.get_chunk_idx(true_x, true_y);
-            // if (x_mod == 0) {
-            //     char id = y_mod == 0 ? 'C' : (y_mod == 1 ? 'X' : 'Y');
-            //     tile.ch = id;
-            //     continue;
-            // }
-            // if (x_mod == 1) {
-            //     tile.ch = ':';
-            //     continue;
-            // }
-
-            // long value = y_mod == 0 ? chunk_id : (y_mod == 1 ?
-            // std::abs(true_x) : std::abs(true_y)); if (x_mod == 2) {
-            //     if (value >= 0) continue;
-
-            //     tile.ch = '-';
-            //     continue;
-            // }
-
-            // long power = 1000;
-            // for (long i = 3; i < x_mod; ++i) power /= 10;
-
-            // char digit = '0' + (value / power) % 10;
-
-            // tile.ch = digit;
         }
     }
+    // render the debug info on the screen
+    DEBUG_CHUNKS(
+        box, map, window,
+        [this](LayoutBox const &box, long x, long y) -> TCOD_ConsoleTile & {
+            return this->get_tile(box, x, y);
+        },
+        is_debug_graphics);
+
     // SPDLOG_TRACE("Map rendered");
 }
 
-void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, EntityData &a,
-                             MapWindow const &window) {
+void tcodRenderer::render_ant(LayoutBox const &box, Map &map, EntityData &a,
+                              MapWindow const &window) {
     // SPDLOG_TRACE("Rendering ant at ({}, {})", a.x, a.y);
     long x, y;
     bool is_valid;
@@ -171,7 +139,7 @@ void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, EntityData &a,
             return;
         }
 
-        clearCh(box, last_x, last_y);
+        clear_tile(box, last_x, last_y);
     }
 
     if(map.in_fov(a.x, a.y)) {
@@ -187,8 +155,8 @@ void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, EntityData &a,
     // SPDLOG_TRACE("EntityData rendered");
 }
 
-void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b,
-                                  MapWindow const &window) {
+void tcodRenderer::render_building(LayoutBox const &box, Building &b,
+                                   MapWindow const &window) {
     // SPDLOG_TRACE("Rendering building at ({}, {})", b.x, b.y);
     for(long xi = b.x; xi < b.x + b.w; ++xi) {
         for(long yi = b.y; yi < b.y + b.h; ++yi) {
@@ -204,9 +172,9 @@ void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b,
     // SPDLOG_TRACE("Building rendered");
 }
 
-void tcodRenderer::renderTextEditor(LayoutBox const &box,
-                                    TextEditor const &editor,
-                                    size_t ant_count) {
+void tcodRenderer::render_text_editor(LayoutBox const &box,
+                                      TextEditor const &editor,
+                                      size_t ant_count) {
     // SPDLOG_TRACE("Rendering text editor");
     std::vector<std::string> asciiGrid(globals::TEXTBOXHEIGHT + 2);
     for(int i = 0; i < globals::TEXTBOXHEIGHT + 2; ++i) {
@@ -253,7 +221,7 @@ void tcodRenderer::renderTextEditor(LayoutBox const &box,
 // TODO: display potential key presses that could be helpful.
 // For instance, when standing in a nursery, display keys to produce new
 // workers. This could be replaced with something else in the future.
-void tcodRenderer::renderHelpBoxes(LayoutBox const &) {}
+void tcodRenderer::render_help_boxes(LayoutBox const &) {}
 
 void tcodRenderer::present() {
     // SPDLOG_TRACE("Presenting tcod context");
@@ -269,7 +237,8 @@ void tcodRenderer::pixel_to_tile_coordinates(int pixel_x, int pixel_y,
     tile_y = tile[1];
 }
 
-TCOD_ConsoleTile &tcodRenderer::clearCh(LayoutBox const &box, long x, long y) {
+TCOD_ConsoleTile &tcodRenderer::clear_tile(LayoutBox const &box, long x,
+                                           long y) {
     // SPDLOG_TRACE("Clearing tile at ({}, {})", x, y);
     auto &tile = get_tile(box, x, y);
     tile.ch = ' ';
@@ -292,86 +261,4 @@ const std::array<int, 4> tcodRenderer::get_rect(LayoutBox const &box, long x,
     long abs_x = 0, abs_y = 0;
     box.get_abs_pos(x, y, abs_x, abs_y);
     return {(int)abs_x, (int)abs_y, w, h};
-}
-
-LayoutBox::LayoutBox() : xp(0), yp(0), wp(0), hp(0), x(0), y(0), w(0), h(0) {
-    SPDLOG_TRACE("Empty LayoutBox created");
-}
-LayoutBox::LayoutBox(long w, long h)
-    : xp(0), yp(0), wp(w), hp(h), x(0), y(0), w(w), h(h) {
-    SPDLOG_TRACE("LayoutBox created with dimensions {}x{}", w, h);
-}
-LayoutBox::LayoutBox(long x, long y, long w, long h)
-    : xp(x), yp(y), wp(w), hp(h), x(x), y(y), w(w), h(h) {
-    SPDLOG_TRACE("LayoutBox created at ({}, {}) with dimensions {}x{}", x, y, w,
-                 h);
-}
-
-LayoutBox::~LayoutBox() {
-    SPDLOG_DEBUG("Destructing LayoutBox");
-    if(children.first) delete children.first;
-    if(children.second) delete children.second;
-    SPDLOG_TRACE("LayoutBox destructed");
-}
-void LayoutBox::get_abs_pos(long x0, long y0, long &x1, long &y1) const {
-    x1 = x + x0;
-    y1 = y + y0;
-}
-
-long LayoutBox::get_width() const { return this->w; }
-long LayoutBox::get_height() const { return this->h; }
-std::pair<LayoutBox *, LayoutBox *> &LayoutBox::split(ulong percentage,
-                                                      Orientation orientation) {
-    if(orientation == Orientation::HORIZONTAL) {
-        SPDLOG_DEBUG("Splitting box horizontally at {}%", percentage);
-        ulong first_h = h * percentage / 100;
-        ulong second_h = h - first_h;
-        children.first = new LayoutBox(x, y, w, first_h);
-        children.second = new LayoutBox(x, y + first_h, w, second_h);
-
-    } else {
-        SPDLOG_DEBUG("Splitting box vertically at {}%", percentage);
-        ulong first_w = w * percentage / 100;
-        ulong second_w = w - first_w;
-        children.first = new LayoutBox(x, y, first_w, h);
-        children.second = new LayoutBox(x + first_w, y, second_w, h);
-    }
-    SPDLOG_TRACE("Layout box splitting completed");
-    return children;
-}
-
-BoxManager::BoxManager(ulong w, ulong h) : main(w, h), text_editor_root(w, h) {
-    SPDLOG_DEBUG("Creating BoxManager");
-    ulong map_split = 80;
-
-    SPDLOG_DEBUG("Splitting main box to create map and sidebar");
-    std::tie(map_box, sidebar_box) =
-        main.split(map_split, LayoutBox::Orientation::VERTICAL);
-
-    LayoutBox *editor_right_menu = nullptr, *editor_empty = nullptr;
-
-    SPDLOG_DEBUG("Splitting sidebar to create text editor and registers");
-    std::tie(text_editor_content_box, editor_right_menu) =
-        text_editor_root.split(map_split, LayoutBox::Orientation::VERTICAL);
-
-    SPDLOG_DEBUG(
-        "Splitting editor right menu to create text editor and registers");
-    std::tie(text_editor_registers_box, editor_empty) =
-        editor_right_menu->split(30, LayoutBox::Orientation::HORIZONTAL);
-
-    SPDLOG_DEBUG("Centering text editor content box");
-    text_editor_content_box->center(
-        globals::TEXTBOXWIDTH + globals::REGBOXWIDTH,
-        globals::TEXTBOXHEIGHT + globals::REGBOXHEIGHT);
-
-    SPDLOG_TRACE("BoxManager created");
-}
-
-void LayoutBox::center(ulong new_width, ulong new_height) {
-    x = xp + (wp - new_width) / 2;
-    y = yp + (hp - new_height) / 2;
-    w = new_width;
-    h = new_height;
-    SPDLOG_TRACE("Centered box at ({}, {}) with new dimensions {}x{}", x, y, w,
-                 h);
 }
