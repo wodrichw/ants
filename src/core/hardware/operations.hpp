@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
+class Packer;
+class Unpacker;
+
 class Operations {
     std::vector<std::function<bool()>> _ops;
     std::unordered_map<std::string, size_t> label_map;
@@ -22,12 +25,7 @@ class Operations {
     const std::function<bool()>& operator[](size_t idx);
     size_t size();
     void handleClockPulse();
-};
 
-struct ParserStatus {
-    bool p_err;
-    std::string err_msg;
-    void error(const std::string& err_msg);
-    ParserStatus();
-    ParserStatus(bool p_err, std::string err_msg);
+    friend Packer& operator<<(Packer& p, Operations const& obj);
+    friend Unpacker& operator>>(Unpacker& p, Operations& obj);
 };

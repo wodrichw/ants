@@ -5,7 +5,7 @@
 
 #include "app/globals.hpp"
 #include "entity/building.hpp"
-#include "entity/map_entity.hpp"
+#include "entity/entity_data.hpp"
 #include "entity/map_section_data.hpp"
 #include "spdlog/spdlog.h"
 #include "utils/math.hpp"

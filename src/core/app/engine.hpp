@@ -18,7 +18,7 @@ class Engine {
     TextEditor editor;
 
     Renderer* renderer;
-    ParserCommandsAssembler assembler;
+    CommandMap assembler;
     EntityManager entity_manager;
     EventSystem root_event_system;
 

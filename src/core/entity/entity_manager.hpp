@@ -146,7 +146,7 @@ struct EntityManager {
         SPDLOG_DEBUG("Selected building at ({}, {})", new_x, new_y);
 
         SPDLOG_DEBUG("Creating worker controller");
-        ParserCommandsAssembler assembler;
+        CommandMap assembler;
         Worker* new_ant =
             new Worker(EntityData(new_x, new_y, 'w', 10, color::light_green));
         Worker_Controller* w = new Worker_Controller(assembler, new_ant->cpu,

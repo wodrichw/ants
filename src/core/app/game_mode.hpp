@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "entity/entity_manager.hpp"
-#include "entity/map_entity.hpp"
+#include "entity/entity_data.hpp"
 #include "ui/event_system.hpp"
 #include "ui/render.hpp"
 #include "ui/text_editor_handler.hpp"

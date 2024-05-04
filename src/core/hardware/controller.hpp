@@ -3,7 +3,9 @@
 #include <string>
 #include <vector>
 
+#include "hardware/parse_args.hpp"
 #include "hardware/parser.hpp"
+#include "hardware/operations.hpp"
 
 class ClockController {
    public:
@@ -18,7 +20,7 @@ class Worker_Controller : public ClockController {
     Parser parser;
 
     Worker_Controller(
-        ParserCommandsAssembler& commands_assember,
+        CommandMap& command_map,
         DualRegisters& registers, MapEntity& entity, Map& map,
         std::vector<std::string>& program_code);
     ~Worker_Controller();

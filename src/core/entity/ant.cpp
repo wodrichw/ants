@@ -4,7 +4,7 @@
 #include <optional>
 
 #include "ui/colors.hpp"
-#include "entity/map_entity.hpp"
+#include "entity/entity_data.hpp"
 #include "spdlog/spdlog.h"
 
 Player::Player(EntityData const& data)
@@ -16,12 +16,28 @@ EntityData& Player::get_data() {
     return data;
 }
 
+Packer& operator<<(Packer& p, Player const& obj) {
+    return p << obj.data;
+}
+
+Unpacker& operator>>(Unpacker& p, Player& obj) {
+    return p >> obj.data;
+}
+
 Worker::Worker(EntityData const& data)
     : data(data), operations(), cpu() {
 }
 
 EntityData& Worker::get_data() {
     return data;
+}
+
+Packer& operator<<(Packer& p, Worker const& obj) {
+    return p << obj.data << obj.operations << obj.cpu;
+}
+
+Unpacker& operator>>(Unpacker& p, Worker& obj) {
+    return p >> obj.data >> obj.operations >> obj.cpu;
 }
 
 void toggle_color(tcod::ColorRGB& col) {

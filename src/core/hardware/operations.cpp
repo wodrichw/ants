@@ -3,7 +3,7 @@
 #include <string>
 
 #include "app/globals.hpp"
-#include "entity/map_entity.hpp"
+#include "entity/entity_data.hpp"
 #include "entity/map.hpp"
 #include "spdlog/spdlog.h"
 
@@ -55,15 +55,10 @@ void Operations::handleClockPulse() {
     SPDLOG_TRACE("Clock pulse handled for operations");
 }
 
-ParserStatus::ParserStatus() : p_err(false), err_msg("") {
-    SPDLOG_DEBUG("ParserStatus created");
+Packer& operator<<(Packer& p, Operations const& obj) {
+    return p; 
 }
-ParserStatus::ParserStatus(bool p_err, std::string err_msg)
-    : p_err(p_err), err_msg(err_msg) {
-        SPDLOG_DEBUG("ParserStatus created with error message");
-    }
-void ParserStatus::error(const std::string& err_msg) {
-    SPDLOG_ERROR("ParserStatus error: {}", err_msg);
-    this->p_err = true;
-    this->err_msg = err_msg;
+
+Unpacker& operator>>(Unpacker& p, Operations& obj) {
+    return p;
 }

@@ -4,8 +4,8 @@
 
 #include "app/globals.hpp"
 #include "entity/map.hpp"
-#include "entity/map_entity.hpp"
-struct NOP {
+#include "entity/entity_data.hpp"
+struct NoOP {
     bool operator()();
 };
 

@@ -1,7 +1,7 @@
 #include "hardware/op_def.hpp"
 
 // NOP //////////////////////////////////////////
-bool NOP::operator()() {
+bool NoOP::operator()() {
     SPDLOG_TRACE("NOP operation executed");
     return false;
 }
