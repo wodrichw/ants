@@ -14,6 +14,7 @@
 #include "ui/render.hpp"
 #include "ui/text_editor_handler.hpp"
 #include "ui/ui_handlers.hpp"
+#include "hardware/hardware_manager.hpp"
 
 class Mode {
    public:
@@ -21,6 +22,8 @@ class Mode {
     virtual bool is_primary() = 0;
     virtual void render() = 0;
     virtual void update() = 0;
+    virtual void on_start() = 0;
+    virtual void on_end() = 0;
     virtual EventPublisher<MouseEventType, MouseEvent>&
     get_mouse_publisher() = 0;
     virtual EventPublisher<KeyboardEventType, KeyboardEvent>&
@@ -30,16 +33,15 @@ class Mode {
 };
 
 class EditorMode : public Mode {
+    EventSystem event_system;
     Renderer& renderer;
     LayoutBox& box;
-    TextEditor& editor;
+    TextEditor editor;
     std::vector<MapEntity*> const& ants;
-    EventSystem event_system;
 
    public:
-    EditorMode(Renderer& renderer, LayoutBox& box, TextEditor& editor,
-               std::vector<MapEntity*> const& ants)
-        : renderer(renderer), box(box), editor(editor), ants(ants) {
+    EditorMode(Renderer& renderer, LayoutBox& box, SoftwareManager& software_manager, std::vector<MapEntity*> const& ants)
+        : renderer(renderer), box(box), editor(software_manager), ants(ants) {
         // text editor listeners
         event_system.keyboard_events.add(RETURN_KEY_EVENT,
                                          new NewLineHandler(editor));
@@ -61,6 +63,9 @@ class EditorMode : public Mode {
 
     bool is_editor() override { return true; }
     bool is_primary() override { return false; }
+
+    void on_start() override { editor.open(); }
+    void on_end() override { editor.close(); }
 
     void render() override {
         renderer.render_text_editor(box, editor, ants.size());
@@ -86,19 +91,19 @@ class EditorMode : public Mode {
 class PrimaryMode : public Mode {
     EventSystem event_system;
     LayoutBox& box;
+    HardwareManager hardware_manager;
     EntityManager& entity_manager;
     Renderer& renderer;
-    std::vector<ClockController*> clockControllers;
     ulong clock_timeout_1000ms;
 
    public:
-    PrimaryMode(LayoutBox& box, EntityManager& entity_manager,
-                Renderer& renderer, TextEditor& editor)
+    PrimaryMode(LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer)
         : box(box),
+          hardware_manager(command_map),
           entity_manager(entity_manager),
           renderer(renderer),
-          clockControllers(),
           clock_timeout_1000ms(SDL_GetTicks64()) {
+
         event_system.keyboard_events.add(
             LEFT_KEY_EVENT,
             new MoveLeftHandler(entity_manager.map, entity_manager.player));
@@ -126,7 +131,7 @@ class PrimaryMode : public Mode {
             new MoveDownHandler(entity_manager.map, entity_manager.player));
         event_system.keyboard_events.add(
             A_KEY_EVENT,
-            new CreateAntHandler(entity_manager, clockControllers, editor));
+            new CreateAntHandler(entity_manager, hardware_manager, software_manager));
 
         // click listeners
         event_system.mouse_events.add(
@@ -135,6 +140,9 @@ class PrimaryMode : public Mode {
 
     bool is_editor() override { return false; }
     bool is_primary() override { return true; }
+
+    void on_start() override {}
+    void on_end() override {}
 
     void render() override {
         // SPDLOG_TRACE("Rendering engine");
@@ -162,7 +170,7 @@ class PrimaryMode : public Mode {
         // SPDLOG_TRACE("Checking for clock pulse");
         if(clock_timeout_1000ms < SDL_GetTicks64()) {
             // SPDLOG_TRACE("Detected clock pulse");
-            for(ClockController* c : clockControllers) {
+            for(ClockController* c : hardware_manager.controllers) {
                 c->handleClockPulse();
             }
             clock_timeout_1000ms += 1000;

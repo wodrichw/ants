@@ -1,26 +1,30 @@
 #pragma once
 
 #include <sstream>
+#include <string>
+#include <vector>
 
-#include "hardware/parser.hpp"
+#include "hardware/label_map.hpp"
+#include "utils/status.hpp"
 
-struct DualRegisters;
-struct MapEntity;
-class Map;
-class Operations;
+using uchar = unsigned char;
 
-struct ParserArgs {
-    DualRegisters& registers;
-    MapEntity& entity;
-    Map& map;
-    Operations& operations;
-    ParserArgs(DualRegisters& registers, MapEntity& entity, Map& map,
-               Operations& operations): registers(registers), entity(entity),
-                map(map), operations(operations) {}
+struct ParseArgs {
+    ParseArgs(std::string const& line, std::vector<uchar>& code, LabelMap& labels,
+        Status& status) : code_stream(line), code(code), labels(labels), status(status) {}
+
+    std::istringstream code_stream;
+    std::vector<uchar>& code;
+    LabelMap const& labels;
+    Status& status;
 };
 
-struct ParseLineArgs {
-    std::istringstream &code_stream;
-    ParserStatus &status;
-    ParserArgs& args;
+struct DeparseArgs {
+    DeparseArgs(std::vector<uchar>::const_iterator code_it, LabelMap const& labels, std::vector<std::string>& lines, Status& status):
+        code_it(code_it), labels(labels), lines(lines), status(status) {}
+
+    std::vector<uchar>::const_iterator code_it;
+    LabelMap const& labels;
+    std::vector<std::string>& lines;
+    Status& status;
 };

@@ -16,6 +16,7 @@ struct EntityData {
     tcod::ColorRGB col;
     RenderPosition last_rendered_pos;
 
+    EntityData(char ch, long fov_radius, tcod::ColorRGB col);
     EntityData(long x, long y, char ch, long fov_radius, tcod::ColorRGB col);
     ~EntityData()=default;
 

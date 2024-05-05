@@ -1,3 +1,5 @@
+#pragma once
+
 #include "app/arg_parse.hpp"
 #include "app/engine.hpp"
 

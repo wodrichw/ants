@@ -2,7 +2,9 @@
 #include "app/game_mode.hpp"
 
 GameState::GameState(Mode* primary_mode, Mode* editor_mode): mode(primary_mode),
-        primary_mode(primary_mode), editor_mode(editor_mode) {}
+        primary_mode(primary_mode), editor_mode(editor_mode) {
+            mode->on_start();
+    }
 
 bool GameState::is_editor() { return mode->is_editor(); }
 bool GameState::is_primary() { return mode->is_primary(); }
@@ -11,11 +13,13 @@ void GameState::render() { mode->render(); }
 void GameState::update() { mode->update(); }
 
 void GameState::toggle_editor() {
+    mode->on_end();
     if (mode->is_editor()) {
         mode = primary_mode;
     } else {
         mode = editor_mode;
     }
+    mode->on_start();
 }
 
  EventPublisher<MouseEventType, MouseEvent>& GameState::get_mouse_publisher() {

@@ -25,7 +25,7 @@ Unpacker& operator>>(Unpacker& p, Player& obj) {
 }
 
 Worker::Worker(EntityData const& data)
-    : data(data), operations(), cpu() {
+    : data(data), program_executor(), cpu() {
 }
 
 EntityData& Worker::get_data() {
@@ -33,11 +33,11 @@ EntityData& Worker::get_data() {
 }
 
 Packer& operator<<(Packer& p, Worker const& obj) {
-    return p << obj.data << obj.operations << obj.cpu;
+    return p << obj.data << obj.program_executor << obj.cpu;
 }
 
 Unpacker& operator>>(Unpacker& p, Worker& obj) {
-    return p >> obj.data >> obj.operations >> obj.cpu;
+    return p >> obj.data >> obj.program_executor >> obj.cpu;
 }
 
 void toggle_color(tcod::ColorRGB& col) {

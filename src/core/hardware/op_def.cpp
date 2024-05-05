@@ -20,7 +20,7 @@ bool LoadConstantOp::operator()() {
 }
 
 // MOVE /////////////////////////////////////////
-MoveOp::MoveOp(Map& map, MapEntity& entity, long dx, long dy)
+MoveOp::MoveOp(Map& map, MapEntity& entity, schar dx, schar dy)
     : map(map), entity(entity), dx(dx), dy(dy) {
         SPDLOG_DEBUG("MoveOp created");
         SPDLOG_TRACE("dx: {}, dy: {}", dx, dy);
@@ -104,7 +104,7 @@ bool DecOp::operator()() {
 }
 
 // JMP /////////////////////////////////////////
-JmpOp::JmpOp(size_t& op_idx, size_t new_idx)
+JmpOp::JmpOp(ushort& op_idx, ushort new_idx)
     : op_idx(op_idx), new_idx(new_idx - 1) {
         SPDLOG_DEBUG("JmpOp created - jumping to: {}", new_idx);
     }
@@ -117,7 +117,7 @@ bool JmpOp::operator()() {
 }
 
 // JNZ /////////////////////////////////////////
-JnzOp::JnzOp(size_t& op_idx, size_t new_idx, bool const& zero_flag)
+JnzOp::JnzOp(ushort& op_idx, ushort new_idx, bool const& zero_flag)
     : op_idx(op_idx), new_idx(new_idx - 1), zero_flag(zero_flag) {
         SPDLOG_DEBUG("JnzOp created - jumping to: {}", new_idx);
     }

@@ -4,8 +4,12 @@
 #include <string>
 
 #include "app/globals.hpp"
+#include "utils/status.hpp"
 
-struct ParserStatus;
+using uchar = unsigned char;
+using schar = signed char;
+
+struct Status;
 
 // Parser helpers
 namespace TokenParser {
@@ -17,15 +21,15 @@ namespace TokenParser {
     // A -> 0
     // B -> 1
     // ...
-    cpu_word_size register_idx(std::istringstream &ss);
+    uchar register_idx(std::istringstream &ss);
 
     // Parse direction keyword to a dx and dy pair
-    void direction(std::istringstream &ss, long &dx, long &dy,
-                   ParserStatus& status);
+    void direction(std::istringstream &ss, schar &dx, schar &dy,
+                   Status& status);
 
-    std::string get_label(std::istringstream &ss, ParserStatus& status);
+    std::string get_label(std::istringstream &ss, Status& status);
 
     // Check that no more arguments exist to be parsed.
-    void terminate(std::istringstream &ss, ParserStatus& status,
+    void terminate(std::istringstream &ss, Status& status,
                    const std::string &err_msg);
 }  // namespace TokenParser

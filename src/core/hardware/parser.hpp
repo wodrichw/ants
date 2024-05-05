@@ -6,33 +6,24 @@
 
 #include "app/globals.hpp"
 #include "hardware/command_config.hpp"
+#include "utils/status.hpp"
 
 struct ParserArgs;
-class Operations;
-
-struct ParserStatus {
-    bool p_err;
-    std::string err_msg;
-    void error(const std::string& err_msg);
-    ParserStatus();
-    ParserStatus(bool p_err, std::string err_msg);
-};
+struct ProgramExecutor;
+struct MachineCode;
+class LabelMap;
 
 class Parser {
-   public:
-    ParserStatus status;
+    public:
 
-   private:
-    void parse(std::vector<std::string> &program_code, ParserArgs &args);
-    bool handle_label(Operations &operations, std::string const &word);
-    void assemble_commands(CommandMap& command_map,
-        std::unordered_set<Command> command_set);
+    Parser(CommandMap const&);
+    void parse(std::vector<std::string> const&, MachineCode&, Status&);
+    void deparse(MachineCode const&, std::vector<std::string>&, Status&);
 
-   public:
-    std::unordered_map<std::string, std::function<void(ParseLineArgs &parse_line)>>
-        commands;
-    Parser(CommandMap &command_map,
-           std::unordered_set<Command> command_set,
-           std::vector<std::string> &program_code,
-           ParserArgs &args);
-};
+    private:
+
+    bool handle_label(LabelMap&, std::string const&, ushort, Status&);
+    void preprocess(std::vector<std::string> const&, LabelMap&, std::vector<std::string>&, Status&);
+
+    CommandMap const& command_map;
+ };

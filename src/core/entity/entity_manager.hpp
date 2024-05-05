@@ -10,6 +10,8 @@
 #include "entity/map_section_data.hpp"
 #include "entity/map_window.hpp"
 #include "hardware/controller.hpp"
+#include "hardware/software_manager.hpp"
+#include "hardware/hardware_manager.hpp"
 #include "ui/colors.hpp"
 
 struct EntityManager {
@@ -18,12 +20,15 @@ struct EntityManager {
     std::vector<Building*> buildings;
     MapWindow map_window;
     Map map;
+    Worker* next_worker;
 
     EntityManager(int map_width, int map_height, ProjectArguments& config)
         : player(EntityData(40, 25, '@', 10, color::white)),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
-          map(map_window.border, config.is_walls_enabled) {
+          map(map_window.border, config.is_walls_enabled),
+          next_worker(create_worker_data()) {
+
         ants.push_back(&player);
 
         MapSectionData section;
@@ -60,6 +65,10 @@ struct EntityManager {
         SPDLOG_DEBUG("Destroying EntityManager");
         for(auto ant : ants) delete ant;
         for(auto building : buildings) delete building;
+
+        delete next_worker;
+        next_worker = nullptr;
+
         SPDLOG_TRACE("Destroyed ants and buildings");
     }
 
@@ -89,7 +98,6 @@ struct EntityManager {
 
     void set_window_tiles() {
         SPDLOG_TRACE("Setting window tiles");
-        long wall_count = 0, floor_count = 0;
         for(long local_x = 0; local_x < map_window.border.w; local_x++) {
             for(long local_y = 0; local_y < map_window.border.h; local_y++) {
                 long x = local_x + map_window.border.x1,
@@ -99,15 +107,11 @@ struct EntityManager {
 
                 if(map.is_wall(x, y)) {
                     map_window.set_wall(x, y);
-                    wall_count++;
                 } else {
                     map_window.set_floor(x, y);
-                    floor_count++;
                 }
             }
         }
-        SPDLOG_TRACE("Window tiles set - walls: {}, floors: {}", wall_count,
-                     floor_count);
     }
 
     void update() {
@@ -121,8 +125,7 @@ struct EntityManager {
         update_fov();
     }
 
-    void create_ant(std::vector<ClockController*>& controllers,
-                    std::vector<std::string>& lines) {
+    void create_ant(HardwareManager& hardware_manager, SoftwareManager& software_manager) {
         // if(key_sym == SDLK_a && player->bldgId.has_value()) {
         // Make worker
         // TODO: make an intelligent location picker for workers
@@ -134,40 +137,53 @@ struct EntityManager {
         //      until an open square is found (or out of space in the map)
 
         SPDLOG_INFO("Detected 'a' key press, adding worker ant");
+
+        if (!software_manager.has_code()) {
+            SPDLOG_ERROR("Cannot create ant with an empty program");
+            return;
+        }
+
         Building* b = map.get_building(player);
         if(b == nullptr) {
             SPDLOG_DEBUG("No building found at player location");
             return;
         }
 
-        long new_x = b->x + b->w / 2, new_y = b->y + b->h / 2;
+        long new_x = b->border.center_x, new_y = b->border.center_y;
         if(!map.can_place(new_x, new_y)) return;
 
         SPDLOG_DEBUG("Selected building at ({}, {})", new_x, new_y);
 
         SPDLOG_DEBUG("Creating worker controller");
-        CommandMap assembler;
-        Worker* new_ant =
-            new Worker(EntityData(new_x, new_y, 'w', 10, color::light_green));
-        Worker_Controller* w = new Worker_Controller(assembler, new_ant->cpu,
-                                                     *new_ant, map, lines);
-        if(w->parser.status.p_err) {
-            // TODO: show parse errors in the text editor box instead of a cout
-            // this will likely require returning the line number, and word that
-            // caused the parse error
-            SPDLOG_ERROR("Error parsing worker controller: {}",
-                         w->parser.status.err_msg);
-            delete new_ant;
-            delete w;
+        EntityData& data = next_worker->get_data();
+        data.x = new_x;
+        data.y = new_y;
+
+        AntInteractor interactor(
+            next_worker->cpu, *next_worker, map, next_worker->program_executor._ops,
+            next_worker->program_executor.op_idx);
+
+        MachineCode const& code = software_manager.get();
+
+        Status status;
+        hardware_manager.compiler.compile(code, interactor, status);
+        if (status.p_err) {
+            SPDLOG_ERROR("Failed to compile the program for the ant");
             return;
         }
 
+        software_manager.assign();
+
+
         SPDLOG_DEBUG("Creating worker ant");
-        controllers.push_back(w);
+        hardware_manager.controllers.push_back(&next_worker->program_executor);
 
-        map.add_entity(*new_ant);
-        ants.push_back(new_ant);
+        map.add_entity(*next_worker);
+        ants.push_back(next_worker);
+        next_worker = create_worker_data();
+    }
 
-        return;
+    Worker* create_worker_data() {
+        return new Worker(EntityData('w', 10, color::light_green));
     }
 };

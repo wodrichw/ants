@@ -165,15 +165,19 @@ class Map {
     }
 
     void remove_entity(MapEntity& entity) {
+        SPDLOG_TRACE("Removing entity");
         EntityData& data = entity.get_data();
         set_entity(data.x, data.y, nullptr);
     }
 
     bool move_entity(MapEntity& entity, long dx, long dy) {
+        SPDLOG_DEBUG("Moving entity by - dx: {} dy: {}", dx, dy);
         EntityData& data = entity.get_data();
         long x = data.x, y = data.y;
 
         long new_x = x + dx, new_y = y + dy;
+        SPDLOG_TRACE("Moving entity - new x: {} new y: {}", new_x, new_y);
+    
         if(is_walls_enabled && !can_place(new_x, new_y)) {
             SPDLOG_TRACE("Cannot move entity to ({}, {})", new_x, new_y);
             return false;
@@ -184,13 +188,15 @@ class Map {
         data.x = new_x;
         data.y = new_y;
 
+        SPDLOG_TRACE("Calling entity move callback");
         entity.move_callback(x, y, new_x, new_y);
+        SPDLOG_TRACE("Successfully moved the entity");
         return true;
     }
 
     void add_building(Building& building) {
-        for(long x = building.x; x < building.x + building.w; ++x) {
-            for(long y = building.y; y < building.y + building.h; ++y) {
+        for(long x = building.border.x1; x <= building.border.x2; ++x) {
+            for(long y = building.border.y1; y <= building.border.y2; ++y) {
                 get_tile(x, y).building = &building;
             }
         }

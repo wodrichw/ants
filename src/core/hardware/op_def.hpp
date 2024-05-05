@@ -5,6 +5,9 @@
 #include "app/globals.hpp"
 #include "entity/map.hpp"
 #include "entity/entity_data.hpp"
+
+using schar = signed char;
+
 struct NoOP {
     bool operator()();
 };
@@ -21,11 +24,11 @@ struct LoadConstantOp {
 };
 
 struct MoveOp {
-    MoveOp(Map& map, MapEntity& entity, long dx, long dy);
+    MoveOp(Map& map, MapEntity& entity, schar dx, schar dy);
     bool operator()();
     Map& map;
     MapEntity& entity;
-    long dx, dy;
+    schar dx, dy;
 };
 
 struct CopyOp {
@@ -64,16 +67,16 @@ struct DecOp {
 };
 
 struct JmpOp {
-    JmpOp(size_t& op_idx, size_t new_idx);
+    JmpOp(ushort& op_idx, ushort new_idx);
     bool operator()();
-    size_t& op_idx;
-    size_t new_idx;
+    ushort& op_idx;
+    ushort new_idx;
 };
 
 struct JnzOp {
-    JnzOp(size_t& op_idx, size_t new_idx, bool const& zero_flag);
+    JnzOp(ushort& op_idx, ushort new_idx, bool const& zero_flag);
     bool operator()();
-    size_t& op_idx;
-    size_t new_idx;
+    ushort& op_idx;
+    ushort new_idx;
     bool const& zero_flag;
 };

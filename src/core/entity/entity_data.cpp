@@ -1,6 +1,9 @@
 #include "entity/entity_data.hpp"
 #include "spdlog/spdlog.h"
 
+EntityData::EntityData(char ch, long fov_radius, tcod::ColorRGB col)
+    : x(0), y(0), ch(ch), fov_radius(fov_radius), col(col), last_rendered_pos() {}
+
 EntityData::EntityData(long x, long y, char ch, long fov_radius, tcod::ColorRGB col)
     : x(x), y(y), ch(ch), fov_radius(fov_radius), col(col), last_rendered_pos() {
         SPDLOG_DEBUG("EntityData created at ({}, {})", x, y);

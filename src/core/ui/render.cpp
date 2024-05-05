@@ -22,18 +22,8 @@ struct Box {
         // SPDLOG_TRACE("Populated char {} at ({}, {})", ch, x_idx, y_idx);
     }
 
-    void check_input_text(const std::vector<std::string> &text) {
-        // SPDLOG_TRACE("Checking input text");
-        (void)text;
-        assert(text.size() == h - 2);
-        assert(std::all_of(
-            text.begin(), text.end(),
-            [this](const std::string &str) { return str.length() == w - 2; }));
-    }
-
-    void populate(const std::vector<std::string> &text) {
+    void populate(const std::vector<std::string> &text, ushort offset_x=0, ushort offset_y=0) {
         // SPDLOG_TRACE("Populating box with {} lines", text.size());
-        check_input_text(text);
 
         // render corners
         // SPDLOG_DEBUG("Rendering corners");
@@ -50,9 +40,13 @@ struct Box {
             populate_char(i, h - 1, '-');
         }
 
-        for(ulong i = 1; i < h - 1; ++i) {
-            for(ulong j = 1; j < w - 1; ++j) {
-                populate_char(j, i, text[i - 1][j - 1]);
+        for(ushort i = 1; i < h - 1; ++i) {
+            ushort text_line_idx = offset_y + i - 1;
+            bool is_line_filled = text_line_idx < text.size();
+            for(ushort j = 1; j < w - 1; ++j) {
+                ushort char_idx = offset_x + j - 1;
+                populate_char(j, i, is_line_filled && char_idx < text[text_line_idx].size() ?
+                    text[text_line_idx][char_idx] : ' ');
             }
         }
     }
@@ -119,8 +113,7 @@ void tcodRenderer::render_ant(LayoutBox const &box, Map &map, EntityData &a,
     bool is_valid;
     window.to_local_coords(a.x, a.y, x, y, is_valid);
     if(!is_valid) {
-        SPDLOG_ERROR("Invalid coordinates ({}, {}) when rendering ant", a.x,
-                     a.y);
+        // SPDLOG_ERROR("Invalid coordinates ({}, {}) when rendering ant", a.x, a.y);
         return;
     }
 
@@ -158,8 +151,8 @@ void tcodRenderer::render_ant(LayoutBox const &box, Map &map, EntityData &a,
 void tcodRenderer::render_building(LayoutBox const &box, Building &b,
                                    MapWindow const &window) {
     // SPDLOG_TRACE("Rendering building at ({}, {})", b.x, b.y);
-    for(long xi = b.x; xi < b.x + b.w; ++xi) {
-        for(long yi = b.y; yi < b.y + b.h; ++yi) {
+    for(long xi = b.border.x1; xi <= b.border.x2; ++xi) {
+        for(long yi = b.border.y1; yi <= b.border.y2; ++yi) {
             long x, y;
             bool is_valid;
             window.to_local_coords(xi, yi, x, y, is_valid);
@@ -193,7 +186,7 @@ void tcodRenderer::render_text_editor(LayoutBox const &box,
                (globals::REGBOXHEIGHT * 2) + 2, globals::REGBOXWIDTH + 2,
                globals::REGBOXHEIGHT + 2);
 
-    mainBox.populate(editor.lines);
+    mainBox.populate(editor.lines, editor.get_offset_x(), editor.get_offset_y());
     accBox.populate({"ACC:0   "});
     bacBox.populate({"BAC:1   "});
 
@@ -213,7 +206,7 @@ void tcodRenderer::render_text_editor(LayoutBox const &box,
 
     tcod::print_rect(
         root_console,
-        get_rect(box, editor.cursorX + 1, editor.cursorY + 1, 1, 1), " ",
+        get_rect(box, editor.get_cursor_x() + 1 - editor.get_offset_x(), editor.get_cursor_y() + 1 - editor.get_offset_y(), 1, 1), " ",
         color::white, color::light_green, TCOD_LEFT, TCOD_BKGND_SET);
     // SPDLOG_TRACE("Text editor rendered");
 }

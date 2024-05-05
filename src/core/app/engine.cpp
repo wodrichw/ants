@@ -16,18 +16,17 @@
 
 Engine::Engine(ProjectArguments& config)
     : box_manager(globals::COLS, globals::ROWS),
-      editor(),
       renderer(config.is_render ? static_cast<Renderer*>(new tcodRenderer(
                                       config.is_debug_graphics))
                                 : static_cast<Renderer*>(new NoneRenderer())),
-      assembler(),
       entity_manager(box_manager.map_box->get_width(),
                      box_manager.map_box->get_height(), config),
       root_event_system(),
-      primary_mode(*box_manager.map_box, entity_manager, *renderer, editor),
-      editor_mode(*renderer, *box_manager.text_editor_content_box, editor,
-                  entity_manager.ants),
+      software_manager(command_map),
+      primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer),
+      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.ants),
       state(&primary_mode, &editor_mode) {
+
     SPDLOG_DEBUG("Setting game status to STARTUP");
     add_listeners();
     SPDLOG_DEBUG("Engine initialized");

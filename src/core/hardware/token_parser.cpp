@@ -1,14 +1,15 @@
 #include "hardware/token_parser.hpp"
-#include "hardware/parser.hpp"
 #include "spdlog/spdlog.h"
+
+using uchar = unsigned char;
 
 cpu_word_size TokenParser::integer(std::istringstream &ss) {
     std::string word;
     ss >> word;
     return std::stoi(word);
 }
-cpu_word_size TokenParser::register_idx(std::istringstream &ss) {
-    char firstChar;
+uchar TokenParser::register_idx(std::istringstream &ss) {
+    uchar firstChar;
     ss >> firstChar;
 
     if(firstChar >= 'A' && firstChar <= 'Z') {
@@ -21,10 +22,10 @@ cpu_word_size TokenParser::register_idx(std::istringstream &ss) {
     // it in a different way based on your requirements. For example, returning
     // a specific value like UINT_MAX to indicate an error.
     SPDLOG_ERROR("Invalid register index: {}", firstChar);
-    return UINT_MAX;
+    return 0b111;
 }
-void TokenParser::direction(std::istringstream &ss, long &dx, long &dy,
-                            ParserStatus &status) {
+void TokenParser::direction(std::istringstream &ss, schar &dx, schar &dy,
+                            Status &status) {
     std::string word;
     ss >> word;
 
@@ -44,7 +45,7 @@ void TokenParser::direction(std::istringstream &ss, long &dx, long &dy,
     SPDLOG_DEBUG("Parsed direction from {}: dx: {}, dy: {}", word, dx, dy);
 }
 
-std::string TokenParser::get_label(std::istringstream &ss, ParserStatus &status) {
+std::string TokenParser::get_label(std::istringstream &ss, Status &status) {
     std::string word;
     ss >> word;
     if(!ss) {
@@ -55,12 +56,12 @@ std::string TokenParser::get_label(std::istringstream &ss, ParserStatus &status)
     return word;
 }
 
-void TokenParser::terminate(std::istringstream &ss, ParserStatus &status,
+void TokenParser::terminate(std::istringstream &ss, Status &status,
                             const std::string &err_msg) {
     std::string word;
     ss >> word;
-    if(ss && word[0] != '#') {
+    if(ss) {
         status.error(err_msg);
+        SPDLOG_ERROR("Additional characters remained: {}", err_msg);
     }
-    SPDLOG_DEBUG("Terminated parsing with message: {}", err_msg);
 }

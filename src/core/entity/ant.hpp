@@ -1,7 +1,10 @@
 #pragma once
 
+#include <unordered_set>
+
 #include "hardware/brain.hpp"
-#include "hardware/operations.hpp"
+#include "hardware/program_executor.hpp"
+#include "hardware/command_config.hpp"
 #include "entity/entity_data.hpp"
 
 struct Player: public MapEntity {
@@ -19,8 +22,15 @@ struct Player: public MapEntity {
 
 struct Worker: public MapEntity {
     EntityData data;
-    Operations operations;
+    ProgramExecutor program_executor;
     DualRegisters cpu;
+
+    std::unordered_set<CommandEnum> command_set = {
+        CommandEnum::ADD, CommandEnum::DEC, CommandEnum::INC,
+        CommandEnum::JMP, CommandEnum::JNZ, CommandEnum::LOAD,
+        CommandEnum::MOVE, CommandEnum::NOP, CommandEnum::SUB,
+        CommandEnum::COPY
+    };
 
     Worker(EntityData const& data);
     ~Worker()=default;

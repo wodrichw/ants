@@ -8,19 +8,19 @@
 #include "hardware/parser.hpp"
 #include "entity/entity_manager.hpp"
 #include "ui/event_system.hpp"
+#include "hardware/software_manager.hpp"
 
 using ulong = unsigned long;
 
 class Renderer;
 
 class Engine {
-    BoxManager box_manager;
-    TextEditor editor;
-
+    BoxManager box_manager; 
     Renderer* renderer;
-    CommandMap assembler;
     EntityManager entity_manager;
     EventSystem root_event_system;
+    CommandMap command_map;
+    SoftwareManager software_manager;
 
     PrimaryMode primary_mode;
     EditorMode editor_mode;

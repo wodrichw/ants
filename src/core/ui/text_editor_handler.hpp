@@ -15,16 +15,7 @@ class NewLineHandler: public Subscriber<KeyboardEvent> {
 public:
     NewLineHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (editor.cursorY >= (globals::TEXTBOXHEIGHT - 1)) return;
-    
-        SPDLOG_TRACE("Adding new line at cursorY: {}", editor.cursorY);
-        ++editor.cursorY;
-        editor.lines.insert(
-            editor.lines.begin() + editor.cursorY,
-            std::string(globals::TEXTBOXWIDTH, ' '));
-        editor.lines.pop_back();
-        editor.moveToPrevNonWhiteSpace();
-        SPDLOG_TRACE("Added new line at cursorY: {}", editor.cursorY);
+        editor.new_line();
     }
 };
 class BackspaceHandler: public Subscriber<KeyboardEvent> {
@@ -32,20 +23,7 @@ class BackspaceHandler: public Subscriber<KeyboardEvent> {
 public:
     BackspaceHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        SPDLOG_DEBUG("Backspace key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
-        if(editor.cursorX > 0) {
-            SPDLOG_TRACE("Erasing character at cursorX: {}", editor.cursorX);
-            editor.lines[editor.cursorY].erase(editor.cursorX - 1, 1);
-            editor.lines[editor.cursorY].push_back(' ');
-            if(editor.cursorX > 0) editor.cursorX--;
-        } else if(editor.cursorY > 0) {
-            SPDLOG_TRACE("Erasing newline at cursorY: {}", editor.cursorY);
-            editor.lines.erase(editor.lines.begin() + editor.cursorY);
-            editor.lines.push_back(std::string(globals::TEXTBOXWIDTH, ' '));
-            --editor.cursorY;
-            editor.moveToEndLine();
-        }
-        SPDLOG_TRACE("Backspace key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
+        editor.backspace();
     }
 };
 
@@ -54,14 +32,11 @@ class MoveCursorLeftHandler: public Subscriber<KeyboardEvent> {
 public:
     MoveCursorLeftHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        SPDLOG_DEBUG("Left key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
-        if(editor.cursorX > 0) {
-            SPDLOG_TRACE("Moving cursor left");
-            editor.cursorX--;
-        } else if(editor.cursorY > 0) {
-            SPDLOG_TRACE("Moving cursor up");
-            --editor.cursorY;
-            editor.moveToEndLine();
+        if(!editor.on_left_edge()) {
+            editor.move_left();
+        } else if(!editor.on_top_edge()) {
+            editor.move_up();
+            editor.move_to_end_line();
         }
     }
 };
@@ -71,16 +46,12 @@ class MoveCursorRightHandler: public Subscriber<KeyboardEvent> {
 public:
     MoveCursorRightHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        SPDLOG_DEBUG("Right key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
-        if(editor.cursorX < (globals::TEXTBOXWIDTH - 1)) {
-            SPDLOG_TRACE("Moving cursor right");
-            ++editor.cursorX;
-        } else if(editor.cursorY < (globals::TEXTBOXHEIGHT - 1)) {
-            SPDLOG_TRACE("Moving cursor down");
-            ++editor.cursorY;
-            editor.cursorX = 0;
+        if (!editor.on_right_edge()) {
+            editor.move_right();
+        } else if (!editor.on_bottom_edge()) {
+            editor.move_down();
+            editor.move_to_start_line();
         }
-        
     }
 };
 
@@ -89,12 +60,10 @@ class MoveCursorUpHandler: public Subscriber<KeyboardEvent> {
 public:
     MoveCursorUpHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (editor.cursorY <= 0) return;
+        if (editor.on_top_edge()) return;
 
-        SPDLOG_DEBUG("Up key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
-        --editor.cursorY;
-        editor.moveToPrevNonWhiteSpace();
-        SPDLOG_TRACE("Up key pressed - new cursorX: {}, new cursorY: {}", editor.cursorX, editor.cursorY);
+        editor.move_up();
+        editor.go_to_text_x();
     }
 };
 
@@ -103,13 +72,13 @@ class MoveCursorDownHandler: public Subscriber<KeyboardEvent> {
 public:
     MoveCursorDownHandler(TextEditor& editor) : editor(editor){}
     void operator()(KeyboardEvent const&) {
-        if (editor.cursorY >= (globals::TEXTBOXHEIGHT - 1)) return;
+        if (editor.on_bottom_edge()) {
+            editor.move_to_end_line();
+            return;
+        }
 
-        SPDLOG_DEBUG("Down key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
-        ++editor.cursorY;
-        editor.moveToPrevNonWhiteSpace();
-        SPDLOG_TRACE("Down key pressed - new cursorX: {}, new cursorY: {}", editor.cursorX, editor.cursorY);
-        
+        editor.move_down();
+        editor.go_to_text_x();
     }
 };
 
@@ -127,15 +96,11 @@ class EditorKeyHandler: public Subscriber<CharKeyboardEvent> {
 public:
     EditorKeyHandler(TextEditor& editor) : editor(editor){}
     void operator()(CharKeyboardEvent const& event) {
-        if (editor.cursorX >= (globals::TEXTBOXWIDTH - 1)) return;
-
         if (!(((event.key >= 'a' && event.key <= 'z') ||
             (event.key >= '0' && event.key <= '9') ||
             event.key == ',' || event.key == ' ' ||
             event.key == '#' || event.key == ':'))) return;
-    
-        SPDLOG_TRACE("Printable key pressed - cursorX: {}, cursorY: {}", editor.cursorX, editor.cursorY);
-        editor.lines[editor.cursorY][editor.cursorX] = toupper(event.key);
-        editor.cursorX++;
+
+        editor.insert(toupper(event.key));
     }
 };

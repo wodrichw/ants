@@ -79,13 +79,13 @@ public:
 
 class CreateAntHandler: public Subscriber<KeyboardEvent> {
     EntityManager& entity_manager;
-    std::vector<ClockController*>& controllers;
-    TextEditor& editor;
+    HardwareManager& hardware_manager;
+    SoftwareManager& software_manager;
 public:
-    CreateAntHandler(EntityManager& entity_manager, std::vector<ClockController*>& controllers, TextEditor& editor):
-        entity_manager(entity_manager), controllers(controllers), editor(editor) {}
+    CreateAntHandler(EntityManager& entity_manager, HardwareManager& hardware_manager, SoftwareManager& software_manager):
+        entity_manager(entity_manager), hardware_manager(hardware_manager), software_manager(software_manager) {}
     void operator()(KeyboardEvent const&) { 
-        entity_manager.create_ant(controllers, editor.lines);
+        entity_manager.create_ant(hardware_manager, software_manager);
     }
 };
 
