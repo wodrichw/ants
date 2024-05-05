@@ -81,7 +81,10 @@ ProjectArguments::ProjectArguments(int argc, char* argv[])
 void ProjectArguments::help() const {
     std::cout << "Usage: ants [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --map_path <path>  Path to the map file\n";
+    std::cout << "  --map_path <path>    Path to the map file\n";
+    std::cout << "  --no_render          Does not render any graphics for the game\n";
+    std::cout << "  --debug_graphics     Add debug graphics to the GUI\n";
+    std::cout << "  --disable_walls      The player and ants can traverse walls\n";
     std::cout
         << "  --log_level <level>  Set the runtime log level - options: trace, "
            "debug, info, warn, error, critical, and off. default: info. Note "
