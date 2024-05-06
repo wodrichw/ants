@@ -11,6 +11,9 @@
   "documentation": "https://libtcod.readthedocs.io/en/latest/",
   "license": "BSD-3-Clause",
   "dependencies": [
-    "libtcod"
+    "libtcod",
+    "spdlog",
+    "pybind11",
+    "protobuf"
   ]
 }

@@ -102,7 +102,6 @@ endif()
 
 # Set the compile time log level for the project
 option(LOG "Set compile time log level" "INFO")
-message(STATUS "Setting log level to ${LOG}")
 if(LOG STREQUAL "TRACE")
     add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 elseif(LOG STREQUAL "DEBUG")
@@ -117,14 +116,33 @@ elseif(LOG STREQUAL "CRITICAL")
     add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_CRITICAL)
 else()
     add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF)
+    set(LOG OFF)
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/lib/spdlog/include)
-add_subdirectory(${PROJECT_SOURCE_DIR}/lib/spdlog)
+message(STATUS "Setting log level to ${LOG}")
 
-# pybind11
-include_directories(${PROJECT_SOURCE_DIR}/lib/pybind11/include)
-add_subdirectory(${PROJECT_SOURCE_DIR}/lib/pybind11)
+
+find_package(spdlog CONFIG REQUIRED)
+include_directories(${SPDLOG_INCLUDE_DIRS})
+
+find_package(pybind11 CONFIG REQUIRED)
+include_directories(${PYBIND11_INCLUDE_DIRS})
+
+    # find_package(Python COMPONENTS Interpreter Development)
+    # find_package(pybind11 CONFIG)
+    #
+    # # pybind11 method:
+    # pybind11_add_module(MyModule1 src1.cpp)
+    #
+    # # Python method:
+    # Python_add_library(MyModule2 src2.cpp)
+    # target_link_libraries(MyModule2 pybind11::headers)
+    # set_target_properties(MyModule2 PROPERTIES
+    #     INTERPROCEDURAL_OPTIMIZATION ON
+    #     CXX_VISIBILITY_PRESET ON
+    #     VISIBILITY_INLINES_HIDDEN ON
+    # )
+
 
 # add_executable(samples_c samples_c.c)
 # target_link_libraries(samples_c ${LINK_TCOD} ${SDL2MAIN})
