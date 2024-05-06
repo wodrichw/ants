@@ -1,4 +1,5 @@
 #include "app/facade.hpp"
+#include "entity.pb.h"
 
 #include <SDL_timer.h>
 
@@ -33,4 +34,10 @@ void AntGameFacade::initialize() {
         "{}, REGBOXHEIGHT: {}",
         globals::TEXTBOXHEIGHT, globals::TEXTBOXWIDTH, globals::REGBOXWIDTH,
         globals::REGBOXHEIGHT);
+
+    ant_proto::EntityData entity_data;
+    entity_data.set_x(1);
+    entity_data.set_y(0);
+    entity_data.set_ch(2);
+    entity_data.set_fov_radius(3);
 }

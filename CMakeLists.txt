@@ -128,21 +128,8 @@ include_directories(${SPDLOG_INCLUDE_DIRS})
 find_package(pybind11 CONFIG REQUIRED)
 include_directories(${PYBIND11_INCLUDE_DIRS})
 
-    # find_package(Python COMPONENTS Interpreter Development)
-    # find_package(pybind11 CONFIG)
-    #
-    # # pybind11 method:
-    # pybind11_add_module(MyModule1 src1.cpp)
-    #
-    # # Python method:
-    # Python_add_library(MyModule2 src2.cpp)
-    # target_link_libraries(MyModule2 pybind11::headers)
-    # set_target_properties(MyModule2 PROPERTIES
-    #     INTERPROCEDURAL_OPTIMIZATION ON
-    #     CXX_VISIBILITY_PRESET ON
-    #     VISIBILITY_INLINES_HIDDEN ON
-    # )
-
+find_package(Protobuf CONFIG REQUIRED)
+include_directories(${PROTOBUF_INCLUDE_DIRS})
 
 # add_executable(samples_c samples_c.c)
 # target_link_libraries(samples_c ${LINK_TCOD} ${SDL2MAIN})

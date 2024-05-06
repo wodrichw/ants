@@ -1,0 +1,13 @@
+syntax = "proto3";
+package ant_proto;
+
+
+
+message EntityData {
+    int64 x = 1;
+    int64 y = 2;
+
+    int32 ch = 3;
+    int64 fov_radius = 4;
+}
+
