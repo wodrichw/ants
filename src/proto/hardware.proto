@@ -1,0 +1,8 @@
+syntax = "proto3";
+package ant_proto;
+
+message DualRegisters {
+    uint32 register0 = 1;
+    uint32 register1 = 2;
+    bool zero_flag = 3;
+}

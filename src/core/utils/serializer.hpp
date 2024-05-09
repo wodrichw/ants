@@ -11,68 +11,73 @@ using ulong = unsigned long;
 class Packer {
 
     public:
+    Packer(std::string const& path) : output(path, std::ios::binary) {
+        if (!output) SPDLOG_ERROR("Failed to open file for writing: '{}", path);
+    }
+    ~Packer() { close(); }
 
-    template <typename T>
-    Packer& operator<<(T const& obj) {
-        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(obj);
-        buffer.insert(buffer.end(), bytes, bytes + sizeof(obj));
+    explicit operator bool() { return bool(output); }
+
+    template<typename T>
+    Packer& operator<<(T const& data) {
+        std::string msg;
+        if (!data.SerializeToString(&msg)) {
+            SPDLOG_ERROR("Failed to serialize object");
+            return *this;
+        }
+
+        int size = msg.size();
+        write_int(size);
+        output.write(msg.data(), size);
+
         return *this;
     }
 
-    void write(const std::string& filename) {
-        std::ofstream file(filename, std::ios::binary);
-        if (!file.is_open()) {
-            SPDLOG_ERROR("Failed to write to file: '{}'", filename);
-            return;
-        }
+    private:
 
-        file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
-        file.close();
-        SPDLOG_INFO("{} byte(s) was written to '{}' successfully.", buffer.size(), filename);
+    void write_int(int value) {
+        output.write(reinterpret_cast<const char*>(&value), sizeof(value));
     }
 
-    private:
-    std::vector<uint8_t> buffer;
+    void close() { output.close(); }
+
+    std::ofstream output;
 };
 
 class Unpacker {
 
 public:
 
-    Unpacker(std::string const& filename) {
-        read(filename);
+    Unpacker(std::string const& path) : input(path, std::ios::binary) {
+        if (!input) SPDLOG_ERROR("Failed to open file for reading: '{}'", path);
     }
+    ~Unpacker() { close(); }
 
     // Deserialize method
     template <typename T>
     Unpacker& operator>>(T& obj) {
-        std::memcpy(&obj, buffer.data() + offset, sizeof(obj));
-        offset += sizeof(obj);
+        int size = read_int();
+
+        buffer.resize(size);
+        input.read(buffer.data(), size);
+
+        std::string data(buffer.begin(), buffer.end());
+        if (!obj.ParseFromString(data)) {
+            SPDLOG_ERROR("Failed to parse serialized data.");
+        }
         return *this;
     }
 
     private:
 
-    void read(const std::string& filename) {
-        std::ifstream file(filename, std::ios::binary | std::ios::ate);
-        if (!file.is_open()) {
-            SPDLOG_ERROR("Failed to read binary file: '{}'", filename);
-            return;
-        }
+    void close() { input.close(); }
 
-        std::streamsize size = file.tellg();
-        file.seekg(0, std::ios::beg);
-
-        buffer.reserve(size);
-        offset = 0;
-        if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
-            SPDLOG_ERROR("Unable to read data from binary file: '{}'", filename);
-            return;
-        }
-        
-        SPDLOG_INFO("Read {} byte(s) from the file successfully.");
+    int read_int() {
+        int value;
+        input.read(reinterpret_cast<char*>(&value), sizeof(value));
+        return value;
     }
 
-    std::vector<uint8_t> buffer;
-    size_t offset = 0;
+    std::ifstream input;
+    std::vector<char> buffer;
 };

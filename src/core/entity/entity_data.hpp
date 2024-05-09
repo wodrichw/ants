@@ -1,11 +1,12 @@
 #pragma once
 #include <libtcod/color.hpp>
-#include "utils/serializer.hpp"
-
 struct RenderPosition {
     long x = 0, y = 0;
     bool requires_update = false;
 };
+
+class Packer;
+class Unpacker;
 
 struct EntityData {
    public:
@@ -18,10 +19,10 @@ struct EntityData {
 
     EntityData(char ch, long fov_radius, tcod::ColorRGB col);
     EntityData(long x, long y, char ch, long fov_radius, tcod::ColorRGB col);
+    EntityData(Unpacker&);
     ~EntityData()=default;
 
     friend Packer& operator<<(Packer& p, EntityData const& obj);
-    friend Unpacker& operator>>(Unpacker& p, EntityData& obj);
 };
 
 struct MapEntity {

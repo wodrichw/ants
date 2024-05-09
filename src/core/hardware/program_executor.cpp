@@ -7,6 +7,8 @@
 #include "entity/map.hpp"
 #include "spdlog/spdlog.h"
 
+ProgramExecutor::ProgramExecutor(Unpacker&) {}
+
 void ProgramExecutor::handleClockPulse() {
     // SPDLOG_TRACE("Handling clock pulse for program_executor");
     bool op_result = true;
@@ -21,8 +23,4 @@ void ProgramExecutor::handleClockPulse() {
 
 Packer& operator<<(Packer& p, ProgramExecutor const&) {
     return p; 
-}
-
-Unpacker& operator>>(Unpacker& p, ProgramExecutor&) {
-    return p;
 }

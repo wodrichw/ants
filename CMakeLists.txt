@@ -5,8 +5,11 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS true)
 # Set the default toolchain to use a Vcpkg submodule.
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/lib/vcpkg/scripts/buildsystems/vcpkg.cmake")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+set(CMAKE_CXX_STANDARD 17) 
 
 project (ants C CXX)
+add_executable(ants src/main.cpp)
+set_target_properties(ants PROPERTIES CXX_STANDARD 17)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake OPTIONAL RESULT_VARIABLE CONAN_FILE)
 if(CONAN_FILE)
@@ -140,9 +143,7 @@ endif()
 # target_compile_definitions(samples_c PRIVATE "$<$<C_COMPILER_ID:MSVC>:_CRT_NONSTDC_NO_DEPRECATE>")
 
 add_subdirectory(src)
-include_directories(${PROJECT_SOURCE_DIR}/src/core)
-add_executable(ants src/main.cpp)
-set_target_properties(ants PROPERTIES CXX_STANDARD 17)
+include_directories(${PROJECT_SOURCE_DIR}/src/core ${PROTOBUF_INCLUDE_DIRS_1})
 target_link_libraries(ants ants_src)
 if (CONAN_FILE)
     add_dependencies(ants copy_font)

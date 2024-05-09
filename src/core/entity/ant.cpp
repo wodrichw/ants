@@ -5,12 +5,15 @@
 
 #include "ui/colors.hpp"
 #include "entity/entity_data.hpp"
+#include "proto/entity.pb.h"
 #include "spdlog/spdlog.h"
 
 Player::Player(EntityData const& data)
     : data(data) {
         SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
 }
+
+Player::Player(Unpacker& p) : data(p) {}
 
 EntityData& Player::get_data() {
     return data;
@@ -20,13 +23,11 @@ Packer& operator<<(Packer& p, Player const& obj) {
     return p << obj.data;
 }
 
-Unpacker& operator>>(Unpacker& p, Player& obj) {
-    return p >> obj.data;
-}
-
 Worker::Worker(EntityData const& data)
     : data(data), program_executor(), cpu() {
 }
+
+Worker::Worker(Unpacker& p): data(p), program_executor(p), cpu(p) {}
 
 EntityData& Worker::get_data() {
     return data;
@@ -34,10 +35,6 @@ EntityData& Worker::get_data() {
 
 Packer& operator<<(Packer& p, Worker const& obj) {
     return p << obj.data << obj.program_executor << obj.cpu;
-}
-
-Unpacker& operator>>(Unpacker& p, Worker& obj) {
-    return p >> obj.data >> obj.program_executor >> obj.cpu;
 }
 
 void toggle_color(tcod::ColorRGB& col) {

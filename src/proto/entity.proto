@@ -1,8 +1,6 @@
 syntax = "proto3";
 package ant_proto;
 
-
-
 message EntityData {
     int64 x = 1;
     int64 y = 2;
@@ -11,3 +9,4 @@ message EntityData {
     int64 fov_radius = 4;
 }
 
+message Player {}
