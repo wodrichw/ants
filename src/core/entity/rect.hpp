@@ -70,7 +70,7 @@ struct Rect {
         msg.set_y1(obj.y1);
         msg.set_w(obj.w);
         msg.set_h(obj.h);
-        return p << obj;
+        return p << msg;
     }
 
     static Rect from_top_left(long x1, long y1, long w, long h) {
