@@ -1,27 +1,28 @@
 #pragma once
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <libtcod/color.hpp>
 #include <vector>
 
+#include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
 
 class Packer {
-
-    public:
+   public:
     Packer(std::string const& path) : output(path, std::ios::binary) {
-        if (!output) SPDLOG_ERROR("Failed to open file for writing: '{}", path);
+        if(!output) SPDLOG_ERROR("Failed to open file for writing: '{}", path);
     }
     ~Packer() { close(); }
 
     explicit operator bool() { return bool(output); }
 
-    template<typename T>
+    template <typename T>
     Packer& operator<<(T const& data) {
         std::string msg;
-        if (!data.SerializeToString(&msg)) {
+        if(!data.SerializeToString(&msg)) {
             SPDLOG_ERROR("Failed to serialize object");
             return *this;
         }
@@ -33,8 +34,14 @@ class Packer {
         return *this;
     }
 
-    private:
+    Packer& operator<<(tcod::ColorRGB const& col) {
+        ant_proto::Integer msg;
+        msg.set_value((col.r << 16) | (col.g << 8) | col.b);
+        (*this) << msg;
+        return *this;
+    }
 
+   private:
     void write_int(int value) {
         output.write(reinterpret_cast<const char*>(&value), sizeof(value));
     }
@@ -45,11 +52,9 @@ class Packer {
 };
 
 class Unpacker {
-
-public:
-
+   public:
     Unpacker(std::string const& path) : input(path, std::ios::binary) {
-        if (!input) SPDLOG_ERROR("Failed to open file for reading: '{}'", path);
+        if(!input) SPDLOG_ERROR("Failed to open file for reading: '{}'", path);
     }
     ~Unpacker() { close(); }
 
@@ -62,14 +67,24 @@ public:
         input.read(buffer.data(), size);
 
         std::string data(buffer.begin(), buffer.end());
-        if (!obj.ParseFromString(data)) {
+        if(!obj.ParseFromString(data)) {
             SPDLOG_ERROR("Failed to parse serialized data.");
         }
         return *this;
     }
 
-    private:
+    Unpacker& operator>>(tcod::ColorRGB& col) {
+        ant_proto::Integer msg;
+        (*this) >> msg;
 
+        uint color = msg.value();
+        col.r = color >> 16;
+        col.g = (color >> 8) & 255;
+        col.b = color & 255;
+        return *this;
+    }
+
+   private:
     void close() { input.close(); }
 
     int read_int() {

@@ -2,11 +2,10 @@
 
 #include <vector>
 
-#include "hardware/parse_args.hpp"
-#include "hardware/parser.hpp"
 #include "hardware/command_config.hpp"
-
 #include "hardware/machine_code.hpp"
+#include "hardware/parser.hpp"
+#include "spdlog/spdlog.h"
 
 class SoftwareManager {
     Parser parser;
@@ -15,20 +14,19 @@ class SoftwareManager {
     MachineCode* current_code = new MachineCode();
     bool assigned_current = false;
 
-
-    public:
-    SoftwareManager(CommandMap const& command_map): parser(command_map) {};
+   public:
+    SoftwareManager(CommandMap const& command_map) : parser(command_map){};
 
     bool has_code() const { return !current_code->is_empty(); }
 
     void add_lines(std::vector<std::string> const& lines) {
         SPDLOG_DEBUG("Getting the instruction strings from the machine code");
         clear_current();
-    
+
         Status status;
         parser.parse(lines, *current_code, status);
 
-        if (status.p_err) {
+        if(status.p_err) {
             SPDLOG_ERROR("Failed to parse program - clearing machine code...");
             current_code->clear();
         }
@@ -40,33 +38,32 @@ class SoftwareManager {
         parser.deparse(*current_code, lines, status);
         lines.push_back("");
 
-        if (status.p_err) {
-            SPDLOG_ERROR("Failed to deparse program - clearing string lines...");
+        if(status.p_err) {
+            SPDLOG_ERROR(
+                "Failed to deparse program - clearing string lines...");
             lines.clear();
         }
     }
 
-    MachineCode& get() {
-        return *current_code;
-    }
+    MachineCode& get() { return *current_code; }
 
-    void assign() {
-        assigned_current = true;
-    }
+    void assign() { assigned_current = true; }
 
     virtual ~SoftwareManager() {
         delete current_code;
         current_code = nullptr;
 
-        for(MachineCode* code: code_list) delete code;
+        for(MachineCode* code : code_list) delete code;
         code_list.clear();
     }
 
-    private:
-
+   private:
     void clear_current() {
-        if (!assigned_current) {
-            SPDLOG_DEBUG("No workers were assigned the code - clearing the code: {} instructions", current_code->size());
+        if(!assigned_current) {
+            SPDLOG_DEBUG(
+                "No workers were assigned the code - clearing the code: {} "
+                "instructions",
+                current_code->size());
             current_code->clear();
             return;
         }

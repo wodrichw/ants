@@ -7,19 +7,20 @@
 #include "entity/building.hpp"
 #include "entity/entity_data.hpp"
 #include "entity/map_section_data.hpp"
+#include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
 #include "utils/math.hpp"
 
 using ulong = unsigned long;
 
 struct Tile {
+    bool is_explored = false;  // has this tile already been seen by the player?
+    bool in_fov = false;       // is the tile currently visible to the player?
+    bool is_wall = true;
     MapEntity* entity = nullptr;
     Building* building = nullptr;
-    bool is_explored =
-        false;            // has this tile already been seen by the player ?
-    bool in_fov = false;  // is the tile currently visible to the player ?
-    bool is_wall = true;
-    Tile() = default;
+    Tile(bool is_explored = false, bool in_fov = false, bool is_wall = false)
+        : is_explored(is_explored), in_fov(in_fov), is_wall(is_wall) {}
 };
 
 struct Chunk {
@@ -32,6 +33,24 @@ struct Chunk {
           y(y),
           update_parity(update_parity),
           tiles(globals::CHUNK_AREA) {}
+    Chunk(Unpacker& p) {
+        assert(globals::CHUNK_AREA == 64);
+
+        ant_proto::Chunk msg;
+        p >> msg;
+
+        x = msg.x();
+        y = msg.y();
+        update_parity = msg.update_parity();
+        tiles.reserve(globals::CHUNK_AREA);
+
+        ulong is_explored = msg.is_explored(), in_fov = msg.in_fov(),
+              is_wall = msg.is_wall();
+        for(ulong i = 0; i < globals::CHUNK_AREA; ++i) {
+            tiles.emplace_back((is_explored >> i) & 1UL, (in_fov >> i) & 1UL,
+                               (is_wall >> i) & 1UL);
+        }
+    }
     Tile& operator[](long idx) {
         if(idx < 0 || idx >= globals::CHUNK_AREA)
             SPDLOG_ERROR("Invalid tile idx: {}", idx);
@@ -39,6 +58,26 @@ struct Chunk {
         return tiles[idx];
     }
     Tile const& operator[](long idx) const { return tiles[idx]; }
+
+    friend Packer& operator<<(Packer& p, Chunk const& obj) {
+        ant_proto::Chunk msg;
+        msg.set_x(obj.x);
+        msg.set_y(obj.y);
+        msg.set_update_parity(obj.update_parity);
+
+        ulong is_explored = 0, in_fov = 0, is_wall = 0;
+        for(ulong i = 0; i < globals::CHUNK_AREA; ++i) {
+            Tile const& tile = obj[i];
+            is_explored |= (tile.is_explored << i);
+            in_fov |= (tile.in_fov << i);
+            is_wall |= (tile.is_wall << i);
+        }
+
+        msg.set_is_explored(is_explored);
+        msg.set_in_fov(in_fov);
+        msg.set_is_wall(is_wall);
+        return p << msg;
+    }
 };
 
 class Chunks {
@@ -74,6 +113,21 @@ class Chunks {
         ulong tile_idx;
     };
 
+    Chunks() = default;
+    Chunks(Unpacker& p) {
+        ant_proto::Chunks msg;
+        p >> msg;
+
+        ulong count = msg.count();
+        for(ulong i = 0; i < count; ++i) {
+            ant_proto::Integer id_msg;
+            p >> id_msg;
+
+            Chunk* chunk = new Chunk(p);
+            emplace(id_msg.value(), chunk);
+        }
+    }
+
     tile_iterator begin_tile() { return tile_iterator(chunks.begin()); }
     tile_iterator end_tile() { return tile_iterator(chunks.end()); }
 
@@ -94,6 +148,19 @@ class Chunks {
         chunks.emplace(chunk_id, chunk);
     }
 
+    friend Packer& operator<<(Packer& p, Chunks const& obj) {
+        ant_proto::Chunks msg;
+        msg.set_count(obj.chunks.size());
+        p << msg;
+
+        for(auto const& [id, chunk] : obj.chunks) {
+            ant_proto::Integer id_msg;
+            id_msg.set_value(id);
+            p << id_msg << (*chunk);
+        }
+        return p;
+    }
+
    private:
     ChunkMap chunks;
 };
@@ -108,6 +175,15 @@ class Map {
         SPDLOG_INFO("Creating map with border: ({}, {}) - {}x{}", border.x1,
                     border.y1, border.w, border.h);
         add_missing_chunks(border);
+    }
+
+    Map(Unpacker& p) : chunks(p) {
+        ant_proto::Map msg;
+        p >> msg;
+
+        needs_update = msg.needs_update();
+        chunk_update_parity = msg.chunk_update_parity();
+        is_walls_enabled = msg.is_walls_enabled();
     }
 
     void load_section(MapSectionData const& section_data) {
@@ -177,7 +253,7 @@ class Map {
 
         long new_x = x + dx, new_y = y + dy;
         SPDLOG_TRACE("Moving entity - new x: {} new y: {}", new_x, new_y);
-    
+
         if(is_walls_enabled && !can_place(new_x, new_y)) {
             SPDLOG_TRACE("Cannot move entity to ({}, {})", new_x, new_y);
             return false;
@@ -319,6 +395,14 @@ class Map {
             (offset * 2 - 1) * (2 * chunk_depth - chunk_x + chunk_y - offset);
         // SPDLOG_TRACE("Chunk index for tile ({}, {}) is {}", x, y, chunk_idx);
         return chunk_idx;
+    }
+
+    friend Packer& operator<<(Packer& p, Map const& obj) {
+        ant_proto::Map msg;
+        msg.set_needs_update(obj.needs_update);
+        msg.set_chunk_update_parity(obj.chunk_update_parity);
+        msg.set_is_walls_enabled(obj.is_walls_enabled);
+        return p << obj.chunks << msg;
     }
 
    private:

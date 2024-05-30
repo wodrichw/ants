@@ -1,19 +1,36 @@
-#include <vector>
+#include "entity/map_window.hpp"
 
 #include <libtcod.hpp>
 
-#include "entity/map_window.hpp"
+#include "proto/entity.pb.h"
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
 
-MapWindow::MapWindow(Rect const& border) :
-      border(border),
+MapWindow::MapWindow(Rect const& border)
+    : border(border),
       rooms(),
       corridors(),
       map(new TCODMap(border.w, border.h)) {
-        SPDLOG_INFO("Creating map of size {}x{}", border.w, border.h);
-      }
+    SPDLOG_INFO("Creating map of size {}x{}", border.w, border.h);
+}
+
+MapWindow::MapWindow(Unpacker& p) : border(p) {
+    ant_proto::MapWindow msg;
+    p >> msg;
+
+    ulong room_count = msg.room_count();
+    rooms.reserve(room_count);
+    for(ulong i = 0; i < room_count; ++i) {
+        rooms.emplace_back(p);
+    }
+
+    ulong corridor_count = msg.corridor_count();
+    corridors.reserve(corridor_count);
+    for(ulong i = 0; i < corridor_count; ++i) {
+        corridors.emplace_back(p);
+    }
+}
 
 MapWindow::~MapWindow() {
     SPDLOG_INFO("Destroying map");
@@ -38,9 +55,10 @@ void MapWindow::compute_fov(long x, long y, long radius) {
     long local_x, local_y;
     bool is_valid;
     to_local_coords(x, y, local_x, local_y, is_valid);
-    if (!is_valid) return;
+    if(!is_valid) return;
 
-    SPDLOG_TRACE("Computing FOV from ({}, {}) with radius {}", local_x, local_y, radius);
+    SPDLOG_TRACE("Computing FOV from ({}, {}) with radius {}", local_x, local_y,
+                 radius);
     map->computeFov(local_x, local_y, radius);
     SPDLOG_TRACE("FOV computed");
 }
@@ -49,7 +67,7 @@ void MapWindow::set_wall(long x, long y) {
     long local_x, local_y;
     bool is_valid;
     to_local_coords(x, y, local_x, local_y, is_valid);
-    if (!is_valid) {
+    if(!is_valid) {
         // SPDLOG_ERROR("Invalid coordinates ({}, {}) when set wall", x, y);
         return;
     }
@@ -62,7 +80,7 @@ void MapWindow::set_floor(long x, long y) {
     long local_x, local_y;
     bool is_valid;
     to_local_coords(x, y, local_x, local_y, is_valid);
-    if (!is_valid) {
+    if(!is_valid) {
         // SPDLOG_ERROR("Invalid coordinates ({}, {}) when set floor", x, y);
         return;
     }
@@ -71,8 +89,25 @@ void MapWindow::set_floor(long x, long y) {
     map->setProperties(local_x, local_y, true, true);
 }
 
-void MapWindow::to_local_coords(long x, long y, long& local_x, long& local_y, bool& is_valid) const {
+void MapWindow::to_local_coords(long x, long y, long& local_x, long& local_y,
+                                bool& is_valid) const {
     local_x = x - border.x1;
     local_y = y - border.y1;
-    is_valid = local_x >= 0 && local_x < border.w && local_y >= 0 && local_y < border.h;
+    is_valid = local_x >= 0 && local_x < border.w && local_y >= 0 &&
+               local_y < border.h;
+}
+
+Packer& operator<<(Packer& p, MapWindow const& obj) {
+    ant_proto::MapWindow msg;
+    msg.set_room_count(obj.rooms.size());
+    msg.set_corridor_count(obj.corridors.size());
+
+    p << obj.border << msg;
+    for(Rect const& room : obj.rooms) {
+        p << room;
+    }
+    for(Rect const& corridor : obj.corridors) {
+        p << corridor;
+    }
+    return p;
 }

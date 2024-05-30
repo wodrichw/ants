@@ -1,11 +1,11 @@
 #include "hardware/command_parsers.hpp"
-#include "hardware/parse_args.hpp"
-#include "hardware/token_parser.hpp"
-#include "hardware/op_def.hpp"
-#include "hardware/program_executor.hpp"
+
 #include "hardware/brain.hpp"
 #include "hardware/command_config.hpp"
-
+#include "hardware/op_def.hpp"
+#include "hardware/parse_args.hpp"
+#include "hardware/program_executor.hpp"
+#include "hardware/token_parser.hpp"
 #include "spdlog/spdlog.h"
 
 using uchar = unsigned char;
@@ -70,8 +70,9 @@ void CopyParser::operator()(ParseArgs &args) {
     uchar const reg_src_idx = TokenParser::register_idx(args.code_stream);
     uchar const reg_dst_idx = TokenParser::register_idx(args.code_stream);
 
-    args.code.push_back((instruction << 3) | ((reg_src_idx << 1) & 1) | (reg_dst_idx & 1));
-    
+    args.code.push_back((instruction << 3) | ((reg_src_idx << 1) & 1) |
+                        (reg_dst_idx & 1));
+
     TokenParser::terminate(args.code_stream, args.status,
                            "Copy instruction only accepts 2 arguments");
     SPDLOG_TRACE("Copy command parsed");
@@ -94,7 +95,8 @@ void AddParser::operator()(ParseArgs &args) {
     uchar const reg_src_idx = TokenParser::register_idx(args.code_stream);
     uchar const reg_dst_idx = TokenParser::register_idx(args.code_stream);
 
-    args.code.push_back((instruction << 3) | ((reg_src_idx << 1) & 1) | (reg_dst_idx & 1));
+    args.code.push_back((instruction << 3) | ((reg_src_idx << 1) & 1) |
+                        (reg_dst_idx & 1));
 
     TokenParser::terminate(args.code_stream, args.status,
                            "Add instruction only accepts 2 arguments");
@@ -118,7 +120,8 @@ void SubParser::operator()(ParseArgs &args) {
     uchar const reg_src_idx = TokenParser::register_idx(args.code_stream);
     uchar const reg_dst_idx = TokenParser::register_idx(args.code_stream);
 
-    args.code.push_back((instruction << 3) | ((reg_src_idx << 1) & 1) | (reg_dst_idx & 1));
+    args.code.push_back((instruction << 3) | ((reg_src_idx << 1) & 1) |
+                        (reg_dst_idx & 1));
 
     TokenParser::terminate(args.code_stream, args.status,
                            "Subtraction instruction only accepts 2 arguments");
@@ -195,9 +198,10 @@ void MoveAntParser::operator()(ParseArgs &args) {
     // (0, 2) (2, 1) (0,  0) ( 0, 1) [x2, --]
     //  2      3      0        1
 
-    args.code.push_back((instruction << 3) | (((dx + 1) / 2) * 2) + (dy + 1));
+    args.code.push_back(((instruction << 3) | (((dx + 1) / 2) * 2)) + (dy + 1));
 
-    TokenParser::terminate(args.code_stream, args.status, "Move ant operator expects 1 arguments.");
+    TokenParser::terminate(args.code_stream, args.status,
+                           "Move ant operator expects 1 arguments.");
     SPDLOG_TRACE("Move EntityData command parsed");
 }
 
@@ -209,13 +213,21 @@ void MoveAntDeparser::operator()(DeparseArgs &args) {
     ss << "MOVE ";
 
     switch(movement) {
-        case 0: ss << "UP"; break;
-        case 1: ss << "LEFT"; break;
-        case 2: ss << "DOWN"; break;
-        default: ss << "RIGHT"; break;
+        case 0:
+            ss << "UP";
+            break;
+        case 1:
+            ss << "LEFT";
+            break;
+        case 2:
+            ss << "DOWN";
+            break;
+        default:
+            ss << "RIGHT";
+            break;
     }
 
-    std::string const& dir = ss.str();
+    std::string const &dir = ss.str();
     args.lines.push_back(dir);
     SPDLOG_TRACE("Move Ant command deparsed: {}", dir);
 }
@@ -242,7 +254,7 @@ void JumpDeparser::operator()(DeparseArgs &args) {
     ++args.code_it;
 
     ushort const label_idx = (*(args.code_it++)) | ((*(args.code_it++)) << 8);
-    std::string const& label = args.labels.at(label_idx);
+    std::string const &label = args.labels.at(label_idx);
 
     std::stringstream ss;
     ss << "JMP " << label;
@@ -260,7 +272,8 @@ void JumpNotZeroParser::operator()(ParseArgs &args) {
     args.code.push_back(label_idx & 0xFF);
     args.code.push_back((label_idx >> 8) & 0xFF);
 
-    // args.code.push_back(JnzOp(args.program_executor.op_idx, label_idx, args.registers.zero_flag));
+    // args.code.push_back(JnzOp(args.program_executor.op_idx, label_idx,
+    // args.registers.zero_flag));
 
     TokenParser::terminate(args.code_stream, args.status,
                            "JNZ TAKES ONLY ONE ARGUMENT");
@@ -274,7 +287,7 @@ void JumpNotZeroDeparser::operator()(DeparseArgs &args) {
     ++args.code_it;
 
     ushort const label_idx = (*(args.code_it++)) | ((*(args.code_it++)) << 8);
-    std::string const& label = args.labels.at(label_idx);
+    std::string const &label = args.labels.at(label_idx);
 
     std::stringstream ss;
     ss << "JNZ " << label;

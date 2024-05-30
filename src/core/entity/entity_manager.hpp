@@ -5,13 +5,14 @@
 #include "app/arg_parse.hpp"
 #include "entity/ant.hpp"
 #include "entity/building.hpp"
+#include "entity/entity_data.hpp"
 #include "entity/map.hpp"
 #include "entity/map_builder.hpp"
 #include "entity/map_section_data.hpp"
 #include "entity/map_window.hpp"
-#include "hardware/controller.hpp"
-#include "hardware/software_manager.hpp"
 #include "hardware/hardware_manager.hpp"
+#include "hardware/software_manager.hpp"
+#include "spdlog/spdlog.h"
 #include "ui/colors.hpp"
 
 struct EntityManager {
@@ -28,7 +29,6 @@ struct EntityManager {
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
           next_worker(create_worker_data()) {
-
         ants.push_back(&player);
 
         MapSectionData section;
@@ -39,6 +39,7 @@ struct EntityManager {
             FileMapBuilder(config.default_map_file_path)(section);
         }
         map.load_section(section);
+
         SPDLOG_DEBUG("Loaded map section data");
 
         if(section.rooms.empty()) {
@@ -59,6 +60,45 @@ struct EntityManager {
         SPDLOG_DEBUG("Adding player entity to the map");
         map.add_entity(player);
         map_window.set_center(player.get_data().x, player.get_data().y);
+    }
+
+    EntityManager(Unpacker& p) : player(p), map_window(p), map(p) {
+        ant_proto::EntityManager msg;
+        p >> msg;
+
+        for(long i = 0; i < msg.ant_count(); ++i) {
+            ant_proto::Integer entity_type_msg;
+            p >> entity_type_msg;
+            MapEntityType entity_type =
+                static_cast<MapEntityType>(entity_type_msg.value());
+
+            if(entity_type == PLAYER) {
+                SPDLOG_WARN("Unexpected player in serialized ant array");
+                continue;
+            }
+
+            if(entity_type == WORKER) {
+                ants.push_back(new Worker(p));
+                continue;
+            }
+            SPDLOG_ERROR("Unknown serialized ant type: {}",
+                         static_cast<ulong>(entity_type));
+        }
+
+        for(long i = 0; i < msg.building_count(); ++i) {
+            ant_proto::Integer building_type_msg;
+            p >> building_type_msg;
+            BuildingType building_type =
+                static_cast<BuildingType>(building_type_msg.value());
+
+            if(building_type == NURSERY) {
+                buildings.push_back(new Nursery(p));
+                continue;
+            }
+
+            SPDLOG_ERROR("Unknown serialized building type: {}",
+                         static_cast<ulong>(building_type));
+        }
     }
 
     ~EntityManager() {
@@ -93,7 +133,7 @@ struct EntityManager {
                 }
             }
         }
-        // SPDLOG_TRACE("FOV updated");
+        SPDLOG_TRACE("FOV updated");
     }
 
     void set_window_tiles() {
@@ -125,7 +165,8 @@ struct EntityManager {
         update_fov();
     }
 
-    void create_ant(HardwareManager& hardware_manager, SoftwareManager& software_manager) {
+    void create_ant(HardwareManager& hardware_manager,
+                    SoftwareManager& software_manager) {
         // if(key_sym == SDLK_a && player->bldgId.has_value()) {
         // Make worker
         // TODO: make an intelligent location picker for workers
@@ -138,7 +179,7 @@ struct EntityManager {
 
         SPDLOG_INFO("Detected 'a' key press, adding worker ant");
 
-        if (!software_manager.has_code()) {
+        if(!software_manager.has_code()) {
             SPDLOG_ERROR("Cannot create ant with an empty program");
             return;
         }
@@ -159,21 +200,20 @@ struct EntityManager {
         data.x = new_x;
         data.y = new_y;
 
-        AntInteractor interactor(
-            next_worker->cpu, *next_worker, map, next_worker->program_executor._ops,
-            next_worker->program_executor.op_idx);
+        AntInteractor interactor(next_worker->cpu, *next_worker, map,
+                                 next_worker->program_executor._ops,
+                                 next_worker->program_executor.op_idx);
 
         MachineCode const& code = software_manager.get();
 
         Status status;
         hardware_manager.compiler.compile(code, interactor, status);
-        if (status.p_err) {
+        if(status.p_err) {
             SPDLOG_ERROR("Failed to compile the program for the ant");
             return;
         }
 
         software_manager.assign();
-
 
         SPDLOG_DEBUG("Creating worker ant");
         hardware_manager.controllers.push_back(&next_worker->program_executor);

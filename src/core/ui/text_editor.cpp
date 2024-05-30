@@ -1,15 +1,13 @@
 #include "ui/text_editor.hpp"
 
 #include "app/globals.hpp"
-#include "ui/event_system.hpp"
 #include "hardware/software_manager.hpp"
-
 #include "spdlog/spdlog.h"
 
-TextEditor::TextEditor(SoftwareManager& software_manager):
-    software_manager(software_manager) {
-        reset();
-    }
+TextEditor::TextEditor(SoftwareManager& software_manager)
+    : software_manager(software_manager) {
+    reset();
+}
 
 void TextEditor::open() {
     SPDLOG_INFO("Opening the editor");
@@ -28,16 +26,18 @@ void TextEditor::close() {
 
 void TextEditor::go_to_text_x() {
     ushort length = line_length();
-    SPDLOG_TRACE("Checking if cursor x is within text - cursor x: {} length: {}", cursor_x, length);
+    SPDLOG_TRACE(
+        "Checking if cursor x is within text - cursor x: {} length: {}",
+        cursor_x, length);
 
-    if (cursor_x <= length) return;
+    if(cursor_x <= length) return;
 
     cursor_x = length;
     pan_to_cursor_x();
 }
 
 void TextEditor::go_to_text_y() {
-    if (cursor_y >= lines.size()) {
+    if(cursor_y >= lines.size()) {
         cursor_y = lines.size() - 1;
         pan_to_cursor_y();
     }
@@ -48,14 +48,16 @@ void TextEditor::move_to_start_line() {
     SPDLOG_DEBUG("Moving to start of line");
     cursor_x = 0;
     pan_to_cursor_x();
-    SPDLOG_DEBUG("move_to_end_line - cursor_x: {}, cursor_y: {}", cursor_x, cursor_y);
+    SPDLOG_DEBUG("move_to_end_line - cursor_x: {}, cursor_y: {}", cursor_x,
+                 cursor_y);
 }
 
 void TextEditor::move_to_end_line() {
     SPDLOG_DEBUG("Moving to end of line");
     cursor_x = line_length();
     pan_to_cursor_x();
-    SPDLOG_DEBUG("move_to_end_line - cursor_x: {}, cursor_y: {}", cursor_x, cursor_y);
+    SPDLOG_DEBUG("move_to_end_line - cursor_x: {}, cursor_y: {}", cursor_x,
+                 cursor_y);
 }
 
 void TextEditor::reset() {
@@ -64,19 +66,17 @@ void TextEditor::reset() {
     lines.push_back("");
 }
 
-ushort TextEditor::line_length() const {
-    return lines.at(cursor_y).size();
-}
+ushort TextEditor::line_length() const { return lines.at(cursor_y).size(); }
 
 void TextEditor::pan_to_cursor_x() {
     ushort x_pos = std::max(0, cursor_x - 2);
-    if (x_pos < pan_x) {
+    if(x_pos < pan_x) {
         SPDLOG_TRACE("Panning to the left - pan x: {} -> {}", pan_x, cursor_x);
         pan_x = x_pos;
         return;
     }
 
-    if (cursor_x >= (pan_x + globals::TEXTBOXWIDTH - 1)) {
+    if(cursor_x >= (pan_x + globals::TEXTBOXWIDTH - 1)) {
         pan_x = cursor_x - globals::TEXTBOXWIDTH + 1;
         SPDLOG_TRACE("Panning to the right - pan x: {}", pan_x);
         return;
@@ -84,30 +84,24 @@ void TextEditor::pan_to_cursor_x() {
 }
 
 void TextEditor::pan_to_cursor_y() {
-    if (cursor_y < pan_y) {
+    if(cursor_y < pan_y) {
         SPDLOG_TRACE("Panning up - pan y: {} -> {}", pan_y, cursor_y);
         pan_y = cursor_y;
         return;
     }
 
-    if (cursor_y >= (pan_y + globals::TEXTBOXHEIGHT - 1)) {
+    if(cursor_y >= (pan_y + globals::TEXTBOXHEIGHT - 1)) {
         pan_y = cursor_y - globals::TEXTBOXHEIGHT + 1;
         SPDLOG_TRACE("Panning down - pan y: {}", pan_y);
         return;
     }
 }
 
-bool TextEditor::on_left_edge() const {
-    return cursor_x == 0;
-}
+bool TextEditor::on_left_edge() const { return cursor_x == 0; }
 
-bool TextEditor::on_top_edge() const {
-    return cursor_y == 0;
-}
+bool TextEditor::on_top_edge() const { return cursor_y == 0; }
 
-bool TextEditor::on_right_edge() const {
-    return cursor_x == line_length();
-}
+bool TextEditor::on_right_edge() const { return cursor_x == line_length(); }
 
 bool TextEditor::on_bottom_edge() const {
     return cursor_y == (lines.size() - 1);
@@ -156,13 +150,13 @@ void TextEditor::new_line() {
 }
 
 void TextEditor::backspace() {
-    if (!on_left_edge()) {
+    if(!on_left_edge()) {
         move_left();
         lines[cursor_y].erase(cursor_x, 1);
         return;
     }
 
-    if (!on_top_edge()) {
+    if(!on_top_edge()) {
         std::string copy_line = lines[cursor_y];
         lines.erase(lines.begin() + cursor_y);
         move_up();

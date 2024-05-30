@@ -20,14 +20,16 @@ struct EntityData {
     EntityData(char ch, long fov_radius, tcod::ColorRGB col);
     EntityData(long x, long y, char ch, long fov_radius, tcod::ColorRGB col);
     EntityData(Unpacker&);
-    ~EntityData()=default;
+    ~EntityData() = default;
 
     friend Packer& operator<<(Packer& p, EntityData const& obj);
 };
+
+enum MapEntityType { PLAYER, WORKER };
 
 struct MapEntity {
     virtual EntityData& get_data() = 0;
     virtual void move_callback(long x, long y, long new_x, long new_y) = 0;
     virtual void click_callback(long x, long y) = 0;
-    virtual ~MapEntity() {};
+    virtual ~MapEntity(){};
 };
