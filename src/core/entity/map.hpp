@@ -19,7 +19,7 @@ struct Tile {
     bool is_wall = true;
     MapEntity* entity = nullptr;
     Building* building = nullptr;
-    Tile(bool is_explored = false, bool in_fov = false, bool is_wall = false)
+    Tile(bool is_explored = false, bool in_fov = false, bool is_wall = true)
         : is_explored(is_explored), in_fov(in_fov), is_wall(is_wall) {}
 };
 
