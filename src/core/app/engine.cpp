@@ -23,7 +23,7 @@ Engine::Engine(ProjectArguments& config)
                      box_manager.map_box->get_height(), config),
       software_manager(command_map),
       primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer),
-      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.ants),
+      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
 
     SPDLOG_DEBUG("Setting game status to STARTUP");
@@ -37,9 +37,9 @@ Engine::Engine(Unpacker& p, ProjectArguments& config)
                                 config.is_debug_graphics))
                         : static_cast<Renderer*>(new NoneRenderer())),
       entity_manager(p),
-      software_manager(p, command_map),
+      software_manager(p, command_map, entity_manager.workers.size()),
       primary_mode(p, *box_manager.map_box, command_map, software_manager, entity_manager, *renderer),
-      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.ants),
+      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
     
     SPDLOG_DEBUG("Setting game status to STARTUP");

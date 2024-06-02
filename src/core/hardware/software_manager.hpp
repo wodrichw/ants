@@ -11,12 +11,13 @@ class SoftwareManager {
     Parser parser;
 
     std::vector<MachineCode*> code_list;
+    std::unordered_map<ulong, ulong> ant_mapping;
     MachineCode* current_code = new MachineCode();
     bool assigned_current = false;
 
    public:
     SoftwareManager(CommandMap const& command_map) : parser(command_map){};
-    SoftwareManager(Unpacker& p, CommandMap const& command_map)
+    SoftwareManager(Unpacker& p, CommandMap const& command_map, ulong worker_count)
         : parser(command_map) {
             ant_proto::Integer count_msg;
             p >> count_msg;
@@ -25,6 +26,13 @@ class SoftwareManager {
     
             for (ulong i = 0; i < code_list_length; ++i) {
                 code_list.push_back(new MachineCode(p));
+            }
+
+            for (ulong i = 0; i < worker_count; ++i) {
+               ant_proto::AntCodeRecord msg;
+               p >> msg;
+
+               ant_mapping[msg.ant_idx()] = msg.code_idx(); 
             }
         }
 
@@ -58,7 +66,14 @@ class SoftwareManager {
 
     MachineCode& get() { return *current_code; }
 
-    void assign() { assigned_current = true; }
+    MachineCode& operator[](ulong ant_idx) { return *(code_list[ant_mapping[ant_idx]]); }
+
+    void assign(ulong ant_idx) {
+        assigned_current = true;
+
+        // needs to be called before current is added to the list
+        ant_mapping[ant_idx] = code_list.size();
+    }
 
     virtual ~SoftwareManager() {
         delete current_code;
@@ -75,6 +90,13 @@ class SoftwareManager {
     
         for (MachineCode const* code : obj.code_list) {
             p << (*code);
+        }
+
+        for (auto const& [ant_idx, code_idx] : obj.ant_mapping) {
+            ant_proto::AntCodeRecord msg;
+            msg.set_ant_idx(ant_idx);
+            msg.set_code_idx(code_idx);
+            p << msg;
         }
         return p;
      }

@@ -37,11 +37,11 @@ class EditorMode : public Mode {
     Renderer& renderer;
     LayoutBox& box;
     TextEditor editor;
-    std::vector<MapEntity*> const& ants;
+    std::vector<Worker*> const& workers;
 
    public:
-    EditorMode(Renderer& renderer, LayoutBox& box, SoftwareManager& software_manager, std::vector<MapEntity*> const& ants)
-        : renderer(renderer), box(box), editor(software_manager), ants(ants) {
+    EditorMode(Renderer& renderer, LayoutBox& box, SoftwareManager& software_manager, std::vector<Worker*> const& workers)
+        : renderer(renderer), box(box), editor(software_manager), workers(workers) {
         // text editor listeners
         event_system.keyboard_events.add(RETURN_KEY_EVENT,
                                          new NewLineHandler(editor));
@@ -68,7 +68,7 @@ class EditorMode : public Mode {
     void on_end() override { editor.close(); }
 
     void render() override {
-        renderer.render_text_editor(box, editor, ants.size());
+        renderer.render_text_editor(box, editor, workers.size());
     }
 
     void update() override {}
@@ -115,6 +115,7 @@ class PrimaryMode : public Mode {
           clock_timeout_1000ms(SDL_GetTicks64()) {
         
         initialize(software_manager);
+        entity_manager.rebuild_workers(hardware_manager, software_manager);
     }
           
     
@@ -172,12 +173,14 @@ class PrimaryMode : public Mode {
             renderer.render_building(box, *building, entity_manager.map_window);
         }
 
-        // draw the ants
-        // SPDLOG_TRACE("Rendering {} ants", ants.size());
-        for(auto ant : entity_manager.ants) {
+        // draw the workers
+        // SPDLOG_TRACE("Rendering {} workers", workers.size());
+        for(auto ant : entity_manager.workers) {
             renderer.render_ant(box, entity_manager.map, ant->get_data(),
                                 entity_manager.map_window);
         }
+        renderer.render_ant(box, entity_manager.map, entity_manager.player.get_data(),
+            entity_manager.map_window);
     }
 
     void update() override {

@@ -17,7 +17,7 @@
 
 struct EntityManager {
     Player player;
-    std::vector<MapEntity*> ants;
+    std::vector<Worker*> workers;
     std::vector<Building*> buildings;
     MapWindow map_window;
     Map map;
@@ -29,7 +29,6 @@ struct EntityManager {
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
           next_worker(create_worker_data()) {
-        ants.push_back(&player);
 
         MapSectionData section;
         if(config.default_map_file_path.empty()) {
@@ -78,7 +77,7 @@ struct EntityManager {
             }
 
             if(entity_type == WORKER) {
-                ants.push_back(new Worker(p));
+                save_ant(new Worker(p));
                 continue;
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
@@ -103,13 +102,25 @@ struct EntityManager {
 
     ~EntityManager() {
         SPDLOG_DEBUG("Destroying EntityManager");
-        for(auto ant : ants) delete ant;
+        for(auto ant : workers) delete ant;
         for(auto building : buildings) delete building;
 
         delete next_worker;
         next_worker = nullptr;
 
-        SPDLOG_TRACE("Destroyed ants and buildings");
+        SPDLOG_TRACE("Destroyed workers and buildings");
+    }
+
+    void update_fov_ant(EntityData& d) {
+        map_window.compute_fov(d.x, d.y, d.fov_radius);
+        for(long x = map_window.border.x1; x < map_window.border.x2; x++) {
+            for(long y = map_window.border.y1; y < map_window.border.y2;
+                y++) {
+                if(!map_window.in_fov(x, y)) continue;
+
+                map.explore(x, y);
+            }
+        }
     }
 
     void update_fov() {
@@ -120,19 +131,10 @@ struct EntityManager {
                 map.reset_tile(x, y);
             }
         }
-        for(auto ant : ants) {
-            EntityData& d = ant->get_data();
-
-            map_window.compute_fov(d.x, d.y, d.fov_radius);
-            for(long x = map_window.border.x1; x < map_window.border.x2; x++) {
-                for(long y = map_window.border.y1; y < map_window.border.y2;
-                    y++) {
-                    if(!map_window.in_fov(x, y)) continue;
-
-                    map.explore(x, y);
-                }
-            }
+        for(auto ant : workers) {
+            update_fov_ant(ant->get_data());
         }
+        update_fov_ant(player.get_data());
         SPDLOG_TRACE("FOV updated");
     }
 
@@ -199,28 +201,48 @@ struct EntityManager {
         EntityData& data = next_worker->get_data();
         data.x = new_x;
         data.y = new_y;
-
-        AntInteractor interactor(next_worker->cpu, *next_worker, map,
-                                 next_worker->program_executor._ops,
-                                 next_worker->program_executor.op_idx);
-
+    
         MachineCode const& code = software_manager.get();
 
+        if (!build_ant(hardware_manager, *next_worker, code)) {
+            return;
+        }
+
+        SPDLOG_DEBUG("Creating worker ant");
+        ulong ant_idx = workers.size();
+        software_manager.assign(ant_idx); // before pushing to this->workers
+    
+        save_ant(next_worker);
+        next_worker = create_worker_data();
+    }
+
+    bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& code) {
+
+        AntInteractor interactor(worker.cpu, worker, map,
+                            worker.program_executor._ops,
+                            worker.program_executor.op_idx);
+        
         Status status;
         hardware_manager.compile(code, interactor, status);
         if(status.p_err) {
             SPDLOG_ERROR("Failed to compile the program for the ant");
-            return;
+            return false;
         }
+        hardware_manager.push_back(&worker.program_executor);
+        return true;
+    }
 
-        software_manager.assign();
+    void rebuild_workers(HardwareManager& hardware_manager, SoftwareManager& software_manager) {
+        ulong ant_idx = 0;
+        for (Worker* worker: workers) {
+            build_ant(hardware_manager, *worker, software_manager[ant_idx]); 
+            ++ant_idx;
+        }
+    }
 
-        SPDLOG_DEBUG("Creating worker ant");
-        hardware_manager.push_back(&next_worker->program_executor);
-
-        map.add_entity(*next_worker);
-        ants.push_back(next_worker);
-        next_worker = create_worker_data();
+    void save_ant(Worker* worker) {
+        map.add_entity(*worker);
+        workers.push_back(worker);
     }
 
     Worker* create_worker_data() {
@@ -229,10 +251,10 @@ struct EntityManager {
 
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {
         ant_proto::EntityManager msg;
-        msg.set_ant_count(obj.ants.size());
+        msg.set_ant_count(obj.workers.size());
         p << obj.player << obj.map_window << obj.map << msg;
 
-        for (MapEntity const* entity: obj.ants) {
+        for (MapEntity const* entity: obj.workers) {
             ant_proto::Integer entity_type_msg;
             entity_type_msg.set_value(static_cast<int>(entity->get_type()));
             p << entity_type_msg << (*entity);

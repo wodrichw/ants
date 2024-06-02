@@ -15,3 +15,8 @@ message LabelRecord {
     uint32 address = 1;
     string label = 2;
 }
+
+message AntCodeRecord {
+    uint64 ant_idx = 1;
+    uint64 code_idx = 2;
+}

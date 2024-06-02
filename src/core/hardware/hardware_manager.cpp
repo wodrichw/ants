@@ -12,7 +12,7 @@ void HardwareManager::push_back(ClockController* controller) { controllers.push_
 
 void HardwareManager::compile(MachineCode const& machine_code, AntInteractor& interactor, Status& status) { compiler.compile(machine_code, interactor, status); }
 
-Packer& operator<<(Packer& p, HardwareManager const& obj) {
+Packer& operator<<(Packer& p, HardwareManager const&) {
     // Does not take ownership of clock controller objects.
     return p;
 }
