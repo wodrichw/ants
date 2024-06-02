@@ -19,6 +19,8 @@ EntityData& Player::get_data() {
     return data;
 }
 
+MapEntityType Player::get_type() const { return PLAYER; }
+
 Packer& operator<<(Packer& p, Player const& obj) {
     return p << obj.data;
 }
@@ -60,3 +62,5 @@ void Worker::click_callback(long, long) {
 }
 
 void Worker::move_callback(long, long, long, long) {}
+
+MapEntityType Worker::get_type() const { return WORKER; }

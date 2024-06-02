@@ -10,3 +10,8 @@ message DualRegisters {
 message ProgramExecutor {
     uint32 op_idx = 1;
 }
+
+message LabelRecord {
+    uint32 address = 1;
+    string label = 2;
+}

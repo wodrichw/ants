@@ -18,6 +18,7 @@ struct ProgramExecutor: public ClockController {
     ProgramExecutor()=default;
     ProgramExecutor(Unpacker& p); 
     void handleClockPulse();
+    ControllerType get_type() const { return PROGRAM_EXECUTOR; }
 
     friend Packer& operator<<(Packer& p, ProgramExecutor const& obj);
 };

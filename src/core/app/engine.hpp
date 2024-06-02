@@ -29,9 +29,11 @@ class Engine {
    public:
 
     Engine(ProjectArguments& config);
+    Engine(Unpacker&, ProjectArguments&);
     ~Engine();
     void update();
     void render();
+    friend Packer& operator<<(Packer&, Engine const&);
 
    private:
     void add_listeners();

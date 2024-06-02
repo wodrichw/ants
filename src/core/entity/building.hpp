@@ -23,6 +23,10 @@ struct Building {
         id = msg.id();
     }
 
+    virtual ~Building(){}
+
+    virtual BuildingType get_type() const = 0;
+
     friend Packer& operator<<(Packer& p, Building const& obj) {
         ant_proto::Building msg;
         msg.set_id(obj.id);
@@ -36,4 +40,5 @@ class Nursery : public Building {
         : Building(Rect::from_top_left(x, y, 3, 3), id, color::blue) {}
 
     Nursery(Unpacker& p) : Building(p) {}
+    BuildingType get_type() const { return NURSERY; }
 };

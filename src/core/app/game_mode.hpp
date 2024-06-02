@@ -103,6 +103,22 @@ class PrimaryMode : public Mode {
           entity_manager(entity_manager),
           renderer(renderer),
           clock_timeout_1000ms(SDL_GetTicks64()) {
+        
+        initialize(software_manager);
+    }
+    
+    PrimaryMode(Unpacker& p, LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer)
+        : box(box),
+          hardware_manager(p, command_map),
+          entity_manager(entity_manager),
+          renderer(renderer),
+          clock_timeout_1000ms(SDL_GetTicks64()) {
+        
+        initialize(software_manager);
+    }
+          
+    
+    void initialize(SoftwareManager& software_manager) {
 
         event_system.keyboard_events.add(
             LEFT_KEY_EVENT,
@@ -170,7 +186,7 @@ class PrimaryMode : public Mode {
         // SPDLOG_TRACE("Checking for clock pulse");
         if(clock_timeout_1000ms < SDL_GetTicks64()) {
             // SPDLOG_TRACE("Detected clock pulse");
-            for(ClockController* c : hardware_manager.controllers) {
+            for(ClockController* c : hardware_manager) {
                 c->handleClockPulse();
             }
             clock_timeout_1000ms += 1000;

@@ -16,6 +16,7 @@ struct Player: public MapEntity {
     ~Player()=default;
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
+    MapEntityType get_type() const;
 
     friend Packer& operator<<(Packer& p, Player const& obj);
 };
@@ -39,6 +40,7 @@ struct Worker: public MapEntity {
     EntityData& get_data();
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
+    MapEntityType get_type() const;
 
     friend Packer& operator<<(Packer& p, Worker const& obj);
 };

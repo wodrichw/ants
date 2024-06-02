@@ -82,7 +82,7 @@ struct EntityManager {
                 continue;
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
-                         static_cast<ulong>(entity_type));
+                         static_cast<uint>(entity_type));
         }
 
         for(long i = 0; i < msg.building_count(); ++i) {
@@ -97,7 +97,7 @@ struct EntityManager {
             }
 
             SPDLOG_ERROR("Unknown serialized building type: {}",
-                         static_cast<ulong>(building_type));
+                         static_cast<uint>(building_type));
         }
     }
 
@@ -207,7 +207,7 @@ struct EntityManager {
         MachineCode const& code = software_manager.get();
 
         Status status;
-        hardware_manager.compiler.compile(code, interactor, status);
+        hardware_manager.compile(code, interactor, status);
         if(status.p_err) {
             SPDLOG_ERROR("Failed to compile the program for the ant");
             return;
@@ -216,7 +216,7 @@ struct EntityManager {
         software_manager.assign();
 
         SPDLOG_DEBUG("Creating worker ant");
-        hardware_manager.controllers.push_back(&next_worker->program_executor);
+        hardware_manager.push_back(&next_worker->program_executor);
 
         map.add_entity(*next_worker);
         ants.push_back(next_worker);
@@ -225,5 +225,24 @@ struct EntityManager {
 
     Worker* create_worker_data() {
         return new Worker(EntityData('w', 10, color::light_green));
+    }
+
+    friend Packer& operator<<(Packer& p, EntityManager const& obj) {
+        ant_proto::EntityManager msg;
+        msg.set_ant_count(obj.ants.size());
+        p << obj.player << obj.map_window << obj.map << msg;
+
+        for (MapEntity const* entity: obj.ants) {
+            ant_proto::Integer entity_type_msg;
+            entity_type_msg.set_value(static_cast<int>(entity->get_type()));
+            p << entity_type_msg << (*entity);
+        }
+
+        for (Building const* building: obj.buildings) {
+            ant_proto::Integer building_type_msg;
+            building_type_msg.set_value(static_cast<int>(building->get_type()));
+            p << building_type_msg << (*building);
+        }
+        return p;
     }
 };
