@@ -113,14 +113,15 @@ class PrimaryMode : public Mode {
           entity_manager(entity_manager),
           renderer(renderer),
           clock_timeout_1000ms(SDL_GetTicks64()) {
-        
+        SPDLOG_DEBUG("Unpacking primary mode object"); 
         initialize(software_manager);
         entity_manager.rebuild_workers(hardware_manager, software_manager);
+        SPDLOG_TRACE("Completed unpacking the primary mode object");
     }
           
     
     void initialize(SoftwareManager& software_manager) {
-
+        SPDLOG_DEBUG("Adding the primary mode event system subscriptions");
         event_system.keyboard_events.add(
             LEFT_KEY_EVENT,
             new MoveLeftHandler(entity_manager.map, entity_manager.player));
@@ -153,6 +154,7 @@ class PrimaryMode : public Mode {
         // click listeners
         event_system.mouse_events.add(
             LEFT_MOUSE_EVENT, new ClickHandler(entity_manager.map, renderer));
+        SPDLOG_TRACE("Completed adding the primary mode event system subscriptions");
     }
 
     bool is_editor() override { return false; }
@@ -211,6 +213,7 @@ class PrimaryMode : public Mode {
     }
 
     friend Packer& operator<<(Packer& p, PrimaryMode const& obj) {
+        SPDLOG_DEBUG("Packing the primary mode object");
         return p << obj.hardware_manager;
     }
 };

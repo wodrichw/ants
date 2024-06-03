@@ -46,6 +46,7 @@ struct Chunk {
 
         ulong is_explored = msg.is_explored(), in_fov = msg.in_fov(),
               is_wall = msg.is_wall();
+        SPDLOG_TRACE("Unpacking chunk - x: {} y: {} update: {} explored: {:x} fov: {:x} walls: {:x}", x, y, update_parity, is_explored, in_fov, is_wall);
         for(ulong i = 0; i < globals::CHUNK_AREA; ++i) {
             tiles.emplace_back((is_explored >> i) & 1UL, (in_fov >> i) & 1UL,
                                (is_wall >> i) & 1UL);
@@ -68,10 +69,11 @@ struct Chunk {
         ulong is_explored = 0, in_fov = 0, is_wall = 0;
         for(ulong i = 0; i < globals::CHUNK_AREA; ++i) {
             Tile const& tile = obj[i];
-            is_explored |= (tile.is_explored << i);
-            in_fov |= (tile.in_fov << i);
-            is_wall |= (tile.is_wall << i);
+            is_explored |= ((tile.is_explored & 1UL) << i);
+            in_fov |= ((tile.in_fov & 1UL) << i);
+            is_wall |= ((tile.is_wall & 1UL) << i);
         }
+        SPDLOG_TRACE("Packing chunk - x: {} y: {} update: {} explored: {:x} fov: {:x} walls: {:x}", obj.x, obj.y, obj.update_parity, is_explored, in_fov, is_wall);
 
         msg.set_is_explored(is_explored);
         msg.set_in_fov(in_fov);
@@ -119,6 +121,7 @@ class Chunks {
         p >> msg;
 
         ulong count = msg.count();
+        SPDLOG_DEBUG("Unpacking chunks - count: {}", count);
         for(ulong i = 0; i < count; ++i) {
             ant_proto::Integer id_msg;
             p >> id_msg;
@@ -126,6 +129,7 @@ class Chunks {
             Chunk* chunk = new Chunk(p);
             emplace(id_msg.value(), chunk);
         }
+        SPDLOG_TRACE("Completed unpacking chunks");
     }
 
     tile_iterator begin_tile() { return tile_iterator(chunks.begin()); }
@@ -149,6 +153,7 @@ class Chunks {
     }
 
     friend Packer& operator<<(Packer& p, Chunks const& obj) {
+        SPDLOG_DEBUG("Packing chunks - count: {}", obj.chunks.size());
         ant_proto::Chunks msg;
         msg.set_count(obj.chunks.size());
         p << msg;
@@ -158,6 +163,7 @@ class Chunks {
             id_msg.set_value(id);
             p << id_msg << (*chunk);
         }
+        SPDLOG_TRACE("Completed packing chunks");
         return p;
     }
 
@@ -184,6 +190,11 @@ class Map {
         needs_update = msg.needs_update();
         chunk_update_parity = msg.chunk_update_parity();
         is_walls_enabled = msg.is_walls_enabled();
+        SPDLOG_DEBUG("Unpacking map - needs update: {} chunk update: {} is walls: {}",
+            needs_update ? "YES" : "NO",
+            chunk_update_parity ? "ON" : "OFF",
+            is_walls_enabled ? "ENABLED" : "DISABLED"
+        );
     }
 
     void load_section(MapSectionData const& section_data) {
@@ -398,6 +409,11 @@ class Map {
     }
 
     friend Packer& operator<<(Packer& p, Map const& obj) {
+        SPDLOG_DEBUG("Packing map - needs update: {} chunk update: {} is walls: {}",
+            obj.needs_update ? "YES" : "NO",
+            obj.chunk_update_parity ? "ON" : "OFF",
+            obj.is_walls_enabled ? "ENABLED" : "DISABLED"
+        );
         ant_proto::Map msg;
         msg.set_needs_update(obj.needs_update);
         msg.set_chunk_update_parity(obj.chunk_update_parity);

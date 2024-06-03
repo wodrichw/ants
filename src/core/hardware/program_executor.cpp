@@ -10,6 +10,7 @@ ProgramExecutor::ProgramExecutor(Unpacker& p) {
     p >> msg;
 
     op_idx = msg.op_idx();
+    SPDLOG_TRACE("Completed unpacking program executor - op_idx: {}", op_idx);
 }
 
 void ProgramExecutor::handleClockPulse() {
@@ -25,6 +26,7 @@ void ProgramExecutor::handleClockPulse() {
 }
 
 Packer& operator<<(Packer& p, ProgramExecutor const& obj) {
+    SPDLOG_TRACE("Packing program executor - op_idx: {}", obj.op_idx);
     ant_proto::ProgramExecutor msg;
     msg.set_op_idx(obj.op_idx);
     return p << msg;

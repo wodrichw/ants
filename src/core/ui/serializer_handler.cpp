@@ -8,5 +8,5 @@ void AutoSaveTriggerHandler::operator()(KeyboardEvent const&) {
     SPDLOG_INFO("Starting autosave...");
     Packer p(save_path);
     p << engine;
-    SPDLOG_DEBUG("Autosave completed");
+    SPDLOG_INFO("Autosave completed");
 }

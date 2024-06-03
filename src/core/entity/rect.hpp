@@ -28,6 +28,7 @@ struct Rect {
 
         w = msg.w();
         h = msg.h();
+        SPDLOG_TRACE("Unpacking rectangle - x: {} y: {} w: {} h: {}", msg.x1(), msg.y1(), w, h);
         set_top_left(msg.x1(), msg.y1());
     }
     Rect& operator=(Rect const& other) {
@@ -65,6 +66,7 @@ struct Rect {
     }
 
     friend Packer& operator<<(Packer& p, Rect const& obj) {
+        SPDLOG_TRACE("Completed unpacking rectangle - x: {} y: {} w: {} h: {}", obj.x1, obj.y1, obj.w, obj.h);
         ant_proto::Rect msg;
         msg.set_x1(obj.x1);
         msg.set_y1(obj.y1);

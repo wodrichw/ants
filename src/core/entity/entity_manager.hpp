@@ -62,17 +62,20 @@ struct EntityManager {
     }
 
     EntityManager(Unpacker& p) : player(p), map_window(p), map(p) {
+        SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
         p >> msg;
 
-        for(long i = 0; i < msg.ant_count(); ++i) {
+        ulong worker_count = msg.worker_count();
+        SPDLOG_DEBUG("Unpacking workers - count: {}", worker_count);
+        for(ulong i = 0; i < worker_count; ++i) {
             ant_proto::Integer entity_type_msg;
             p >> entity_type_msg;
             MapEntityType entity_type =
                 static_cast<MapEntityType>(entity_type_msg.value());
 
             if(entity_type == PLAYER) {
-                SPDLOG_WARN("Unexpected player in serialized ant array");
+                SPDLOG_WARN("Unexpected player in Worker ant array");
                 continue;
             }
 
@@ -84,7 +87,9 @@ struct EntityManager {
                          static_cast<uint>(entity_type));
         }
 
-        for(long i = 0; i < msg.building_count(); ++i) {
+        ulong building_count = msg.building_count();
+        SPDLOG_DEBUG("Unpacking building - count: {}", building_count);
+        for(ulong i = 0; i < building_count; ++i) {
             ant_proto::Integer building_type_msg;
             p >> building_type_msg;
             BuildingType building_type =
@@ -217,7 +222,7 @@ struct EntityManager {
     }
 
     bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& code) {
-
+        SPDLOG_TRACE("Building ant program - x: {} y: {} - code: {} bytes", worker.get_data().x, worker.get_data().y, code.size());
         AntInteractor interactor(worker.cpu, worker, map,
                             worker.program_executor._ops,
                             worker.program_executor.op_idx);
@@ -229,15 +234,18 @@ struct EntityManager {
             return false;
         }
         hardware_manager.push_back(&worker.program_executor);
+        SPDLOG_TRACE("Successfully compiled worker program");
         return true;
     }
 
     void rebuild_workers(HardwareManager& hardware_manager, SoftwareManager& software_manager) {
+        SPDLOG_DEBUG("Rebuilding worker ant programs - count: {}", workers.size());
         ulong ant_idx = 0;
         for (Worker* worker: workers) {
             build_ant(hardware_manager, *worker, software_manager[ant_idx]); 
             ++ant_idx;
         }
+        SPDLOG_TRACE("Completed rebuilding worker ant programs");
     }
 
     void save_ant(Worker* worker) {
@@ -251,8 +259,9 @@ struct EntityManager {
 
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {
         ant_proto::EntityManager msg;
-        msg.set_ant_count(obj.workers.size());
+        msg.set_worker_count(obj.workers.size());
         p << obj.player << obj.map_window << obj.map << msg;
+        SPDLOG_DEBUG("Packing entity manager - workers count: {} building count: {}", obj.workers.size(), obj.buildings.size());
 
         for (MapEntity const* entity: obj.workers) {
             ant_proto::Integer entity_type_msg;

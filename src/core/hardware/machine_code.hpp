@@ -17,6 +17,7 @@ struct MachineCode {
         int code_length = length_msg.value();
         code.reserve(code_length);
 
+        SPDLOG_TRACE("Unpacking machine code - length: {} bytes", code_length);
         for(int i = 0; i < code_length;) {
             ant_proto::Integer instr_msg;
             uint instr = instr_msg.value();
@@ -46,6 +47,7 @@ struct MachineCode {
         length_msg.set_value(code_length);
         p << length_msg;
 
+        SPDLOG_TRACE("Packing machine code - length: {} bytes", code_length);
         for(int i = 0; i < code_length;) {
             uint instr = 0;
             // No need to check i against the code length for simplicity

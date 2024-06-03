@@ -33,9 +33,11 @@ EntityData::EntityData(Unpacker& p) {
     ch = msg.ch();
 
     fov_radius = msg.fov_radius();
+    SPDLOG_TRACE("Unpacked entity data - x: {} y: {} ch: {} fov_radius: {}", x, y, ch, fov_radius);
 }
 
 Packer& operator<<(Packer& p, EntityData const& obj) {
+    SPDLOG_TRACE("Packing entity data - x: {} y: {} ch: {} fov_radius: {}", obj.x, obj.y, obj.ch, obj.fov_radius);
     ant_proto::EntityData msg;
     msg.set_x(obj.x);
     msg.set_y(obj.y);

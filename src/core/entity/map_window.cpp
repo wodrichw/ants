@@ -20,16 +20,18 @@ MapWindow::MapWindow(Unpacker& p) : border(p) {
     p >> msg;
 
     ulong room_count = msg.room_count();
+    ulong corridor_count = msg.corridor_count();
+    SPDLOG_DEBUG("Unpacking map window - room count: {} - corridor count: {}", room_count, corridor_count);
     rooms.reserve(room_count);
     for(ulong i = 0; i < room_count; ++i) {
         rooms.emplace_back(p);
     }
 
-    ulong corridor_count = msg.corridor_count();
     corridors.reserve(corridor_count);
     for(ulong i = 0; i < corridor_count; ++i) {
         corridors.emplace_back(p);
     }
+    SPDLOG_TRACE("Completed unpacking map window");
 }
 
 MapWindow::~MapWindow() {
@@ -98,6 +100,7 @@ void MapWindow::to_local_coords(long x, long y, long& local_x, long& local_y,
 }
 
 Packer& operator<<(Packer& p, MapWindow const& obj) {
+    SPDLOG_DEBUG("Packing map window - room count: {} - corridor count: {}", obj.rooms.size(), obj.corridors.size());
     ant_proto::MapWindow msg;
     msg.set_room_count(obj.rooms.size());
     msg.set_corridor_count(obj.corridors.size());
@@ -109,5 +112,6 @@ Packer& operator<<(Packer& p, MapWindow const& obj) {
     for(Rect const& corridor : obj.corridors) {
         p << corridor;
     }
+    SPDLOG_TRACE("Completed packing map window");
     return p;
 }

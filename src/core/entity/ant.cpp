@@ -13,7 +13,9 @@ Player::Player(EntityData const& data)
         SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
 }
 
-Player::Player(Unpacker& p) : data(p) {}
+Player::Player(Unpacker& p) : data(p) {
+    SPDLOG_TRACE("Completed unpacking player");
+}
 
 EntityData& Player::get_data() {
     return data;
@@ -22,6 +24,7 @@ EntityData& Player::get_data() {
 MapEntityType Player::get_type() const { return PLAYER; }
 
 Packer& operator<<(Packer& p, Player const& obj) {
+    SPDLOG_DEBUG("Packing player");
     return p << obj.data;
 }
 
@@ -29,13 +32,16 @@ Worker::Worker(EntityData const& data)
     : data(data), program_executor(), cpu() {
 }
 
-Worker::Worker(Unpacker& p): data(p), program_executor(p), cpu(p) {}
+Worker::Worker(Unpacker& p): data(p), program_executor(p), cpu(p) {
+    SPDLOG_TRACE("Completed unpacking worker");
+}
 
 EntityData& Worker::get_data() {
     return data;
 }
 
 Packer& operator<<(Packer& p, Worker const& obj) {
+    SPDLOG_TRACE("Packing worker");
     return p << obj.data << obj.program_executor << obj.cpu;
 }
 

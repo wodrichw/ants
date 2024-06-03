@@ -27,7 +27,6 @@ Engine::Engine(ProjectArguments& config)
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
     
-    SPDLOG_DEBUG("Setting game status to STARTUP");
     add_listeners(config);
     SPDLOG_INFO("Engine initialized without backup");
 }
@@ -43,7 +42,6 @@ Engine::Engine(Unpacker& p, ProjectArguments& config)
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
     
-    SPDLOG_DEBUG("Setting game status to STARTUP");
     add_listeners(config);
     SPDLOG_INFO("Engine initialized with backup");
 }
@@ -54,6 +52,7 @@ Engine::~Engine() {
 }
 
 void Engine::add_listeners(ProjectArguments& config) {
+    SPDLOG_DEBUG("Adding root event system subscriptions");
     root_event_system.keyboard_events.add(SLASH_KEY_EVENT,
                                           new TextEditorTriggerHandler(state));
     root_event_system.keyboard_events.add(BACK_SLASH_KEY_EVENT,

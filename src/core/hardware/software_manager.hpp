@@ -24,15 +24,18 @@ class SoftwareManager {
             ulong code_list_length = count_msg.value();
             code_list.reserve(code_list_length);
     
+            SPDLOG_DEBUG("Unpacking byte code - count: {}", code_list_length);
             for (ulong i = 0; i < code_list_length; ++i) {
                 code_list.push_back(new MachineCode(p));
             }
 
+            SPDLOG_DEBUG("Unpacking worker/code mappings - count: {}", worker_count);
             for (ulong i = 0; i < worker_count; ++i) {
                ant_proto::AntCodeRecord msg;
                p >> msg;
 
                ant_mapping[msg.ant_idx()] = msg.code_idx(); 
+               SPDLOG_TRACE("Worker index: {} - code length: {} [index: {}]", msg.ant_idx(), (*this)[msg.ant_idx()].size(), msg.code_idx());
             }
         }
 
