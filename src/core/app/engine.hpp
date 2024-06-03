@@ -33,10 +33,10 @@ class Engine {
     ~Engine();
     void update();
     void render();
-    friend Packer& operator<<(Packer&, Engine const&);
 
    private:
-    void add_listeners();
+    void add_listeners(ProjectArguments& config);
+    friend Packer& operator<<(Packer&, Engine const&);
 };
 
 extern Engine engine;

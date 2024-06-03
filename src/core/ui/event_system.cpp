@@ -69,6 +69,7 @@ KeyboardEventType get_keyboard_type(SDL_Keycode event) {
         case SDLK_BACKSPACE: return BACKSPACE_KEY_EVENT;
         case SDLK_SPACE: return SPACE_KEY_EVENT;
         case SDLK_COLON: return COLON_KEY_EVENT;
+        case SDLK_BACKSLASH: return BACK_SLASH_KEY_EVENT;
         default: return UNKNOWN_KEY_EVENT;
     }
 }

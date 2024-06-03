@@ -27,6 +27,7 @@ class ProjectArguments {
 
    public:
     std::string const default_map_file_path;
+    std::string const save_path;
     bool const is_render;
     bool const is_debug_graphics;
     bool const is_walls_enabled;

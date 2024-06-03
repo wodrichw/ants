@@ -11,3 +11,5 @@ build*
 .vscode
 venv
 diagrams
+tmp/
+.DS_Store

@@ -209,4 +209,8 @@ class PrimaryMode : public Mode {
     get_char_keyboard_publisher() override {
         return event_system.char_keyboard_events;
     }
+
+    friend Packer& operator<<(Packer& p, PrimaryMode const& obj) {
+        return p << obj.hardware_manager;
+    }
 };

@@ -84,6 +84,8 @@ class Unpacker {
         return *this;
     }
 
+    bool is_valid() const { return input ? true : false; }
+
    private:
     void close() { input.close(); }
 

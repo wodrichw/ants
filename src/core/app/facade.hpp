@@ -15,5 +15,6 @@ class AntGameFacade {
     void initialize();
 
     ProjectArguments config;
+    Unpacker unpacker;
     Engine engine;
 };

@@ -12,6 +12,7 @@
 #include <libtcod/context.hpp>
 
 #include "app/globals.hpp"
+#include "ui/serializer_handler.hpp"
 #include "spdlog/spdlog.h"
 
 Engine::Engine(ProjectArguments& config)
@@ -25,10 +26,10 @@ Engine::Engine(ProjectArguments& config)
       primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer),
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
-
+    
     SPDLOG_DEBUG("Setting game status to STARTUP");
-    add_listeners();
-    SPDLOG_DEBUG("Engine initialized");
+    add_listeners(config);
+    SPDLOG_INFO("Engine initialized without backup");
 }
 
 Engine::Engine(Unpacker& p, ProjectArguments& config)
@@ -43,8 +44,8 @@ Engine::Engine(Unpacker& p, ProjectArguments& config)
       state(&primary_mode, &editor_mode) {
     
     SPDLOG_DEBUG("Setting game status to STARTUP");
-    add_listeners();
-    SPDLOG_DEBUG("Engine initialized");
+    add_listeners(config);
+    SPDLOG_INFO("Engine initialized with backup");
 }
 
 Engine::~Engine() {
@@ -52,9 +53,11 @@ Engine::~Engine() {
     SPDLOG_TRACE("Engine destructed");
 }
 
-void Engine::add_listeners() {
+void Engine::add_listeners(ProjectArguments& config) {
     root_event_system.keyboard_events.add(SLASH_KEY_EVENT,
                                           new TextEditorTriggerHandler(state));
+    root_event_system.keyboard_events.add(BACK_SLASH_KEY_EVENT,
+                                          new AutoSaveTriggerHandler(*this, config.save_path));
 }
 
 void Engine::update() {
@@ -99,4 +102,8 @@ void Engine::render() {
     renderer->present();
 
     // SPDLOG_TRACE("Render complete");
+}
+
+Packer& operator<<(Packer& p, Engine const& obj) {
+    return p << obj.entity_manager << obj.software_manager << obj.primary_mode;
 }
