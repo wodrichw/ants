@@ -5,6 +5,8 @@
 #include "utils/serializer.hpp"
 #include "proto/hardware.pb.h"
 
+#include "spdlog/spdlog.h"
+
 class LabelMap {
     std::unordered_map<std::string, ushort> label_map;
     std::unordered_map<ushort, std::string> address_map;
@@ -17,6 +19,7 @@ class LabelMap {
         p >> length_msg;
 
         int map_length = length_msg.value();
+        SPDLOG_TRACE("Unpacking the software label map - size: {}", map_length);
         label_map.reserve(map_length);
         address_map.reserve(map_length);
 
@@ -59,6 +62,7 @@ class LabelMap {
     }
 
     friend Packer& operator<<(Packer& p, LabelMap const& obj) {
+        SPDLOG_TRACE("Packing label map - size: {}", obj.size());
         ant_proto::Integer length_msg;
         length_msg.set_value(obj.size());
         p << length_msg;

@@ -20,3 +20,8 @@ message AntCodeRecord {
     uint64 ant_idx = 1;
     uint64 code_idx = 2;
 }
+
+message SoftwareManager {
+    uint64 code_list_length = 1;
+    bool assigned_current = 2;
+}

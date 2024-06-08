@@ -61,7 +61,7 @@ struct EntityManager {
         map_window.set_center(player.get_data().x, player.get_data().y);
     }
 
-    EntityManager(Unpacker& p) : player(p), map_window(p), map(p) {
+    EntityManager(Unpacker& p) : player(p), map_window(p), map(p), next_worker(create_worker_data()) {
         SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
         p >> msg;
@@ -69,10 +69,10 @@ struct EntityManager {
         ulong worker_count = msg.worker_count();
         SPDLOG_DEBUG("Unpacking workers - count: {}", worker_count);
         for(ulong i = 0; i < worker_count; ++i) {
-            ant_proto::Integer entity_type_msg;
-            p >> entity_type_msg;
+            ant_proto::Integer worker_msg;
+            p >> worker_msg;
             MapEntityType entity_type =
-                static_cast<MapEntityType>(entity_type_msg.value());
+                static_cast<MapEntityType>(worker_msg.value());
 
             if(entity_type == PLAYER) {
                 SPDLOG_WARN("Unexpected player in Worker ant array");
@@ -85,6 +85,7 @@ struct EntityManager {
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
                          static_cast<uint>(entity_type));
+            exit(1);
         }
 
         ulong building_count = msg.building_count();
@@ -96,12 +97,15 @@ struct EntityManager {
                 static_cast<BuildingType>(building_type_msg.value());
 
             if(building_type == NURSERY) {
-                buildings.push_back(new Nursery(p));
+                Building* building = new Nursery(p);
+                buildings.push_back(building);
+                map.add_building(*building);
                 continue;
             }
 
             SPDLOG_ERROR("Unknown serialized building type: {}",
                          static_cast<uint>(building_type));
+            exit(1);
         }
     }
 
@@ -260,15 +264,18 @@ struct EntityManager {
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {
         ant_proto::EntityManager msg;
         msg.set_worker_count(obj.workers.size());
+        msg.set_building_count(obj.buildings.size());
         p << obj.player << obj.map_window << obj.map << msg;
         SPDLOG_DEBUG("Packing entity manager - workers count: {} building count: {}", obj.workers.size(), obj.buildings.size());
 
-        for (MapEntity const* entity: obj.workers) {
-            ant_proto::Integer entity_type_msg;
-            entity_type_msg.set_value(static_cast<int>(entity->get_type()));
-            p << entity_type_msg << (*entity);
+        SPDLOG_DEBUG("Packing workers");
+        for (Worker const* worker: obj.workers) {
+            ant_proto::Integer worker_msg;
+            worker_msg.set_value(static_cast<int>(worker->get_type()));
+            p << worker_msg << (*worker);
         }
 
+        SPDLOG_DEBUG("Packing buildings");
         for (Building const* building: obj.buildings) {
             ant_proto::Integer building_type_msg;
             building_type_msg.set_value(static_cast<int>(building->get_type()));

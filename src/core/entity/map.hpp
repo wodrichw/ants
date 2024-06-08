@@ -46,7 +46,7 @@ struct Chunk {
 
         ulong is_explored = msg.is_explored(), in_fov = msg.in_fov(),
               is_wall = msg.is_wall();
-        SPDLOG_TRACE("Unpacking chunk - x: {} y: {} update: {} explored: {:x} fov: {:x} walls: {:x}", x, y, update_parity, is_explored, in_fov, is_wall);
+        // SPDLOG_TRACE("Unpacking chunk - x: {} y: {} update: {} explored: {:x} fov: {:x} walls: {:x}", x, y, update_parity, is_explored, in_fov, is_wall);
         for(ulong i = 0; i < globals::CHUNK_AREA; ++i) {
             tiles.emplace_back((is_explored >> i) & 1UL, (in_fov >> i) & 1UL,
                                (is_wall >> i) & 1UL);
@@ -73,7 +73,7 @@ struct Chunk {
             in_fov |= ((tile.in_fov & 1UL) << i);
             is_wall |= ((tile.is_wall & 1UL) << i);
         }
-        SPDLOG_TRACE("Packing chunk - x: {} y: {} update: {} explored: {:x} fov: {:x} walls: {:x}", obj.x, obj.y, obj.update_parity, is_explored, in_fov, is_wall);
+        // SPDLOG_TRACE("Packing chunk - x: {} y: {} update: {} explored: {:x} fov: {:x} walls: {:x}", obj.x, obj.y, obj.update_parity, is_explored, in_fov, is_wall);
 
         msg.set_is_explored(is_explored);
         msg.set_in_fov(in_fov);

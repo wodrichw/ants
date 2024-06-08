@@ -66,7 +66,7 @@ struct Rect {
     }
 
     friend Packer& operator<<(Packer& p, Rect const& obj) {
-        SPDLOG_TRACE("Completed unpacking rectangle - x: {} y: {} w: {} h: {}", obj.x1, obj.y1, obj.w, obj.h);
+        SPDLOG_TRACE("Completed packing rectangle - x: {} y: {} w: {} h: {}", obj.x1, obj.y1, obj.w, obj.h);
         ant_proto::Rect msg;
         msg.set_x1(obj.x1);
         msg.set_y1(obj.y1);

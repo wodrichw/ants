@@ -20,7 +20,9 @@ struct MachineCode {
         SPDLOG_TRACE("Unpacking machine code - length: {} bytes", code_length);
         for(int i = 0; i < code_length;) {
             ant_proto::Integer instr_msg;
+            p >> instr_msg;
             uint instr = instr_msg.value();
+            SPDLOG_TRACE("Unpacking 4 instructions: {:x} - {} / {}", instr, i, code_length);
             for(int j = 3; j >= 0 && i < code_length; --j, ++i) {
                 uchar instr_byte = (instr >> (j * 8)) & 255;
                 code.push_back(instr_byte);
@@ -45,7 +47,7 @@ struct MachineCode {
         ant_proto::Integer length_msg;
         int code_length = obj.code.size();
         length_msg.set_value(code_length);
-        p << length_msg;
+        p << obj.labels << length_msg;
 
         SPDLOG_TRACE("Packing machine code - length: {} bytes", code_length);
         for(int i = 0; i < code_length;) {
@@ -55,6 +57,7 @@ struct MachineCode {
                 instr <<= 8;
                 instr |= (i < code_length ? obj.code[i] : 0);
             }
+            SPDLOG_TRACE("Packing 4 instructions: {:x} - {} / {}", instr, i, code_length);
             ant_proto::Integer instr_msg;
             instr_msg.set_value(instr);
             p << instr_msg;

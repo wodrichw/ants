@@ -15,7 +15,7 @@ MapWindow::MapWindow(Rect const& border)
     SPDLOG_INFO("Creating map of size {}x{}", border.w, border.h);
 }
 
-MapWindow::MapWindow(Unpacker& p) : border(p) {
+MapWindow::MapWindow(Unpacker& p) : border(p), map(new TCODMap(border.w, border.h)) {
     ant_proto::MapWindow msg;
     p >> msg;
 
@@ -70,7 +70,7 @@ void MapWindow::set_wall(long x, long y) {
     bool is_valid;
     to_local_coords(x, y, local_x, local_y, is_valid);
     if(!is_valid) {
-        // SPDLOG_ERROR("Invalid coordinates ({}, {}) when set wall", x, y);
+        SPDLOG_ERROR("Invalid coordinates ({}, {}) when set wall", x, y);
         return;
     }
 
@@ -83,7 +83,7 @@ void MapWindow::set_floor(long x, long y) {
     bool is_valid;
     to_local_coords(x, y, local_x, local_y, is_valid);
     if(!is_valid) {
-        // SPDLOG_ERROR("Invalid coordinates ({}, {}) when set floor", x, y);
+        SPDLOG_ERROR("Invalid coordinates ({}, {}) when set floor", x, y);
         return;
     }
 

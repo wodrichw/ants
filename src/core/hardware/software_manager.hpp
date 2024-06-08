@@ -18,13 +18,14 @@ class SoftwareManager {
    public:
     SoftwareManager(CommandMap const& command_map) : parser(command_map){};
     SoftwareManager(Unpacker& p, CommandMap const& command_map, ulong worker_count)
-        : parser(command_map) {
-            ant_proto::Integer count_msg;
-            p >> count_msg;
-            ulong code_list_length = count_msg.value();
+        : parser(command_map), current_code(new MachineCode(p)) {
+            ant_proto::SoftwareManager sftmgr_msg;
+            p >> sftmgr_msg;
+            ulong code_list_length = sftmgr_msg.code_list_length();
             code_list.reserve(code_list_length);
+            assigned_current = sftmgr_msg.assigned_current();
     
-            SPDLOG_DEBUG("Unpacking byte code - count: {}", code_list_length);
+            SPDLOG_DEBUG("Unpacking code list - count: {}", code_list_length);
             for (ulong i = 0; i < code_list_length; ++i) {
                 code_list.push_back(new MachineCode(p));
             }
@@ -69,7 +70,10 @@ class SoftwareManager {
 
     MachineCode& get() { return *current_code; }
 
-    MachineCode& operator[](ulong ant_idx) { return *(code_list[ant_mapping[ant_idx]]); }
+    MachineCode& operator[](ulong ant_idx) {
+        ulong code_idx = ant_mapping[ant_idx];
+        return code_idx >= code_list.size() ? *current_code : *(code_list[code_idx]); 
+    }
 
     void assign(ulong ant_idx) {
         assigned_current = true;
@@ -87,14 +91,20 @@ class SoftwareManager {
     }
 
     friend Packer& operator<<(Packer& p, SoftwareManager const& obj) {
-        ant_proto::Integer count_msg;
-        count_msg.set_value(obj.code_list.size());
-        p << count_msg;
+        SPDLOG_DEBUG("Packing software manager - assigned current: {}", obj.assigned_current);
+        ant_proto::SoftwareManager sftmgr_msg;
+        sftmgr_msg.set_code_list_length(obj.code_list.size());
+        sftmgr_msg.set_assigned_current(obj.assigned_current);
+
+        SPDLOG_DEBUG("Packing current code");
+        p << (*obj.current_code) << sftmgr_msg;
     
+        SPDLOG_DEBUG("Packing code list - count: {}", obj.code_list.size());
         for (MachineCode const* code : obj.code_list) {
             p << (*code);
         }
 
+        SPDLOG_DEBUG("Packing machine code ant mapping - size: {}", obj.ant_mapping.size());
         for (auto const& [ant_idx, code_idx] : obj.ant_mapping) {
             ant_proto::AntCodeRecord msg;
             msg.set_ant_idx(ant_idx);

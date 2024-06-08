@@ -13,7 +13,7 @@ using ulong = unsigned long;
 class Packer {
    public:
     Packer(std::string const& path) : output(path, std::ios::binary) {
-        if(!output) SPDLOG_ERROR("Failed to open file for writing: '{}", path);
+        if(!output) SPDLOG_ERROR("Failed to open file for writing: '{}'", path);
     }
     ~Packer() { close(); }
 
@@ -69,6 +69,7 @@ class Unpacker {
         std::string data(buffer.begin(), buffer.end());
         if(!obj.ParseFromString(data)) {
             SPDLOG_ERROR("Failed to parse serialized data.");
+            exit(1);
         }
         return *this;
     }

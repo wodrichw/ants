@@ -21,6 +21,7 @@ struct Building {
         p >> msg >> color;
 
         id = msg.id();
+        SPDLOG_DEBUG("Unpacked building - id: {}", id);
     }
 
     virtual ~Building(){}
@@ -28,6 +29,7 @@ struct Building {
     virtual BuildingType get_type() const = 0;
 
     friend Packer& operator<<(Packer& p, Building const& obj) {
+        SPDLOG_DEBUG("Packing building - id: {} x: {} y: {}", obj.id, obj.border.x1, obj.border.y1);
         ant_proto::Building msg;
         msg.set_id(obj.id);
         return p << obj.border << msg << obj.color;
@@ -41,4 +43,8 @@ class Nursery : public Building {
 
     Nursery(Unpacker& p) : Building(p) {}
     BuildingType get_type() const { return NURSERY; }
+    friend Packer& operator<<(Packer& p, Nursery const& obj) {
+        SPDLOG_DEBUG("Packing nursery");
+        return p << static_cast<Building const&>(obj);
+    }
 };
