@@ -1,0 +1,27 @@
+syntax = "proto3";
+package ant_proto;
+
+message DualRegisters {
+    uint32 register0 = 1;
+    uint32 register1 = 2;
+    bool zero_flag = 3;
+}
+
+message ProgramExecutor {
+    uint32 op_idx = 1;
+}
+
+message LabelRecord {
+    uint32 address = 1;
+    string label = 2;
+}
+
+message AntCodeRecord {
+    uint64 ant_idx = 1;
+    uint64 code_idx = 2;
+}
+
+message SoftwareManager {
+    uint64 code_list_length = 1;
+    bool assigned_current = 2;
+}

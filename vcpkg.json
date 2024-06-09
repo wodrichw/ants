@@ -3,13 +3,17 @@
   "name": "roguelike-cpp",
   "version-semver": "0.0.1",
   "maintainers": [
-    "William Wodirch"
+    "William Wodirch",
+    "Kevin Chevalier"
   ],
   "description": "Roguelike in C++ build on libtcod",
   "homepage": "https://github.com/libtcod/libtcod",
   "documentation": "https://libtcod.readthedocs.io/en/latest/",
   "license": "BSD-3-Clause",
   "dependencies": [
-    "libtcod"
+    "libtcod",
+    "spdlog",
+    "pybind11",
+    "protobuf"
   ]
 }

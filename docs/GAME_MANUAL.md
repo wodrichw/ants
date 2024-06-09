@@ -19,6 +19,7 @@
 
 # Current Controls
 
+- NOP - no operation
 - MOVE [UP/LEFT/DOWN/RIGHT] - moves the ant one space in the respective direction.
 - LDI [A/B] <INTEGER> - sets the A/B register to a constant.
 - CPY [A/B] [A/B] - copys the value in one register to the other.
@@ -27,7 +28,7 @@
 - INC [A/B] - increments the register
 - DEC [A/B] - decrements the register
 - JMP [LABEL] - go to the label
-- JNZ [LABEL] - got the label if the zero register is not zero.
+- JNZ [LABEL] - go to the label if the zero flag is not zero.
 - [LABEL]: - create a label
 
 # Example Text EDITOR commands

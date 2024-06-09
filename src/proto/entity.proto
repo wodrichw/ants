@@ -1,0 +1,46 @@
+syntax = "proto3";
+package ant_proto;
+
+message EntityData {
+    int64 x = 1;
+    int64 y = 2;
+
+    int32 ch = 3;
+    int64 fov_radius = 4;
+    uint32 color = 5;
+}
+
+message Player {}
+
+message EntityManager {
+    int64 worker_count = 1;
+    int64 building_count = 2;
+}
+
+message Building {
+    int64 id = 1;
+}
+
+message MapWindow {
+    int64 room_count = 1;
+    int64 corridor_count = 2;
+}
+
+message Map {
+    bool needs_update = 1;
+    bool chunk_update_parity = 2;
+    bool is_walls_enabled = 3;
+}
+
+message Chunks {
+    int64 count = 1;
+}
+
+message Chunk {
+    int64 x = 1;
+    int64 y = 2;
+    bool update_parity = 3;
+    int64 is_explored = 4;
+    int64 in_fov = 5;
+    int64 is_wall = 6;
+}

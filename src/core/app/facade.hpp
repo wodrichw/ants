@@ -1,3 +1,5 @@
+#pragma once
+
 #include "app/arg_parse.hpp"
 #include "app/engine.hpp"
 
@@ -13,5 +15,6 @@ class AntGameFacade {
     void initialize();
 
     ProjectArguments config;
+    Unpacker unpacker;
     Engine engine;
 };

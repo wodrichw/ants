@@ -5,59 +5,55 @@
 #include <sstream>
 
 #include "app/globals.hpp"
-#include "ui/text_editor_handler.hpp"
 #include "spdlog/spdlog.h"
+#include "ui/debug_graphics.hpp"
 
 struct Box {
     ulong x, y, w, h;
     std::vector<std::string> &asciiGrid;
     Box(std::vector<std::string> &asciiGrid, long x, long y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {
-            // SPDLOG_TRACE("Box created at ({}, {}) with dimensions {}x{}", x, y, w, h);
-        }
+        // SPDLOG_TRACE("Box created at ({}, {}) with dimensions {}x{}", x, y,
+        // w, h);
+    }
 
-    void populateChar(long x_idx, long y_idx, char ch) {
+    void populate_char(long x_idx, long y_idx, char ch) {
         asciiGrid[y_idx + y][x + x_idx] = ch;
         // SPDLOG_TRACE("Populated char {} at ({}, {})", ch, x_idx, y_idx);
     }
 
-    void checkInputText(const std::vector<std::string> &text) {
-        // SPDLOG_TRACE("Checking input text");
-        assert(text.size() == h - 2);
-        bool checkStrLengths = std::all_of(
-            text.begin(), text.end(),
-            [this](const std::string &str) { return str.length() == w - 2; });
-        assert(checkStrLengths);
-    }
-
-    void populate(const std::vector<std::string> &text) {
+    void populate(const std::vector<std::string> &text, ushort offset_x=0, ushort offset_y=0) {
         // SPDLOG_TRACE("Populating box with {} lines", text.size());
-        checkInputText(text);
 
         // render corners
         // SPDLOG_DEBUG("Rendering corners");
-        populateChar(0, 0, '+');
-        populateChar(0, h - 1, '+');
-        populateChar(w - 1, 0, '+');
-        populateChar(w - 1, h - 1, '+');
+        populate_char(0, 0, '+');
+        populate_char(0, h - 1, '+');
+        populate_char(w - 1, 0, '+');
+        populate_char(w - 1, h - 1, '+');
         for(ulong i = 1; i < h - 1; ++i) {
-            populateChar(0, i, '|');
-            populateChar(w - 1, i, '|');
+            populate_char(0, i, '|');
+            populate_char(w - 1, i, '|');
         }
         for(ulong i = 1; i < w - 1; ++i) {
-            populateChar(i, 0, '-');
-            populateChar(i, h - 1, '-');
+            populate_char(i, 0, '-');
+            populate_char(i, h - 1, '-');
         }
 
-        for(ulong i = 1; i < h - 1; ++i) {
-            for(ulong j = 1; j < w - 1; ++j) {
-                populateChar(j, i, text[i - 1][j - 1]);
+        for(ushort i = 1; i < h - 1; ++i) {
+            ushort text_line_idx = offset_y + i - 1;
+            bool is_line_filled = text_line_idx < text.size();
+            for(ushort j = 1; j < w - 1; ++j) {
+                ushort char_idx = offset_x + j - 1;
+                populate_char(j, i, is_line_filled && char_idx < text[text_line_idx].size() ?
+                    text[text_line_idx][char_idx] : ' ');
             }
         }
     }
 };
 
-tcodRenderer::tcodRenderer() {
+tcodRenderer::tcodRenderer(bool is_debug_graphics)
+    : is_debug_graphics(is_debug_graphics) {
     SPDLOG_DEBUG("Creating tcod renderer");
     auto params = TCOD_ContextParams();
     params.columns = globals::COLS, params.rows = globals::ROWS,
@@ -68,67 +64,110 @@ tcodRenderer::tcodRenderer() {
 
     context = tcod::Context(params);
     root_console = context.new_console(globals::COLS, globals::ROWS);
-    SPDLOG_TRACE("Created root console - completed creating tcod renderer"); 
+    SPDLOG_TRACE("Created root console - completed creating tcod renderer");
+
+    (void)this->is_debug_graphics;
 }
 
-void tcodRenderer::renderMap(LayoutBox const &box, Map &map) {
+void tcodRenderer::render_map(LayoutBox const &box, Map const &map,
+                              MapWindow const &window) {
     // SPDLOG_TRACE("Rendering map");
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA darkGround = color::dark_grey;
     TCOD_ColorRGBA lightWall = color::indian_red;
     TCOD_ColorRGBA lightGround = color::grey;
 
-    for(long x = 0; x < map.width; x++) {
-        for(long y = 0; y < map.height; y++) {
-            auto &tile = clearCh(box, x, y);
-            if(map.isInFov(x, y)) {
-                tile.bg = map.isWall(x, y) ? lightWall : lightGround;
+    // SPDLOG_TRACE("Rendering map with border ({}, {}) - {}x{}",
+    for(long local_x = 0; local_x < window.border.w; ++local_x) {
+        for(long local_y = 0; local_y < window.border.h; ++local_y) {
+            long x = local_x + window.border.x1;
+            long y = local_y + window.border.y1;
+
+            // SPDLOG_TRACE("Rendering tile at ({}, {}) - local ({}, {})", x, y,
+            // local_x, local_y);
+            auto &tile = clear_tile(box, local_x, local_y);
+            if(map.in_fov(x, y)) {
+                tile.bg = map.is_wall(x, y) ? lightWall : lightGround;
             } else {
-                if(map.isExplored(x, y)) {
-                    tile.bg = map.isWall(x, y) ? darkWall : darkGround;
-                } else {
-                    tile.bg = darkWall;
-                }
+                tile.bg = map.is_wall(x, y) || !map.is_explored(x, y)
+                              ? darkWall
+                              : darkGround;
             }
         }
     }
+    // render the debug info on the screen
+    DEBUG_CHUNKS(
+        box, map, window,
+        [this](LayoutBox const &box, long x, long y) -> TCOD_ConsoleTile & {
+            return this->get_tile(box, x, y);
+        },
+        is_debug_graphics);
+
     // SPDLOG_TRACE("Map rendered");
 }
 
-void tcodRenderer::renderAnt(LayoutBox const &box, Map &map, Ant &a) {
+void tcodRenderer::render_ant(LayoutBox const &box, Map &map, EntityData &a,
+                              MapWindow const &window) {
     // SPDLOG_TRACE("Rendering ant at ({}, {})", a.x, a.y);
-    PositionData &last_pos = a.last_rendered_pos;
-    if(last_pos.requires_update) {
-        SPDLOG_TRACE("Clearing last position for ant at ({}, {})", last_pos.x, last_pos.y);
-        last_pos.requires_update = false;
-        clearCh(box, last_pos.x, last_pos.y);
+    long x, y;
+    bool is_valid;
+    window.to_local_coords(a.x, a.y, x, y, is_valid);
+    if(!is_valid) {
+        // SPDLOG_ERROR("Invalid coordinates ({}, {}) when rendering ant", a.x, a.y);
+        return;
     }
 
-    if(map.isInFov(a.x, a.y)) {
+    RenderPosition &last_pos = a.last_rendered_pos;
+    if(last_pos.requires_update) {
+        // SPDLOG_TRACE("Clearing last position for ant at ({}, {})",
+        // last_pos.x, last_pos.y);
+        last_pos.requires_update = false;
+
+        long last_x, last_y;
+        window.to_local_coords(last_pos.x, last_pos.y, last_x, last_y,
+                               is_valid);
+        if(!is_valid) {
+            // SPDLOG_ERROR("Invalid coordinates ({}, {}) when clearing last
+            // position for ant", last_pos.x, last_pos.y);
+            return;
+        }
+
+        clear_tile(box, last_x, last_y);
+    }
+
+    if(map.in_fov(a.x, a.y)) {
         // SPDLOG_TRACE("Rendering ant in FOV at ({}, {})", a.x, a.y);
-        auto &tile = get_tile(box, a.x, a.y);
+        auto &tile = get_tile(box, x, y);
         tile.ch = a.ch;
         tile.fg = a.col;
         last_pos.x = a.x;
         last_pos.y = a.y;
+    } else {
+        // SPDLOG_ERROR("Ant at ({}, {}) is not in FOV", a.x, a.y);
     }
-    // SPDLOG_TRACE("Ant rendered");
+    // SPDLOG_TRACE("EntityData rendered");
 }
 
-void tcodRenderer::renderBuilding(LayoutBox const &box, Building &b) {
+void tcodRenderer::render_building(LayoutBox const &box, Building &b,
+                                   MapWindow const &window) {
     // SPDLOG_TRACE("Rendering building at ({}, {})", b.x, b.y);
-    for(long xi = b.x; xi < b.x + b.w; ++xi) {
-        for(long yi = b.y; yi < b.y + b.h; ++yi) {
-            auto &tile = get_tile(box, xi, yi);
+    for(long xi = b.border.x1; xi <= b.border.x2; ++xi) {
+        for(long yi = b.border.y1; yi <= b.border.y2; ++yi) {
+            long x, y;
+            bool is_valid;
+            window.to_local_coords(xi, yi, x, y, is_valid);
+            if(!is_valid) continue;
+
+            auto &tile = get_tile(box, x, y);
             tile.bg = b.color;
         }
     }
     // SPDLOG_TRACE("Building rendered");
 }
 
-void tcodRenderer::renderTextEditor(LayoutBox const &box,
-                                    TextEditorHandler const &editor,
-                                    size_t ant_count) {
+void tcodRenderer::render_text_editor(LayoutBox const &box,
+                                      TextEditor const &editor,
+                                      size_t ant_count) {
     // SPDLOG_TRACE("Rendering text editor");
     std::vector<std::string> asciiGrid(globals::TEXTBOXHEIGHT + 2);
     for(int i = 0; i < globals::TEXTBOXHEIGHT + 2; ++i) {
@@ -147,7 +186,7 @@ void tcodRenderer::renderTextEditor(LayoutBox const &box,
                (globals::REGBOXHEIGHT * 2) + 2, globals::REGBOXWIDTH + 2,
                globals::REGBOXHEIGHT + 2);
 
-    mainBox.populate(editor.textEditorLines);
+    mainBox.populate(editor.lines, editor.get_offset_x(), editor.get_offset_y());
     accBox.populate({"ACC:0   "});
     bacBox.populate({"BAC:1   "});
 
@@ -167,7 +206,7 @@ void tcodRenderer::renderTextEditor(LayoutBox const &box,
 
     tcod::print_rect(
         root_console,
-        get_rect(box, editor.cursorX + 1, editor.cursorY + 1, 1, 1), " ",
+        get_rect(box, editor.get_cursor_x() + 1 - editor.get_offset_x(), editor.get_cursor_y() + 1 - editor.get_offset_y(), 1, 1), " ",
         color::white, color::light_green, TCOD_LEFT, TCOD_BKGND_SET);
     // SPDLOG_TRACE("Text editor rendered");
 }
@@ -175,7 +214,7 @@ void tcodRenderer::renderTextEditor(LayoutBox const &box,
 // TODO: display potential key presses that could be helpful.
 // For instance, when standing in a nursery, display keys to produce new
 // workers. This could be replaced with something else in the future.
-void tcodRenderer::renderHelpBoxes(LayoutBox const&) {}
+void tcodRenderer::render_help_boxes(LayoutBox const &) {}
 
 void tcodRenderer::present() {
     // SPDLOG_TRACE("Presenting tcod context");
@@ -191,7 +230,8 @@ void tcodRenderer::pixel_to_tile_coordinates(int pixel_x, int pixel_y,
     tile_y = tile[1];
 }
 
-TCOD_ConsoleTile &tcodRenderer::clearCh(LayoutBox const &box, long x, long y) {
+TCOD_ConsoleTile &tcodRenderer::clear_tile(LayoutBox const &box, long x,
+                                           long y) {
     // SPDLOG_TRACE("Clearing tile at ({}, {})", x, y);
     auto &tile = get_tile(box, x, y);
     tile.ch = ' ';
@@ -202,87 +242,16 @@ TCOD_ConsoleTile &tcodRenderer::get_tile(LayoutBox const &box, long x, long y) {
     // SPDLOG_TRACE("Getting tile at ({}, {})", x, y);
     long abs_x = 0, abs_y = 0;
     box.get_abs_pos(x, y, abs_x, abs_y);
+    // SPDLOG_TRACE("Getting tile at ({}, {}) -> abs ({}, {})", x, y, abs_x,
+    // abs_y);
     return root_console.at(abs_x, abs_y);
 }
 
 const std::array<int, 4> tcodRenderer::get_rect(LayoutBox const &box, long x,
                                                 long y, int w, int h) {
-    // SPDLOG_TRACE("Getting rect at ({}, {}) with dimensions {}x{}", x, y, w, h);
+    // SPDLOG_TRACE("Getting rect at ({}, {}) with dimensions {}x{}", x, y, w,
+    // h);
     long abs_x = 0, abs_y = 0;
     box.get_abs_pos(x, y, abs_x, abs_y);
     return {(int)abs_x, (int)abs_y, w, h};
-}
-
-LayoutBox::LayoutBox() : xp(0), yp(0), wp(0), hp(0), x(0), y(0), w(0), h(0) { SPDLOG_TRACE("Empty LayoutBox created"); }
-LayoutBox::LayoutBox(long w, long h)
-    : xp(0), yp(0), wp(w), hp(h), x(0), y(0), w(w), h(h) { SPDLOG_TRACE("LayoutBox created with dimensions {}x{}", w, h); }
-LayoutBox::LayoutBox(long x, long y, long w, long h)
-    : xp(x), yp(y), wp(w), hp(h), x(x), y(y), w(w), h(h) { SPDLOG_TRACE("LayoutBox created at ({}, {}) with dimensions {}x{}", x, y, w, h); }
-
-LayoutBox::~LayoutBox() {
-    SPDLOG_DEBUG("Destructing LayoutBox");
-    if(children.first) delete children.first;
-    if(children.second) delete children.second;
-    SPDLOG_TRACE("LayoutBox destructed");
-}
-void LayoutBox::get_abs_pos(long x0, long y0, long &x1, long &y1) const {
-    x1 = x + x0;
-    y1 = y + y0;
-}
-
-long LayoutBox::get_width() const { return this->w; }
-long LayoutBox::get_height() const { return this->h; }
-
-std::pair<LayoutBox *, LayoutBox *> &LayoutBox::split(ulong percentage,
-                                                      Orientation orientation) {
-    if(orientation == Orientation::HORIZONTAL) {
-        SPDLOG_DEBUG("Splitting box horizontally at {}%", percentage);
-        ulong first_h = h * percentage / 100;
-        ulong second_h = h - first_h;
-        children.first = new LayoutBox(x, y, w, first_h);
-        children.second = new LayoutBox(x, y + first_h, w, second_h);
-
-    } else {
-        SPDLOG_DEBUG("Splitting box vertically at {}%", percentage);
-        ulong first_w = w * percentage / 100;
-        ulong second_w = w - first_w;
-        children.first = new LayoutBox(x, y, first_w, h);
-        children.second = new LayoutBox(x + first_w, y, second_w, h);
-    }
-    SPDLOG_TRACE("Layout box splitting completed");
-    return children;
-}
-
-BoxManager::BoxManager(ulong w, ulong h) : main(w, h), text_editor_root(w, h) {
-    SPDLOG_DEBUG("Creating BoxManager");
-    ulong map_split = 80;
-
-    SPDLOG_DEBUG("Splitting main box to create map and sidebar");
-    std::tie(map_box, sidebar_box) =
-        main.split(map_split, LayoutBox::Orientation::VERTICAL);
-
-    LayoutBox *editor_right_menu = nullptr, *editor_empty = nullptr;
-
-    SPDLOG_DEBUG("Splitting sidebar to create text editor and registers");
-    std::tie(text_editor_content_box, editor_right_menu) =
-        text_editor_root.split(map_split, LayoutBox::Orientation::VERTICAL);
-    
-    SPDLOG_DEBUG("Splitting editor right menu to create text editor and registers");
-    std::tie(text_editor_registers_box, editor_empty) =
-        editor_right_menu->split(30, LayoutBox::Orientation::HORIZONTAL);
-    
-    SPDLOG_DEBUG("Centering text editor content box");
-    text_editor_content_box->center(
-        globals::TEXTBOXWIDTH + globals::REGBOXWIDTH,
-        globals::TEXTBOXHEIGHT + globals::REGBOXHEIGHT);
-
-    SPDLOG_TRACE("BoxManager created");
-}
-
-void LayoutBox::center(ulong new_width, ulong new_height) {
-    x = xp + (wp - new_width) / 2;
-    y = yp + (hp - new_height) / 2;
-    w = new_width;
-    h = new_height;
-    SPDLOG_TRACE("Centered box at ({}, {}) with new dimensions {}x{}", x, y, w, h);
 }

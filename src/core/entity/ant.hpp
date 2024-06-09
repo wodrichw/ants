@@ -1,61 +1,46 @@
 #pragma once
 
-#include <libtcod/color.hpp>
-#include <optional>
+#include <unordered_set>
 
 #include "hardware/brain.hpp"
-#include "ui/buttonController.hpp"
-#include "entity/map.hpp"
-#include "hardware/operations.hpp"
+#include "hardware/program_executor.hpp"
+#include "hardware/command_config.hpp"
+#include "entity/entity_data.hpp"
 
-struct PositionData {
-    long x = 0, y = 0;
-    bool requires_update = false;
+struct Player: public MapEntity {
+    EntityData data;
+
+    Player(EntityData const& data);
+    Player(Unpacker& p);
+    EntityData& get_data();
+    ~Player()=default;
+    void move_callback(long x, long y, long new_x, long new_y);
+    void click_callback(long x, long y);
+    MapEntityType get_type() const;
+
+    friend Packer& operator<<(Packer& p, Player const& obj);
 };
 
-class Ant {
-   public:
-    long x, y, fovRadius;
-    char ch;
-    tcod::ColorRGB col;
-    std::optional<int> bldgId;  // the building the player is occupying. Will
-                                // not be set if player not in a building.
-    PositionData last_rendered_pos;
-
-    Ant(Map* map, long x, long y, int fovRadius, char ch, tcod::ColorRGB col);
-    bool can_move(long dx, long dy);
-    void move(long dx, long dy);
-
-    virtual bool isInFov() = 0;
-    virtual void resetFov() { return; }
-
-    virtual ~Ant() = default;
-
-   private:
-    Map* map;
-};
-
-class Player : public Ant {
-   public:
-    Player(Map* map, long x, long y, int fovRadius, char ch,
-           tcod::ColorRGB col);
-    bool isInFov() { return true; }
-};
-
-class Worker : public Ant {
-   public:
-    Worker(Map* map, ButtonController* button_controller,
-           ButtonController::ButtonData const& data);
-    void move(long dx, long dy);
-    bool can_move(long dx, long dy);
-    bool isInFov() { return true; }
-    bool toggle_color();
-
-    Operations operations;
+struct Worker: public MapEntity {
+    EntityData data;
+    ProgramExecutor program_executor;
     DualRegisters cpu;
 
-   private:
-    ButtonController* button_controller;
-    ButtonController::Button* button;
-    Map* map;
+    std::unordered_set<CommandEnum> command_set = {
+        CommandEnum::ADD, CommandEnum::DEC, CommandEnum::INC,
+        CommandEnum::JMP, CommandEnum::JNZ, CommandEnum::LOAD,
+        CommandEnum::MOVE, CommandEnum::NOP, CommandEnum::SUB,
+        CommandEnum::COPY
+    };
+
+    Worker(EntityData const& data);
+    Worker(Unpacker& p);
+    ~Worker()=default;
+
+    EntityData& get_data();
+    void move_callback(long x, long y, long new_x, long new_y);
+    void click_callback(long x, long y);
+    MapEntityType get_type() const;
+
+    friend Packer& operator<<(Packer& p, Worker const& obj);
 };

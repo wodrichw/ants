@@ -1,54 +1,51 @@
-#include "ant.hpp"
+#include "entity/ant.hpp"
 
 #include <libtcod/color.hpp>
 #include <optional>
 
 #include "ui/colors.hpp"
+#include "entity/entity_data.hpp"
+#include "proto/entity.pb.h"
 #include "spdlog/spdlog.h"
 
-Ant::Ant(Map* map, long x, long y, int fovRadius, char ch, tcod::ColorRGB col)
-    : x(x), y(y), fovRadius(fovRadius), ch(ch), col(col), bldgId(), map(map) {
-        SPDLOG_DEBUG("Ant created at ({}, {})", x, y);
-        SPDLOG_TRACE("Ant FOV radius: {} char: {} building id: {}", fovRadius, ch, bldgId.has_value() ? bldgId.value() : -1);
-    }
-
-void Ant::move(long dx, long dy) {
-    SPDLOG_DEBUG("Ant moving from ({}, {}) to ({}, {})", x, y, x + dx, y + dy);
-    x += dx;
-    y += dy;
-    last_rendered_pos.requires_update = true;
-
-    map->updateFov();
-
-    if(map->getTile(x, y).bldgId.has_value()) {
-        SPDLOG_DEBUG("Ant found building at ({}, {})", x, y);
-        bldgId.emplace(map->getTile(x, y).bldgId.value());
-    } else if (bldgId.has_value()) {
-        SPDLOG_DEBUG("Ant left building at ({}, {})", x, y);
-        bldgId.reset();
-    }
-    SPDLOG_TRACE("Ant completed movement to ({}, {})", x, y);
+Player::Player(EntityData const& data)
+    : data(data) {
+        SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
 }
 
-bool Ant::can_move(long dx, long dy) { return map->canWalk(x + dx, y + dy); }
+Player::Player(Unpacker& p) : data(p) {
+    SPDLOG_TRACE("Completed unpacking player");
+}
 
-Player::Player(Map* map, long x, long y, int fovRadius, char ch,
-               tcod::ColorRGB col)
-    : Ant(map, x, y, fovRadius, ch, col) {
-        SPDLOG_INFO("Player created at ({}, {})", x, y);
-    }
+EntityData& Player::get_data() {
+    return data;
+}
 
-Worker::Worker(Map* map, ButtonController* button_controller,
-               ButtonController::ButtonData const& data)
-    : Ant(map, data.x, data.y, 10, 'w', color::light_green),
-      button_controller(button_controller),
-      button(button_controller->createButton(
-          data, [&]() { return toggle_color(); },
-          std::optional<tcod::ColorRGB>())) {
-            SPDLOG_DEBUG("Worker created at ({}, {})", x, y);
-          }
+MapEntityType Player::get_type() const { return PLAYER; }
 
-bool Worker::toggle_color() {
+Packer& operator<<(Packer& p, Player const& obj) {
+    SPDLOG_DEBUG("Packing player");
+    return p << obj.data;
+}
+
+Worker::Worker(EntityData const& data)
+    : data(data), program_executor(), cpu() {
+}
+
+Worker::Worker(Unpacker& p): data(p), program_executor(p), cpu(p) {
+    SPDLOG_TRACE("Completed unpacking worker");
+}
+
+EntityData& Worker::get_data() {
+    return data;
+}
+
+Packer& operator<<(Packer& p, Worker const& obj) {
+    SPDLOG_TRACE("Packing worker");
+    return p << obj.data << obj.program_executor << obj.cpu;
+}
+
+void toggle_color(tcod::ColorRGB& col) {
     if(col == color::light_green){
         col = color::dark_yellow;
         SPDLOG_DEBUG("Worker toggled color to dark yellow");
@@ -56,15 +53,20 @@ bool Worker::toggle_color() {
         col = color::light_green;
         SPDLOG_DEBUG("Worker toggled color to light green");
     }
-    return true;
 }
 
-void Worker::move(long dx, long dy) {
-    Ant::move(dx, dy);
-    button_controller->moveButton(button, dx, dy);
+void Player::click_callback(long, long) {
+    SPDLOG_INFO("Player clicked - toggling color");
+    toggle_color(data.col);
 }
 
-bool Worker::can_move(long dx, long dy) {
-    return Ant::can_move(dx, dy) &&
-           button_controller->canMoveButton(button, dx, dy);
+void Player::move_callback(long, long, long, long) {}
+
+void Worker::click_callback(long, long) {
+    SPDLOG_INFO("Worker clicked - toggling color");
+    toggle_color(data.col);
 }
+
+void Worker::move_callback(long, long, long, long) {}
+
+MapEntityType Worker::get_type() const { return WORKER; }

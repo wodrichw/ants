@@ -1,66 +1,42 @@
 #ifndef __ENGINE_HPP
 #define __ENGINE_HPP
 
-#include <SDL_events.h>
-#include <SDL_keycode.h>
-#include <stddef.h>
-
-#include <libtcod.hpp>
-#include <libtcod/console.hpp>
-#include <vector>
-
 #include "app/arg_parse.hpp"
-#include "hardware/controller.hpp"
-#include "ui/render.hpp"
-#include "ui/text_editor_handler.hpp"
+#include "app/game_state.hpp"
+#include "app/game_mode.hpp"
+#include "ui/text_editor.hpp"
+#include "hardware/parser.hpp"
+#include "entity/entity_manager.hpp"
+#include "ui/event_system.hpp"
+#include "hardware/software_manager.hpp"
 
-namespace ant {
-    class Ant;
-    class Player;
-}  // namespace ant
-class Building;
-class ClockController;
-class Map;
-class ButtonController;
+using ulong = unsigned long;
+
+class Renderer;
 
 class Engine {
-   public:
-    enum GameStatus {
-        STARTUP,
-        IDLE,
-        TEXT_EDITOR,
-        NEW_TURN,
-        VICTORY,
-        DEFEAT
-    } gameStatus;
-
-    struct InputEvent {
-        long dx, dy;                          // keyboard move events
-        std::optional<ulong> clickX, clickY;  // mouse click events
-    };
-
-    ProjectArguments& config;
-    std::vector<Ant*> ants;
-    BoxManager box_manager;
-    Map* map;
-    Player* player;
-    std::vector<Building*> buildings;
-    std::vector<ClockController*> clockControllers;
+    BoxManager box_manager; 
     Renderer* renderer;
-    TextEditorHandler editor;
-    ButtonController* buttonController;
-    ParserCommandsAssembler assembler;
+    EntityManager entity_manager;
+    EventSystem root_event_system;
+    CommandMap command_map;
+    SoftwareManager software_manager;
 
-    ulong clock_timeout_1000ms;
+    PrimaryMode primary_mode;
+    EditorMode editor_mode;
+    GameState state;
+
+   public:
 
     Engine(ProjectArguments& config);
+    Engine(Unpacker&, ProjectArguments&);
     ~Engine();
     void update();
     void render();
 
    private:
-    void handleMouseClick(SDL_MouseButtonEvent event);
-    void handleKeyPress(SDL_Keycode key_sym, long& dx, long& dy);
+    void add_listeners(ProjectArguments& config);
+    friend Packer& operator<<(Packer&, Engine const&);
 };
 
 extern Engine engine;
