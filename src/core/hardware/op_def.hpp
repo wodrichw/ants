@@ -9,13 +9,13 @@
 using schar = signed char;
 
 struct NoOP {
-    bool operator()();
+    ushort operator()();
 };
 
 // load a constant to the register
 struct LoadConstantOp {
     LoadConstantOp(cpu_word_size& reg, bool& zero_flag, cpu_word_size const value);
-    bool operator()();
+    ushort operator()();
 
    private:
     cpu_word_size& reg;
@@ -24,58 +24,59 @@ struct LoadConstantOp {
 };
 
 struct MoveOp {
-    MoveOp(Map& map, MapEntity& entity, schar dx, schar dy);
-    bool operator()();
+    MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ushort speed);
+    ushort operator()();
     Map& map;
     MapEntity& entity;
     schar dx, dy;
+    ushort speed;
 };
 
 struct CopyOp {
     CopyOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
-    bool operator()();
+    ushort operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct AddOp {
     AddOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
-    bool operator()();
+    ushort operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct SubOp {
     SubOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
-    bool operator()();
+    ushort operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct IncOp {
     IncOp(cpu_word_size& reg, bool& zero_flag);
-    bool operator()();
+    ushort operator()();
     cpu_word_size& reg;
     bool& zero_flag;
 };
 
 struct DecOp {
     DecOp(cpu_word_size& reg, bool& zero_flag);
-    bool operator()();
+    ushort operator()();
     cpu_word_size& reg;
     bool& zero_flag;
 };
 
 struct JmpOp {
     JmpOp(ushort& op_idx, ushort new_idx);
-    bool operator()();
+    ushort operator()();
     ushort& op_idx;
     ushort new_idx;
 };
 
 struct JnzOp {
     JnzOp(ushort& op_idx, ushort new_idx, bool const& zero_flag);
-    bool operator()();
+    ushort operator()();
     ushort& op_idx;
     ushort new_idx;
     bool const& zero_flag;

@@ -16,11 +16,12 @@ struct AntInteractor {
     DualRegisters& registers;
     MapEntity& entity;
     Map& map;
-    std::vector<std::function<bool()>>& ops;
+    std::vector<std::function<ushort()>>& ops;
     ushort& op_idx;
+    ushort move_speed;
     AntInteractor(DualRegisters& registers, MapEntity& entity, Map& map,
-               std::vector<std::function<bool()>>& ops, ushort& op_idx): registers(registers), entity(entity),
-                map(map), ops(ops), op_idx(op_idx) {}
+               std::vector<std::function<ushort()>>& ops, ushort& op_idx, ushort move_speed): registers(registers), entity(entity),
+                map(map), ops(ops), op_idx(op_idx), move_speed(move_speed) {}
 };
 
 struct CompileArgs {

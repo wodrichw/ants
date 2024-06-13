@@ -229,7 +229,7 @@ struct EntityManager {
         SPDLOG_TRACE("Building ant program - x: {} y: {} - code: {} bytes", worker.get_data().x, worker.get_data().y, code.size());
         AntInteractor interactor(worker.cpu, worker, map,
                             worker.program_executor._ops,
-                            worker.program_executor.op_idx);
+                            worker.program_executor.op_idx, worker.move_speed);
         
         Status status;
         hardware_manager.compile(code, interactor, status);

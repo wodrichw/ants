@@ -96,7 +96,7 @@ void MoveAntCompiler::operator()(CompileArgs &args) {
     uchar movement = (*(args.code_it++)) & 0b111;
     schar dx = (movement & 1) * (movement - 2), dy = (1 - (movement & 1)) * (movement - 1);
 
-    interactor.ops.push_back(MoveOp(interactor.map, interactor.entity, dx, dy));
+    interactor.ops.push_back(MoveOp(interactor.map, interactor.entity, dx, dy, interactor.move_speed));
     
     SPDLOG_TRACE("Move EntityData command compiled");
 }

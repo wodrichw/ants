@@ -189,13 +189,13 @@ class PrimaryMode : public Mode {
         entity_manager.update();
 
         // SPDLOG_TRACE("Checking for clock pulse");
-        if(clock_timeout_1000ms < SDL_GetTicks64()) {
-            // SPDLOG_TRACE("Detected clock pulse");
-            for(ClockController* c : hardware_manager) {
-                c->handleClockPulse();
-            }
-            clock_timeout_1000ms += 1000;
+        if(clock_timeout_1000ms >= SDL_GetTicks64()) return;
+
+        // SPDLOG_TRACE("Detected clock pulse");
+        for(ClockController* c : hardware_manager) {
+            c->handleClockPulse();
         }
+        clock_timeout_1000ms += 17; // 1000ms / 60 FPS = 17
     }
 
     EventPublisher<MouseEventType, MouseEvent>& get_mouse_publisher() override {
