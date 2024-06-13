@@ -23,7 +23,7 @@ ushort LoadConstantOp::operator()() {
 MoveOp::MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ushort speed)
     : map(map), entity(entity), dx(dx), dy(dy), speed(speed) {
         SPDLOG_DEBUG("MoveOp created");
-        SPDLOG_INFO("dx: {}, dy: {} speed: {}", dx, dy, speed);
+        SPDLOG_TRACE("dx: {}, dy: {} speed: {}", dx, dy, speed);
     }
 ushort MoveOp::operator()() {
     SPDLOG_DEBUG("Executing MoveOp");

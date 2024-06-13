@@ -148,3 +148,7 @@ target_link_libraries(ants ants_src)
 if (CONAN_FILE)
     add_dependencies(ants copy_font)
 endif()
+
+
+add_executable(bench src/benchmark/benchmark_example.cpp)
+target_link_libraries(bench ants_benchmark)
