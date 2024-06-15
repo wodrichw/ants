@@ -5,14 +5,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "hardware/controller.hpp"
-
 using ulong = unsigned long;
 
 class Packer;
 class Unpacker;
 
-struct ProgramExecutor: public ClockController {
+struct ProgramExecutor {
    public:
     std::vector<std::function<ushort()>> _ops;
     ushort op_idx;
@@ -22,7 +20,6 @@ struct ProgramExecutor: public ClockController {
     ProgramExecutor(ulong const& instr_clock);
     ProgramExecutor(Unpacker& p, ulong const& instr_clock); 
     void handleClockPulse();
-    ControllerType get_type() const { return PROGRAM_EXECUTOR; }
 
     friend Packer& operator<<(Packer& p, ProgramExecutor const& obj);
 };

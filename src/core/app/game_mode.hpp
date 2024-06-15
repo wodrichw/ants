@@ -185,8 +185,8 @@ class PrimaryMode : public Mode {
     void update() override {
         entity_manager.update();
 
-        for(ClockController* c : hardware_manager) {
-            c->handleClockPulse();
+        for(ProgramExecutor* exec : hardware_manager) {
+            exec->handleClockPulse();
         }
     }
 
