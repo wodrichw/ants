@@ -5,7 +5,7 @@
 #include "spdlog/spdlog.h"
 #include "utils/serializer.hpp"
 
-ProgramExecutor::ProgramExecutor(ulong const& instr_clock) : instr_trigger(1), instr_clock(instr_clock) {}
+ProgramExecutor::ProgramExecutor(ulong const& instr_clock) : instr_trigger(0), instr_clock(instr_clock) {}
 
 ProgramExecutor::ProgramExecutor(Unpacker& p, ulong const& instr_clock): instr_clock(instr_clock) {
     ant_proto::ProgramExecutor msg;
@@ -18,10 +18,10 @@ ProgramExecutor::ProgramExecutor(Unpacker& p, ulong const& instr_clock): instr_c
 
 void ProgramExecutor::handleClockPulse() {
     // SPDLOG_INFO("Handling clock pulse for program_executor - clock: {} trigger: {} EXEC: {}", instr_clock, instr_trigger, (instr_clock % instr_trigger) == 0 ? "YES" : "NO");
-    if ((instr_clock % instr_trigger) != 0) return;
+    if ((instr_clock % (instr_trigger + 1)) != 0) return;
 
-    instr_trigger = 1;
-    for(int i = 0; i < 500 && op_idx < _ops.size() && instr_trigger == 1; ++i) {
+    instr_trigger = 0;
+    for(int i = 0; i < 500 && op_idx < _ops.size() && instr_trigger == 0; ++i) {
         instr_trigger = _ops[op_idx]();
         ++op_idx;
         SPDLOG_TRACE("Incrementing op_idx to {}", op_idx);

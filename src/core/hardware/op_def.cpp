@@ -3,7 +3,7 @@
 // NOP //////////////////////////////////////////
 ushort NoOP::operator()() {
     SPDLOG_TRACE("NOP operation executed");
-    return 2;
+    return 1;
 }
 
 // LOAD CONSTANT TO REGISTER ////////////////////
@@ -16,7 +16,7 @@ ushort LoadConstantOp::operator()() {
     SPDLOG_TRACE("Writing value {} to register", value);
     reg = value;
     zero_flag = value == 0;
-    return 1;
+    return 0;
 }
 
 // MOVE /////////////////////////////////////////
@@ -44,7 +44,7 @@ ushort CopyOp::operator()() {
     reg_dst = reg_src;
     zero_flag = reg_src == 0;
     SPDLOG_TRACE("Copying register with result {}", reg_dst);
-    return 1;
+    return 0;
 }
 
 // ADD REGISTER TO REGISTER ////////////////////
@@ -59,7 +59,7 @@ ushort AddOp::operator()() {
     reg_dst += reg_src;
     zero_flag = reg_dst == 0;
     SPDLOG_TRACE("Adding registers - result: {}", reg_dst);
-    return 1;
+    return 0;
 }
 
 // SUB REGISTER TO REGISTER ////////////////////
@@ -74,7 +74,7 @@ ushort SubOp::operator()() {
     reg_dst -= reg_src;
     zero_flag = reg_dst == 0;
     SPDLOG_TRACE("Subtracting registers - result: {}", reg_dst);
-    return 1;
+    return 0;
 }
 
 // INC REGISTER ////////////////////////////////
@@ -87,7 +87,7 @@ ushort IncOp::operator()() {
     ++reg;
     zero_flag = reg == 0;
     SPDLOG_TRACE("Incremented register - result: {} - zero flag: {}", reg, zero_flag);
-    return 1;
+    return 0;
 }
 
 // DEC REGISTER ////////////////////////////////
@@ -100,7 +100,7 @@ ushort DecOp::operator()() {
     --reg;
     zero_flag = reg == 0;
     SPDLOG_TRACE("Decremented register - result: {} - zero flag: {}", reg, zero_flag);
-    return 1;
+    return 0;
 }
 
 // JMP /////////////////////////////////////////
@@ -113,7 +113,7 @@ ushort JmpOp::operator()() {
     SPDLOG_DEBUG("Executing JmpOp");
     op_idx = new_idx;
     SPDLOG_TRACE("Jumped to op_idx {}", op_idx);
-    return 1;
+    return 0;
 }
 
 // JNZ /////////////////////////////////////////
@@ -126,9 +126,9 @@ ushort JnzOp::operator()() {
     SPDLOG_DEBUG("Executing JnzOp");
     if(zero_flag){
         SPDLOG_TRACE("Zero flag is set, not jumping");
-        return 1;
+        return 0;
     }
     SPDLOG_TRACE("Zero flag off - jumping to op_idx {}", new_idx);
     op_idx = new_idx;
-    return 1;
+    return 0;
 }
