@@ -28,11 +28,11 @@ Packer& operator<<(Packer& p, Player const& obj) {
     return p << obj.data;
 }
 
-Worker::Worker(EntityData const& data)
-    : data(data), program_executor(), cpu() {
+Worker::Worker(EntityData const& data, ulong const& instr_clock)
+    : data(data), program_executor(instr_clock), cpu() {
 }
 
-Worker::Worker(Unpacker& p): data(p), program_executor(p), cpu(p) {
+Worker::Worker(Unpacker& p, ulong const& instr_clock): data(p), program_executor(p, instr_clock), cpu(p) {
     SPDLOG_TRACE("Completed unpacking worker");
 }
 

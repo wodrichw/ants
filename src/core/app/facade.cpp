@@ -2,18 +2,28 @@
 
 #include <SDL_timer.h>
 
-AntGameFacade::AntGameFacade() : config(0, nullptr), unpacker(config.save_path), engine(unpacker.is_valid() ? Engine(unpacker, config) : Engine(config)) {
+AntGameFacade::AntGameFacade() : config(0, nullptr), unpacker(config.save_path), engine(unpacker.is_valid() ? Engine(unpacker, config) : Engine(config)), clock_timeout(SDL_GetTicks64()) {
     initialize();
 }
 AntGameFacade::AntGameFacade(int argc, char* argv[])
-    : config(argc, argv), unpacker(config.save_path), engine(unpacker.is_valid() ? Engine(unpacker, config) : Engine(config)) {
+    : config(argc, argv), unpacker(config.save_path), engine(unpacker.is_valid() ? Engine(unpacker, config) : Engine(config)), clock_timeout(SDL_GetTicks64()) {
+    initialize();
+}
+AntGameFacade::AntGameFacade(ProjectArguments& config) : config(config), unpacker(config.save_path), engine(unpacker.is_valid() ? Engine(unpacker, config) : Engine(config)), clock_timeout(SDL_GetTicks64()) {
     initialize();
 }
 
-void AntGameFacade::update() {
-    SDL_GetTicks();
+bool AntGameFacade::update() {
+    if(clock_timeout >= SDL_GetTicks64()) return false;
+    clock_timeout += 17; // 1000ms / 60 FPS = 17
+
     engine.update();
     engine.render();
+    return true;
+}
+
+void AntGameFacade::engine_update() {
+    engine.update();
 }
 
 void AntGameFacade::initialize() {

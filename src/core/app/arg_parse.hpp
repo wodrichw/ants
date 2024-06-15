@@ -8,7 +8,9 @@ class ArgumentParser {
     std::map<std::string, std::string> arguments;
 
    public:
+    ArgumentParser();
     ArgumentParser(int argc, char* argv[]);
+
 
     bool hasKey(const std::string& key) const;
 
@@ -32,4 +34,8 @@ class ProjectArguments {
     bool const is_debug_graphics;
     bool const is_walls_enabled;
     ProjectArguments(int argc, char* argv[]);
+    ProjectArguments(
+        std::string const& default_map_file_path,
+        std::string const& save_path,
+        bool is_render, bool is_debug_graphics, bool is_walls_enabled);
 };

@@ -8,8 +8,10 @@ class AntGameFacade {
     public:
     AntGameFacade();
     AntGameFacade(int argc, char* argv[]);
+    AntGameFacade(ProjectArguments& config);
 
-    void update();
+    bool update();
+    void engine_update();
 
     private:
     void initialize();
@@ -17,4 +19,5 @@ class AntGameFacade {
     ProjectArguments config;
     Unpacker unpacker;
     Engine engine;
+    ulong clock_timeout;
 };

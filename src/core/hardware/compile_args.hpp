@@ -5,6 +5,7 @@
 #include "hardware/parser.hpp"
 
 using uchar = unsigned char;
+using ulong = unsigned long;
 
 struct DualRegisters;
 struct MapEntity;

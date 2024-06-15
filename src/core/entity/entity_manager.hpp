@@ -22,13 +22,15 @@ struct EntityManager {
     MapWindow map_window;
     Map map;
     Worker* next_worker;
+    ulong instr_action_clock;
 
     EntityManager(int map_width, int map_height, ProjectArguments& config)
         : player(EntityData(40, 25, '@', 10, color::white)),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
-          next_worker(create_worker_data()) {
+          next_worker(create_worker_data()),
+          instr_action_clock(0) {
 
         MapSectionData section;
         if(config.default_map_file_path.empty()) {
@@ -65,6 +67,7 @@ struct EntityManager {
         SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
         p >> msg;
+        instr_action_clock = msg.instr_action_clock();
 
         ulong worker_count = msg.worker_count();
         SPDLOG_DEBUG("Unpacking workers - count: {}", worker_count);
@@ -80,7 +83,7 @@ struct EntityManager {
             }
 
             if(entity_type == WORKER) {
-                save_ant(new Worker(p));
+                save_ant(new Worker(p, instr_action_clock));
                 continue;
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
@@ -166,6 +169,7 @@ struct EntityManager {
     }
 
     void update() {
+        ++instr_action_clock;
         if(!map.needs_update) return;
         SPDLOG_TRACE("Updating EntityManager");
         map.needs_update = false;
@@ -258,11 +262,12 @@ struct EntityManager {
     }
 
     Worker* create_worker_data() {
-        return new Worker(EntityData('w', 10, color::light_green));
+        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock);
     }
 
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {
         ant_proto::EntityManager msg;
+        msg.set_instr_action_clock(obj.instr_action_clock);
         msg.set_worker_count(obj.workers.size());
         msg.set_building_count(obj.buildings.size());
         p << obj.player << obj.map_window << obj.map << msg;

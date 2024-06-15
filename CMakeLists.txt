@@ -124,7 +124,6 @@ endif()
 
 message(STATUS "Setting log level to ${LOG}")
 
-
 find_package(spdlog CONFIG REQUIRED)
 include_directories(${SPDLOG_INCLUDE_DIRS})
 
@@ -149,6 +148,8 @@ if (CONAN_FILE)
     add_dependencies(ants copy_font)
 endif()
 
-
-add_executable(bench src/benchmark/benchmark_example.cpp)
-target_link_libraries(bench ants_benchmark)
+if (BENCH)
+    message(STATUS "Creating ant benchmarks executable")
+    add_executable(bench src/benchmark/ant_bench.cpp)
+    target_link_libraries(bench ants_benchmark)
+endif()

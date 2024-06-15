@@ -3,7 +3,7 @@
 // NOP //////////////////////////////////////////
 ushort NoOP::operator()() {
     SPDLOG_TRACE("NOP operation executed");
-    return 1;
+    return 2;
 }
 
 // LOAD CONSTANT TO REGISTER ////////////////////
@@ -16,11 +16,11 @@ ushort LoadConstantOp::operator()() {
     SPDLOG_TRACE("Writing value {} to register", value);
     reg = value;
     zero_flag = value == 0;
-    return 0;
+    return 1;
 }
 
 // MOVE /////////////////////////////////////////
-MoveOp::MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ushort speed)
+MoveOp::MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ulong speed)
     : map(map), entity(entity), dx(dx), dy(dy), speed(speed) {
         SPDLOG_DEBUG("MoveOp created");
         SPDLOG_TRACE("dx: {}, dy: {} speed: {}", dx, dy, speed);
@@ -44,7 +44,7 @@ ushort CopyOp::operator()() {
     reg_dst = reg_src;
     zero_flag = reg_src == 0;
     SPDLOG_TRACE("Copying register with result {}", reg_dst);
-    return 0;
+    return 1;
 }
 
 // ADD REGISTER TO REGISTER ////////////////////
@@ -59,7 +59,7 @@ ushort AddOp::operator()() {
     reg_dst += reg_src;
     zero_flag = reg_dst == 0;
     SPDLOG_TRACE("Adding registers - result: {}", reg_dst);
-    return 0;
+    return 1;
 }
 
 // SUB REGISTER TO REGISTER ////////////////////
@@ -74,7 +74,7 @@ ushort SubOp::operator()() {
     reg_dst -= reg_src;
     zero_flag = reg_dst == 0;
     SPDLOG_TRACE("Subtracting registers - result: {}", reg_dst);
-    return 0;
+    return 1;
 }
 
 // INC REGISTER ////////////////////////////////
@@ -86,8 +86,8 @@ ushort IncOp::operator()() {
     SPDLOG_DEBUG("Executing IncOp");
     ++reg;
     zero_flag = reg == 0;
-    SPDLOG_TRACE("Incremented register - result: {} - zero flag: %d", reg, zero_flag);
-    return 0;
+    SPDLOG_TRACE("Incremented register - result: {} - zero flag: {}", reg, zero_flag);
+    return 1;
 }
 
 // DEC REGISTER ////////////////////////////////
@@ -99,8 +99,8 @@ ushort DecOp::operator()() {
     SPDLOG_DEBUG("Executing DecOp");
     --reg;
     zero_flag = reg == 0;
-    SPDLOG_TRACE("Decremented register - result: {} - zero flag: %d", reg, zero_flag);
-    return 0;
+    SPDLOG_TRACE("Decremented register - result: {} - zero flag: {}", reg, zero_flag);
+    return 1;
 }
 
 // JMP /////////////////////////////////////////
@@ -113,7 +113,7 @@ ushort JmpOp::operator()() {
     SPDLOG_DEBUG("Executing JmpOp");
     op_idx = new_idx;
     SPDLOG_TRACE("Jumped to op_idx {}", op_idx);
-    return 0;
+    return 1;
 }
 
 // JNZ /////////////////////////////////////////
@@ -126,9 +126,9 @@ ushort JnzOp::operator()() {
     SPDLOG_DEBUG("Executing JnzOp");
     if(zero_flag){
         SPDLOG_TRACE("Zero flag is set, not jumping");
-        return 0;
+        return 1;
     }
     SPDLOG_TRACE("Zero flag off - jumping to op_idx {}", new_idx);
     op_idx = new_idx;
-    return 0;
+    return 1;
 }

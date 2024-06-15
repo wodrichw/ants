@@ -34,8 +34,8 @@ struct Worker: public MapEntity {
         CommandEnum::COPY
     };
 
-    Worker(EntityData const& data);
-    Worker(Unpacker& p);
+    Worker(EntityData const& data, ulong const& instr_clock);
+    Worker(Unpacker& p, ulong const& instr_clock);
     ~Worker()=default;
 
     EntityData& get_data();

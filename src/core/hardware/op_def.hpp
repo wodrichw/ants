@@ -24,12 +24,12 @@ struct LoadConstantOp {
 };
 
 struct MoveOp {
-    MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ushort speed);
+    MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ulong speed);
     ushort operator()();
     Map& map;
     MapEntity& entity;
     schar dx, dy;
-    ushort speed;
+    ulong speed;
 };
 
 struct CopyOp {

@@ -94,15 +94,13 @@ class PrimaryMode : public Mode {
     HardwareManager hardware_manager;
     EntityManager& entity_manager;
     Renderer& renderer;
-    ulong clock_timeout_1000ms;
 
    public:
     PrimaryMode(LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer)
         : box(box),
           hardware_manager(command_map),
           entity_manager(entity_manager),
-          renderer(renderer),
-          clock_timeout_1000ms(SDL_GetTicks64()) {
+          renderer(renderer) {
         
         initialize(software_manager);
     }
@@ -111,8 +109,7 @@ class PrimaryMode : public Mode {
         : box(box),
           hardware_manager(p, command_map),
           entity_manager(entity_manager),
-          renderer(renderer),
-          clock_timeout_1000ms(SDL_GetTicks64()) {
+          renderer(renderer) {
         SPDLOG_DEBUG("Unpacking primary mode object"); 
         initialize(software_manager);
         entity_manager.rebuild_workers(hardware_manager, software_manager);
@@ -188,14 +185,9 @@ class PrimaryMode : public Mode {
     void update() override {
         entity_manager.update();
 
-        // SPDLOG_TRACE("Checking for clock pulse");
-        if(clock_timeout_1000ms >= SDL_GetTicks64()) return;
-
-        // SPDLOG_TRACE("Detected clock pulse");
         for(ClockController* c : hardware_manager) {
             c->handleClockPulse();
         }
-        clock_timeout_1000ms += 17; // 1000ms / 60 FPS = 17
     }
 
     EventPublisher<MouseEventType, MouseEvent>& get_mouse_publisher() override {

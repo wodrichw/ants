@@ -1,3 +1,4 @@
+message(STATUS "Compiling Protobuf messages")
 # Find protobuf package  
 find_package(Protobuf REQUIRED)
 

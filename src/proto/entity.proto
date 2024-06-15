@@ -15,6 +15,7 @@ message Player {}
 message EntityManager {
     int64 worker_count = 1;
     int64 building_count = 2;
+    uint64 instr_action_clock = 3;
 }
 
 message Building {
