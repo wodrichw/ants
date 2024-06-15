@@ -32,6 +32,7 @@ struct MapEntity {
     virtual EntityData& get_data() = 0;
     virtual void move_callback(long x, long y, long new_x, long new_y) = 0;
     virtual void click_callback(long x, long y) = 0;
+    virtual void request_move() = 0;
     virtual MapEntityType get_type() const = 0;
     friend Packer& operator<<(Packer& p, MapEntity const&) { return p; }
 };

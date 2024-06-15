@@ -186,6 +186,9 @@ class PrimaryMode : public Mode {
         entity_manager.update();
 
         for(ProgramExecutor* exec : hardware_manager) {
+            exec->reset();
+        }
+        for(ProgramExecutor* exec : hardware_manager) {
             exec->handleClockPulse();
         }
     }

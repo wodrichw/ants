@@ -23,6 +23,8 @@ EntityData& Player::get_data() {
 
 MapEntityType Player::get_type() const { return PLAYER; }
 
+void Player::request_move() {}
+
 Packer& operator<<(Packer& p, Player const& obj) {
     SPDLOG_DEBUG("Packing player");
     return p << obj.data;
@@ -39,6 +41,8 @@ Worker::Worker(Unpacker& p, ulong const& instr_clock): data(p), program_executor
 EntityData& Worker::get_data() {
     return data;
 }
+
+void Worker::request_move() { program_executor.handleClockPulse(); }
 
 Packer& operator<<(Packer& p, Worker const& obj) {
     SPDLOG_TRACE("Packing worker");

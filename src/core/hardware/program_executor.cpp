@@ -13,11 +13,17 @@ ProgramExecutor::ProgramExecutor(Unpacker& p, ulong const& instr_clock): instr_c
 
     op_idx = msg.op_idx();
     instr_trigger = msg.instr_trigger();
+    has_executed = msg.has_executed();
     SPDLOG_TRACE("Completed unpacking program executor - op_idx: {}", op_idx);
 }
 
+void ProgramExecutor::reset() { has_executed = false; }
+
 void ProgramExecutor::handleClockPulse() {
-    // SPDLOG_INFO("Handling clock pulse for program_executor - clock: {} trigger: {} EXEC: {}", instr_clock, instr_trigger, (instr_clock % instr_trigger) == 0 ? "YES" : "NO");
+    if (has_executed) return;
+    has_executed = true;
+
+    // SPDLOG_INFO("Handling clock pulse for program_executor - clock: {} trigger: {}", instr_clock, instr_trigger);
     if ((instr_clock % (instr_trigger + 1)) != 0) return;
 
     instr_trigger = 0;
@@ -35,5 +41,6 @@ Packer& operator<<(Packer& p, ProgramExecutor const& obj) {
     ant_proto::ProgramExecutor msg;
     msg.set_op_idx(obj.op_idx);
     msg.set_instr_trigger(obj.instr_trigger);
+    msg.set_has_executed(obj.has_executed);
     return p << msg;
 }

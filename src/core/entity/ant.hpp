@@ -14,6 +14,7 @@ struct Player: public MapEntity {
     Player(Unpacker& p);
     EntityData& get_data();
     ~Player()=default;
+    void request_move();
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
     MapEntityType get_type() const;
@@ -39,6 +40,7 @@ struct Worker: public MapEntity {
     ~Worker()=default;
 
     EntityData& get_data();
+    void request_move();
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
     MapEntityType get_type() const;
