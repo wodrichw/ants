@@ -28,7 +28,7 @@ struct Worker: public MapEntity {
     EntityData data;
     ProgramExecutor program_executor;
     DualRegisters cpu;
-    ushort move_speed = 1; // 60 FPS / 5 moves per sec = 12
+    ushort move_speed = 12; // 60 FPS / 5 moves per sec = 12
     Inventory inventory;
 
     std::unordered_set<CommandEnum> command_set = {
