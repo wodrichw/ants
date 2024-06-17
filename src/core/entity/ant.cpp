@@ -8,12 +8,12 @@
 #include "proto/entity.pb.h"
 #include "spdlog/spdlog.h"
 
-Player::Player(EntityData const& data)
-    : data(data) {
+Player::Player(EntityData const& data, ItemInfoMap const& info_map)
+    : data(data), inventory(1,1, 1000, info_map) {
         SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
 }
 
-Player::Player(Unpacker& p) : data(p) {
+Player::Player(Unpacker& p, ItemInfoMap const& info_map) : data(p), inventory(p, info_map) {
     SPDLOG_TRACE("Completed unpacking player");
 }
 
@@ -27,14 +27,14 @@ void Player::request_move() {}
 
 Packer& operator<<(Packer& p, Player const& obj) {
     SPDLOG_DEBUG("Packing player");
-    return p << obj.data;
+    return p << obj.data << obj.inventory;
 }
 
-Worker::Worker(EntityData const& data, ulong const& instr_clock)
-    : data(data), program_executor(instr_clock), cpu() {
+Worker::Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const& info_map)
+    : data(data), program_executor(instr_clock), cpu(), inventory(1, 1, 1000, info_map) {
 }
 
-Worker::Worker(Unpacker& p, ulong const& instr_clock): data(p), program_executor(p, instr_clock), cpu(p) {
+Worker::Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const& info_map): data(p), program_executor(p, instr_clock), cpu(p), inventory(p, info_map) {
     SPDLOG_TRACE("Completed unpacking worker");
 }
 
@@ -46,7 +46,7 @@ void Worker::request_move() { program_executor.handleClockPulse(); }
 
 Packer& operator<<(Packer& p, Worker const& obj) {
     SPDLOG_TRACE("Packing worker");
-    return p << obj.data << obj.program_executor << obj.cpu;
+    return p << obj.data << obj.program_executor << obj.cpu << obj.inventory;
 }
 
 void toggle_color(tcod::ColorRGB& col) {

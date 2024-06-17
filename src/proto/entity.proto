@@ -45,3 +45,15 @@ message Chunk {
     int64 in_fov = 5;
     int64 is_wall = 6;
 }
+
+message Inventory {
+    uint64 max_stack_count = 1;
+    uint64 stack_size = 2;
+    uint64 max_weight = 3;
+    uint64 record_count = 4;
+}
+
+message InventoryRecord {
+    uint64 type = 1;
+    uint64 count = 2;
+}

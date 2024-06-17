@@ -16,6 +16,7 @@
 #include "ui/colors.hpp"
 
 struct EntityManager {
+    ItemInfoMap item_info_map;
     Player player;
     std::vector<Worker*> workers;
     std::vector<Building*> buildings;
@@ -25,7 +26,7 @@ struct EntityManager {
     ulong instr_action_clock;
 
     EntityManager(int map_width, int map_height, ProjectArguments& config)
-        : player(EntityData(40, 25, '@', 10, color::white)),
+        : player(EntityData(40, 25, '@', 10, color::white), item_info_map),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
@@ -63,7 +64,7 @@ struct EntityManager {
         map_window.set_center(player.get_data().x, player.get_data().y);
     }
 
-    EntityManager(Unpacker& p) : player(p), map_window(p), map(p), next_worker(create_worker_data()) {
+    EntityManager(Unpacker& p) : player(p, item_info_map), map_window(p), map(p), next_worker(create_worker_data()) {
         SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
         p >> msg;
@@ -83,7 +84,7 @@ struct EntityManager {
             }
 
             if(entity_type == WORKER) {
-                save_ant(new Worker(p, instr_action_clock));
+                save_ant(new Worker(p, instr_action_clock, item_info_map));
                 continue;
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
@@ -262,7 +263,7 @@ struct EntityManager {
     }
 
     Worker* create_worker_data() {
-        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock);
+        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock, item_info_map);
     }
 
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {

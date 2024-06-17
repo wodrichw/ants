@@ -59,7 +59,7 @@ void LoadConstantDeparser::operator()(DeparseArgs &args) {
     cpu_word_size const value = v0 | (v1 << 8) | (v2 << 16) << (v3 << 24);
 
     std::stringstream ss;
-    ss << "LOAD " << register_name << " " << value;
+    ss << "LDI " << register_name << " " << value;
     args.lines.push_back(ss.str());
     SPDLOG_TRACE("Load Constant command deparsed");
 }
