@@ -56,17 +56,10 @@ struct KeyboardChordEvent
     }
 
     void unset_key(KeyboardEventType key) {
-        if (chord.first == key) {
-            SPDLOG_DEBUG("Unset first chord key: {}", static_cast<ulong>(key));
-            chord.first = chord.second;
-            chord.second = UNKNOWN_KEY_EVENT;
-            return;
-        }
+        if (chord.first == key) chord.first = UNKNOWN_KEY_EVENT;
 
-        if (chord.second == key) {
-            SPDLOG_DEBUG("Unset second chord key: {}", static_cast<ulong>(key));
-            chord.second = UNKNOWN_KEY_EVENT;
-        }
+        // always reset for now
+        chord.second = UNKNOWN_KEY_EVENT;
     }
 };
 

@@ -61,6 +61,110 @@ public:
     }
 };
 
+class DigLeftHandler: public Subscriber<KeyboardChordEvent> {
+    Map& map;
+    MapEntity& entity;
+    Inventory& inventory;
+public:
+    DigLeftHandler(Map& map, MapEntity& entity, Inventory& inventory):
+        map(map),
+        entity(entity),
+        inventory(inventory)
+    {}
+
+    void operator()(KeyboardChordEvent const&) { 
+        ulong dirt_quantity = 0;
+        if(inventory.max_space_for_item(DIRT) < dirt_quantity) return;
+        if(!map.dig(entity, -1, 0)) return;
+
+
+        inventory.add(DIRT, dirt_quantity);
+        if (dirt_quantity > 0) {
+            SPDLOG_ERROR("Failed to add dirt to inventory");
+            return;
+        }
+    }
+};
+
+class DigRightHandler: public Subscriber<KeyboardChordEvent> {
+    Map& map;
+    MapEntity& entity;
+    Inventory& inventory;
+public:
+    DigRightHandler(Map& map, MapEntity& entity, Inventory& inventory):
+        map(map),
+        entity(entity),
+        inventory(inventory)
+    {}
+
+    void operator()(KeyboardChordEvent const&) {
+        ulong dirt_quantity = 0;
+        if(inventory.max_space_for_item(DIRT) < dirt_quantity){
+            SPDLOG_DEBUG("Cannot dig since inventory cannot contain more dirt");
+            return;
+        }
+        if(!map.dig(entity, 1, 0)) {
+            return;
+        }
+
+
+        inventory.add(DIRT, dirt_quantity);
+        if (dirt_quantity > 0) {
+            SPDLOG_ERROR("Failed to add dirt to inventory");
+            return;
+        }
+    }
+};
+
+class DigUpHandler: public Subscriber<KeyboardChordEvent> {
+    Map& map;
+    MapEntity& entity;
+    Inventory& inventory;
+public:
+    DigUpHandler(Map& map, MapEntity& entity, Inventory& inventory):
+        map(map),
+        entity(entity),
+        inventory(inventory)
+    {}
+
+    void operator()(KeyboardChordEvent const&) {
+        ulong dirt_quantity = 0;
+        if(inventory.max_space_for_item(DIRT) < dirt_quantity) return;
+        if(!map.dig(entity, 0, -1)) return;
+
+
+        inventory.add(DIRT, dirt_quantity);
+        if (dirt_quantity > 0) {
+            SPDLOG_ERROR("Failed to add dirt to inventory");
+            return;
+        }
+    }
+};
+
+class DigDownHandler: public Subscriber<KeyboardChordEvent> {
+    Map& map;
+    MapEntity& entity;
+    Inventory& inventory;
+public:
+    DigDownHandler(Map& map, MapEntity& entity, Inventory& inventory):
+        map(map),
+        entity(entity),
+        inventory(inventory)
+    {}
+
+    void operator()(KeyboardChordEvent const&) {
+        ulong dirt_quantity = 0;
+        if(inventory.max_space_for_item(DIRT) < dirt_quantity) return;
+        if(!map.dig(entity, 0, 1)) return;
+
+        inventory.add(DIRT, dirt_quantity);
+        if (dirt_quantity > 0) {
+            SPDLOG_ERROR("Failed to add dirt to inventory");
+            return;
+        }
+    }
+};
+
 class ClickHandler: public Subscriber<MouseEvent> {
     Map& map;
     Renderer& renderer;

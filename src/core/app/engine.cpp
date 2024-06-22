@@ -85,13 +85,13 @@ void Engine::update() {
                 break;
 
             case SDL_KEYDOWN:
-                set_keyboard_type(event.key.keysym, keyboard_event);
-                root_event_system.keyboard_events.notify(keyboard_event);
-                state.get_keyboard_publisher().notify(keyboard_event);
-            
                 set_keyboard_chord_type(event.key.keysym, keyboard_chord_event);
                 root_event_system.keyboard_chord_events.notify(keyboard_chord_event);
                 state.get_keyboard_chord_publisher().notify(keyboard_chord_event);
+
+                set_keyboard_type(event.key.keysym, keyboard_event);
+                root_event_system.keyboard_events.notify(keyboard_event);
+                state.get_keyboard_publisher().notify(keyboard_event);
 
                 set_char_keyboard_type(event.key.keysym, char_keyboard_event);
                 root_event_system.char_keyboard_events.notify(char_keyboard_event);

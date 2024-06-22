@@ -72,15 +72,23 @@ class Inventory {
             add(item, count);
         }
     }
-    
-    void add(ItemType item, ulong& delta) {
+
+    ulong max_space_for_item(ItemType item) {
         ulong& current_count = items[item];
         ulong current_stack_count = get_ceil_stack_count(current_count);
         ulong max_stack_count_item = current_stack_count + max_stack_count - stack_count;
         ulong stack_max_increase = max_stack_count_item * stack_size - current_count;
         ItemInfo const& info = item_info_map.at(item);
         ulong weight_max_increase = (max_weight - total_weight) / info.weight;
-        ulong increase_amount = std::min(std::min(stack_max_increase, weight_max_increase), delta);
+        return std::min(stack_max_increase, weight_max_increase);
+    }
+    
+    void add(ItemType item, ulong& delta) {
+        ulong& current_count = items[item];
+        ulong current_stack_count = get_ceil_stack_count(current_count);
+        ItemInfo const& info = item_info_map.at(item);
+        ulong max_space = max_space_for_item(item);
+        ulong increase_amount = std::min(max_space, delta);
         
         current_count += increase_amount;
         delta -= increase_amount;

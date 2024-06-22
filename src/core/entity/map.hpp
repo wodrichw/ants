@@ -288,6 +288,25 @@ class Map {
         return true;
     }
 
+    bool dig(MapEntity& entity, long dx, long dy) {
+        SPDLOG_DEBUG("Entity is digging - dx: {} dy: {}", dx, dy);
+        EntityData& data = entity.get_data();
+        long x = data.x, y = data.y;
+
+        long new_x = x + dx, new_y = y + dy;
+        SPDLOG_TRACE("Entity digging - new x: {} new y: {}", new_x, new_y);
+
+        Tile& tile = get_tile(new_x, new_y);
+        if (!tile.is_wall) {
+            SPDLOG_TRACE("Failed to dig at non-wall position");
+            return false;
+        }        
+
+        tile.is_wall = false;
+        SPDLOG_TRACE("Entity successfully dug at - x: {} y: {}", new_x, new_y);
+        return true;
+    }
+
     void add_building(Building& building) {
         for(long x = building.border.x1; x <= building.border.x2; ++x) {
             for(long y = building.border.y1; y <= building.border.y2; ++y) {

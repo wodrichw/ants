@@ -154,6 +154,39 @@ class PrimaryMode : public Mode {
         event_system.keyboard_events.add(
             A_KEY_EVENT,
             new CreateAntHandler(entity_manager, hardware_manager, software_manager));
+        
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, LEFT_KEY_EVENT},
+            new DigLeftHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );        
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, RIGHT_KEY_EVENT},
+            new DigRightHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );        
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, UP_KEY_EVENT},
+            new DigUpHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );        
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, DOWN_KEY_EVENT},
+            new DigDownHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, H_KEY_EVENT},
+            new DigLeftHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );        
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, L_KEY_EVENT},
+            new DigRightHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );        
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, K_KEY_EVENT},
+            new DigUpHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );        
+        event_system.keyboard_chord_events.add(
+            {D_KEY_EVENT, J_KEY_EVENT},
+            new DigDownHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+        );
 
         // click listeners
         event_system.mouse_events.add(
