@@ -232,7 +232,7 @@ struct EntityManager {
 
     bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& code) {
         SPDLOG_TRACE("Building ant program - x: {} y: {} - code: {} bytes", worker.get_data().x, worker.get_data().y, code.size());
-        AntInteractor interactor(worker.cpu, worker, map,
+        AntInteractor interactor(worker.cpu, worker, map, worker.inventory,
                             worker.program_executor._ops,
                             worker.program_executor.op_idx, worker.move_speed);
         

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <unordered_map>
 #include "proto/entity.pb.h"
 #include "utils/serializer.hpp"

@@ -1,4 +1,8 @@
 #include "hardware/op_def.hpp"
+#include "entity/map.hpp"
+#include "entity/entity_actions.hpp"
+
+#include "spdlog/spdlog.h"
 
 // NOP //////////////////////////////////////////
 ushort NoOP::operator()() {
@@ -29,6 +33,19 @@ ushort MoveOp::operator()() {
     SPDLOG_DEBUG("Executing MoveOp");
     map.move_entity(entity, dx, dy);
     SPDLOG_TRACE("Moving ant by dx: {}, dy: {}", dx, dy);
+    return speed;
+}
+
+// DIG /////////////////////////////////////////
+DigOp::DigOp(Map& map, MapEntity& entity, Inventory& inventory, schar dx, schar dy, ulong speed)
+    : map(map), entity(entity), inventory(inventory), dx(dx), dy(dy), speed(speed) {
+        SPDLOG_DEBUG("DigOp created");
+        SPDLOG_TRACE("dx: {}, dy: {}", dx, dy);
+    }
+ushort DigOp::operator()() {
+    SPDLOG_DEBUG("Executing DigOp");
+    handle_dig(map, entity, inventory, dx, dy);
+    SPDLOG_TRACE("Digging ant by dx: {}, dy: {}", dx, dy);
     return speed;
 }
 

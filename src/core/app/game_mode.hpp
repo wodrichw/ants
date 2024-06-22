@@ -128,64 +128,64 @@ class PrimaryMode : public Mode {
         SPDLOG_DEBUG("Adding the primary mode event system subscriptions");
         event_system.keyboard_events.add(
             LEFT_KEY_EVENT,
-            new MoveLeftHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, -1, 0));
         event_system.keyboard_events.add(
             RIGHT_KEY_EVENT,
-            new MoveRightHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, 1, 0));
         event_system.keyboard_events.add(
             UP_KEY_EVENT,
-            new MoveUpHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, 0, -1));
         event_system.keyboard_events.add(
             DOWN_KEY_EVENT,
-            new MoveDownHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, 0, 1));
 
         event_system.keyboard_events.add(
             H_KEY_EVENT,
-            new MoveLeftHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, -1, 0));
         event_system.keyboard_events.add(
             L_KEY_EVENT,
-            new MoveRightHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, 1, 0));
         event_system.keyboard_events.add(
             K_KEY_EVENT,
-            new MoveUpHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, 0, -1));
         event_system.keyboard_events.add(
             J_KEY_EVENT,
-            new MoveDownHandler(entity_manager.map, entity_manager.player));
+            new MoveHandler(entity_manager.map, entity_manager.player, 0, 1));
         event_system.keyboard_events.add(
             A_KEY_EVENT,
             new CreateAntHandler(entity_manager, hardware_manager, software_manager));
         
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, LEFT_KEY_EVENT},
-            new DigLeftHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, -1, 0)
         );        
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, RIGHT_KEY_EVENT},
-            new DigRightHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 1, 0)
         );        
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, UP_KEY_EVENT},
-            new DigUpHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, -1)
         );        
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, DOWN_KEY_EVENT},
-            new DigDownHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, 1)
         );
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, H_KEY_EVENT},
-            new DigLeftHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, -1, 0)
         );        
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, L_KEY_EVENT},
-            new DigRightHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 1, 0)
         );        
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, K_KEY_EVENT},
-            new DigUpHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, -1)
         );        
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, J_KEY_EVENT},
-            new DigDownHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory)
+            new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, 1)
         );
 
         // click listeners

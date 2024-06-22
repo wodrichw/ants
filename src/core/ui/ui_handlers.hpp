@@ -4,167 +4,35 @@
 #include "ui/render.hpp"
 #include "ui/subscriber.hpp"
 #include "entity/entity_manager.hpp"
+#include "entity/entity_actions.hpp"
 
-class MoveLeftHandler: public Subscriber<KeyboardEvent> {
+class MoveHandler: public Subscriber<KeyboardEvent> {
     Map& map;
     MapEntity& entity;
+    long dx, dy;
 public:
-    MoveLeftHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
-    {}
+    MoveHandler(Map& map, MapEntity& entity, long dx, long dy):
+        map(map), entity(entity), dx(dx), dy(dy) {}
 
     void operator()(KeyboardEvent const&) { 
-        map.move_entity(entity, -1, 0);
+        map.move_entity(entity, dx, dy);
     }
 };
 
-class MoveRightHandler: public Subscriber<KeyboardEvent> {
-    Map& map;
-    MapEntity& entity;
-public:
-    MoveRightHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
-    {}
-
-    void operator()(KeyboardEvent const&) {
-        map.move_entity(entity, 1, 0);
-    }
-};
-
-class MoveUpHandler: public Subscriber<KeyboardEvent> {
-    Map& map;
-    MapEntity& entity;
-public:
-    MoveUpHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
-    {}
-
-    void operator()(KeyboardEvent const&) {
-        map.move_entity(entity, 0, -1);
-    }
-};
-
-class MoveDownHandler: public Subscriber<KeyboardEvent> {
-    Map& map;
-    MapEntity& entity;
-public:
-    MoveDownHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
-    {}
-
-    void operator()(KeyboardEvent const&) {
-        map.move_entity(entity, 0, 1);
-    }
-};
-
-class DigLeftHandler: public Subscriber<KeyboardChordEvent> {
+class DigHandler: public Subscriber<KeyboardChordEvent> {
     Map& map;
     MapEntity& entity;
     Inventory& inventory;
+    long dx, dy;
 public:
-    DigLeftHandler(Map& map, MapEntity& entity, Inventory& inventory):
-        map(map),
-        entity(entity),
-        inventory(inventory)
+    DigHandler(Map& map, MapEntity& entity, Inventory& inventory, long dx, long dy):
+        map(map), entity(entity), inventory(inventory), dx(dx), dy(dy)
     {}
 
     void operator()(KeyboardChordEvent const&) { 
-        ulong dirt_quantity = 0;
-        if(inventory.max_space_for_item(DIRT) < dirt_quantity) return;
-        if(!map.dig(entity, -1, 0)) return;
-
-
-        inventory.add(DIRT, dirt_quantity);
-        if (dirt_quantity > 0) {
-            SPDLOG_ERROR("Failed to add dirt to inventory");
-            return;
-        }
+        handle_dig(map, entity, inventory, dx, dy);
     }
 };
-
-class DigRightHandler: public Subscriber<KeyboardChordEvent> {
-    Map& map;
-    MapEntity& entity;
-    Inventory& inventory;
-public:
-    DigRightHandler(Map& map, MapEntity& entity, Inventory& inventory):
-        map(map),
-        entity(entity),
-        inventory(inventory)
-    {}
-
-    void operator()(KeyboardChordEvent const&) {
-        ulong dirt_quantity = 0;
-        if(inventory.max_space_for_item(DIRT) < dirt_quantity){
-            SPDLOG_DEBUG("Cannot dig since inventory cannot contain more dirt");
-            return;
-        }
-        if(!map.dig(entity, 1, 0)) {
-            return;
-        }
-
-
-        inventory.add(DIRT, dirt_quantity);
-        if (dirt_quantity > 0) {
-            SPDLOG_ERROR("Failed to add dirt to inventory");
-            return;
-        }
-    }
-};
-
-class DigUpHandler: public Subscriber<KeyboardChordEvent> {
-    Map& map;
-    MapEntity& entity;
-    Inventory& inventory;
-public:
-    DigUpHandler(Map& map, MapEntity& entity, Inventory& inventory):
-        map(map),
-        entity(entity),
-        inventory(inventory)
-    {}
-
-    void operator()(KeyboardChordEvent const&) {
-        ulong dirt_quantity = 0;
-        if(inventory.max_space_for_item(DIRT) < dirt_quantity) return;
-        if(!map.dig(entity, 0, -1)) return;
-
-
-        inventory.add(DIRT, dirt_quantity);
-        if (dirt_quantity > 0) {
-            SPDLOG_ERROR("Failed to add dirt to inventory");
-            return;
-        }
-    }
-};
-
-class DigDownHandler: public Subscriber<KeyboardChordEvent> {
-    Map& map;
-    MapEntity& entity;
-    Inventory& inventory;
-public:
-    DigDownHandler(Map& map, MapEntity& entity, Inventory& inventory):
-        map(map),
-        entity(entity),
-        inventory(inventory)
-    {}
-
-    void operator()(KeyboardChordEvent const&) {
-        ulong dirt_quantity = 0;
-        if(inventory.max_space_for_item(DIRT) < dirt_quantity) return;
-        if(!map.dig(entity, 0, 1)) return;
-
-        inventory.add(DIRT, dirt_quantity);
-        if (dirt_quantity > 0) {
-            SPDLOG_ERROR("Failed to add dirt to inventory");
-            return;
-        }
-    }
-};
-
 class ClickHandler: public Subscriber<MouseEvent> {
     Map& map;
     Renderer& renderer;

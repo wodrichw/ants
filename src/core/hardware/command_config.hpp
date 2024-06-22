@@ -9,7 +9,7 @@ struct CompileArgs;
 
 enum CommandEnum {
     NOP=0b00000, MOVE=0b00001, LOAD=0b00010, COPY=0b00011, ADD=0b00100,
-    SUB=0b00101, INC=0b00110, DEC=0b00111, JMP=0b01000, JNZ=0b01001 };
+    SUB=0b00101, INC=0b00110, DEC=0b00111, JMP=0b01000, JNZ=0b01001, DIG=0b01010 };
 
 struct CommandConfig {
     std::string command_string;

@@ -3,10 +3,15 @@
 #include <stddef.h>
 
 #include "app/globals.hpp"
-#include "entity/map.hpp"
-#include "entity/entity_data.hpp"
+
 
 using schar = signed char;
+using ushort = unsigned short;
+using ulong = unsigned long;
+
+class Map;
+struct MapEntity;
+class Inventory;
 
 struct NoOP {
     ushort operator()();
@@ -32,6 +37,15 @@ struct MoveOp {
     ulong speed;
 };
 
+struct DigOp {
+    DigOp(Map& map, MapEntity& entity, Inventory& inventory, schar dx, schar dy, ulong speed);
+    ushort operator()();
+    Map& map;
+    MapEntity& entity;
+    Inventory& inventory;
+    schar dx, dy;
+    ulong speed;
+};
 struct CopyOp {
     CopyOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
     ushort operator()();

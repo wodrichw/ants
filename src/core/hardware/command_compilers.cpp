@@ -101,6 +101,17 @@ void MoveAntCompiler::operator()(CompileArgs &args) {
     SPDLOG_TRACE("Move EntityData command compiled");
 }
 
+void DigAntCompiler::operator()(CompileArgs &args) {
+    SPDLOG_TRACE("Compiling Move EntityData command");
+    AntInteractor &interactor = args.interactor;
+    uchar movement = (*(args.code_it++)) & 0b111;
+    schar dx = (movement & 1) * (movement - 2), dy = (1 - (movement & 1)) * (movement - 1);
+
+    interactor.ops.push_back(DigOp(interactor.map, interactor.entity, interactor.inventory, dx, dy, interactor.move_speed));
+    
+    SPDLOG_TRACE("Move EntityData command compiled");
+}
+
 void JumpCompiler::operator()(CompileArgs &args) {
     SPDLOG_TRACE("Compiling Jump command");
     AntInteractor &interactor = args.interactor;
