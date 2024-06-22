@@ -20,5 +20,6 @@ class GameState {
 
     EventPublisher<MouseEventType, MouseEvent>& get_mouse_publisher();
     EventPublisher<KeyboardEventType, KeyboardEvent>& get_keyboard_publisher();
+    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>& get_keyboard_chord_publisher();
     EventPublisher<CharKeyboardEventType, CharKeyboardEvent>& get_char_keyboard_publisher();
 };

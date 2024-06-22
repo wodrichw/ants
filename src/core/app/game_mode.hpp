@@ -28,6 +28,8 @@ class Mode {
     get_mouse_publisher() = 0;
     virtual EventPublisher<KeyboardEventType, KeyboardEvent>&
     get_keyboard_publisher() = 0;
+    virtual EventPublisher<KeyboardChordEventType, KeyboardChordEvent>&
+    get_keyboard_chord_publisher() = 0;
     virtual EventPublisher<CharKeyboardEventType, CharKeyboardEvent>&
     get_char_keyboard_publisher() = 0;
 };
@@ -80,6 +82,11 @@ class EditorMode : public Mode {
     EventPublisher<KeyboardEventType, KeyboardEvent>& get_keyboard_publisher()
         override {
         return event_system.keyboard_events;
+    }
+
+    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>& get_keyboard_chord_publisher()
+        override {
+        return event_system.keyboard_chord_events;
     }
 
     EventPublisher<CharKeyboardEventType, CharKeyboardEvent>&
@@ -200,6 +207,11 @@ class PrimaryMode : public Mode {
     EventPublisher<KeyboardEventType, KeyboardEvent>& get_keyboard_publisher()
         override {
         return event_system.keyboard_events;
+    }
+
+    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>& get_keyboard_chord_publisher()
+        override {
+        return event_system.keyboard_chord_events;
     }
 
     EventPublisher<CharKeyboardEventType, CharKeyboardEvent>&

@@ -64,8 +64,8 @@ void Engine::update() {
 
     SDL_Event event;
     MouseEvent mouse_event;
-    KeyboardEvent keyboad_event;
-    CharKeyboardEvent char_keyboad_event;
+    KeyboardEvent keyboard_event;
+    CharKeyboardEvent char_keyboard_event;
 
     while(SDL_PollEvent(&event)) {
         switch(event.type) {
@@ -74,20 +74,28 @@ void Engine::update() {
                 break;
 
             case SDL_MOUSEBUTTONDOWN:
-                get_mouse_event(event.button, mouse_event);
+                set_mouse_type(event.button, mouse_event);
+
                 root_event_system.mouse_events.notify(mouse_event);
                 state.get_mouse_publisher().notify(mouse_event);
                 break;
+            
+            case SDL_KEYUP:
+                unset_keyboard_chord_type(event.key.keysym, keyboard_chord_event);
+                break;
 
             case SDL_KEYDOWN:
-                get_keyboard_event(event.key.keysym, keyboad_event);
-                root_event_system.keyboard_events.notify(keyboad_event);
-                state.get_keyboard_publisher().notify(keyboad_event);
+                set_keyboard_type(event.key.keysym, keyboard_event);
+                root_event_system.keyboard_events.notify(keyboard_event);
+                state.get_keyboard_publisher().notify(keyboard_event);
+            
+                set_keyboard_chord_type(event.key.keysym, keyboard_chord_event);
+                root_event_system.keyboard_chord_events.notify(keyboard_chord_event);
+                state.get_keyboard_chord_publisher().notify(keyboard_chord_event);
 
-                get_char_keyboard_event(event.key.keysym, char_keyboad_event);
-                root_event_system.char_keyboard_events.notify(
-                    char_keyboad_event);
-                state.get_char_keyboard_publisher().notify(char_keyboad_event);
+                set_char_keyboard_type(event.key.keysym, char_keyboard_event);
+                root_event_system.char_keyboard_events.notify(char_keyboard_event);
+                state.get_char_keyboard_publisher().notify(char_keyboard_event);
                 break;
         }
     }

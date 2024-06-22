@@ -25,6 +25,7 @@ class Engine {
     PrimaryMode primary_mode;
     EditorMode editor_mode;
     GameState state;
+    KeyboardChordEvent keyboard_chord_event;
 
    public:
 

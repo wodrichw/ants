@@ -25,7 +25,7 @@ MouseEventType get_mouse_type(char button) {
     }
 }
 
-void get_mouse_event(SDL_MouseButtonEvent const& event, MouseEvent& mouse_event) {
+void set_mouse_type(SDL_MouseButtonEvent const& event, MouseEvent& mouse_event) {
     SPDLOG_DEBUG("Getting mouse event: x={}, y={}, button={}", event.x, event.y, event.button);
     mouse_event.x = event.x;
     mouse_event.y = event.y;
@@ -74,9 +74,19 @@ KeyboardEventType get_keyboard_type(SDL_Keycode event) {
     }
 }
 
-void get_keyboard_event(SDL_Keysym const& event, KeyboardEvent& keyboard_event) {
-    SPDLOG_DEBUG("Getting keyboard event: key={}, mod={}", event.sym, event.mod);
+void set_keyboard_type(SDL_Keysym const& event, KeyboardEvent& keyboard_event) {
+    SPDLOG_DEBUG("Setting keyboard event: key={}, mod={}", event.sym, event.mod);
     keyboard_event.type = get_keyboard_type(event.sym);
+}
+
+void set_keyboard_chord_type(SDL_Keysym const& event, KeyboardChordEvent& keyboard_event) {
+    SPDLOG_DEBUG("Setting keyboard event: key={}, mod={}", event.sym, event.mod);
+    keyboard_event.set_key(get_keyboard_type(event.sym));
+}
+
+void unset_keyboard_chord_type(SDL_Keysym const& event, KeyboardChordEvent& keyboard_event) {
+    SPDLOG_DEBUG("Unsetting keyboard event: key={}, mod={}", event.sym, event.mod);
+    keyboard_event.unset_key(get_keyboard_type(event.sym));
 }
 
 SDL_Keycode get_keyboard_key(SDL_Keysym const& event) {
@@ -86,7 +96,7 @@ SDL_Keycode get_keyboard_key(SDL_Keysym const& event) {
     return event.sym;
 }
 
-void get_char_keyboard_event(SDL_Keysym const& event, CharKeyboardEvent& char_keyboard_event) {
+void set_char_keyboard_type(SDL_Keysym const& event, CharKeyboardEvent& char_keyboard_event) {
     char_keyboard_event.key = get_keyboard_key(event);
     SPDLOG_DEBUG("Getting char keyboard event: key={}, mod={}", char_keyboard_event.key, event.mod);
 }
