@@ -101,22 +101,25 @@ class PrimaryMode : public Mode {
     HardwareManager hardware_manager;
     EntityManager& entity_manager;
     Renderer& renderer;
+    bool& is_reload_game;
 
    public:
-    PrimaryMode(LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer)
+    PrimaryMode(LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer, bool& is_reload_game)
         : box(box),
           hardware_manager(command_map),
           entity_manager(entity_manager),
-          renderer(renderer) {
+          renderer(renderer),
+          is_reload_game(is_reload_game) {
         
         initialize(software_manager);
     }
     
-    PrimaryMode(Unpacker& p, LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer)
+    PrimaryMode(Unpacker& p, LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer, bool& is_reload_game)
         : box(box),
           hardware_manager(p, command_map),
           entity_manager(entity_manager),
-          renderer(renderer) {
+          renderer(renderer),
+          is_reload_game(is_reload_game) {
         SPDLOG_DEBUG("Unpacking primary mode object"); 
         initialize(software_manager);
         entity_manager.rebuild_workers(hardware_manager, software_manager);
@@ -186,6 +189,11 @@ class PrimaryMode : public Mode {
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, J_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, 1)
+        );
+
+        event_system.keyboard_events.add(
+            R_KEY_EVENT,
+            new ReloadGameHandler(is_reload_game)
         );
 
         // click listeners

@@ -61,3 +61,10 @@ public:
     }
 };
 
+class ReloadGameHandler: public Subscriber<KeyboardEvent> {
+    public:
+    ReloadGameHandler(bool& is_reload_game) : is_reload_game(is_reload_game) {}
+    void operator()(KeyboardEvent const&) { is_reload_game = true; }
+    private:
+    bool& is_reload_game;
+};

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "app/arg_parse.hpp"
 #include "app/engine.hpp"
+
+using ulong = unsigned long;
 
 class AntGameFacade {
 
@@ -14,10 +15,7 @@ class AntGameFacade {
     void engine_update();
 
     private:
-    void initialize();
 
-    ProjectArguments config;
-    Unpacker unpacker;
     Engine engine;
     ulong clock_timeout;
 };

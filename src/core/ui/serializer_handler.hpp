@@ -8,9 +8,9 @@
 class Engine;
 
 class AutoSaveTriggerHandler: public Subscriber<KeyboardEvent> {
-    Engine const& engine;
+    EngineState const& engine;
     std::string const save_path;
 public:
-    AutoSaveTriggerHandler(Engine&, std::string const);
+    AutoSaveTriggerHandler(EngineState&, std::string const);
     void operator()(KeyboardEvent const&);
 };
