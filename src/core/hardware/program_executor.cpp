@@ -5,7 +5,9 @@
 #include "spdlog/spdlog.h"
 #include "utils/serializer.hpp"
 
-ProgramExecutor::ProgramExecutor(ulong const& instr_clock) : instr_trigger(0), instr_clock(instr_clock) {}
+ProgramExecutor::ProgramExecutor(ulong const& instr_clock):
+    op_idx(0), instr_trigger(0), has_executed(false), instr_clock(instr_clock)
+{}
 
 ProgramExecutor::ProgramExecutor(Unpacker& p, ulong const& instr_clock): instr_clock(instr_clock) {
     ant_proto::ProgramExecutor msg;
