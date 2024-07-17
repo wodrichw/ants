@@ -11,7 +11,7 @@ enum ItemType {
 
 struct ItemInfo {
     ItemType item;
-    ulong weight;
+    ulong weight = 0;
     ItemInfo(ItemType item, ulong weight): item(item), weight(weight) {}
 };
 
@@ -24,7 +24,7 @@ class ItemInfoMap {
         insert(FOOD, 10);
         insert(EGG, 15);
     }
-    
+
     ~ItemInfoMap() {
         for (auto& pair : map) {
             delete pair.second;
@@ -42,7 +42,7 @@ class ItemInfoMap {
 };
 
 class Inventory {
-    ulong max_stack_count, stack_size, max_weight;
+    ulong max_stack_count = 0, stack_size = 0, max_weight = 0;
     ulong stack_count = 0, total_weight = 0;
     std::unordered_map<ItemType, ulong> items;
     ItemInfoMap const& item_info_map;
@@ -84,14 +84,14 @@ class Inventory {
         ulong weight_max_increase = (max_weight - total_weight) / info.weight;
         return std::min(stack_max_increase, weight_max_increase);
     }
-    
+
     void add(ItemType item, ulong& delta) {
         ulong& current_count = items[item];
         ulong current_stack_count = get_ceil_stack_count(current_count);
         ItemInfo const& info = item_info_map.at(item);
         ulong max_space = max_space_for_item(item);
         ulong increase_amount = std::min(max_space, delta);
-        
+
         current_count += increase_amount;
         delta -= increase_amount;
         total_weight += increase_amount * info.weight;
@@ -104,7 +104,7 @@ class Inventory {
         ulong& current_count = items[item];
         ulong current_stack_count = get_ceil_stack_count(current_count);
         ulong decrease_amount = std::min(current_count, delta);
-        
+
         current_count -= decrease_amount;
         delta -= decrease_amount;
 

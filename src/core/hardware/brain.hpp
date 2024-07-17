@@ -7,8 +7,8 @@
 #include "proto/hardware.pb.h"
 
 struct DualRegisters {
-    cpu_word_size registers[2];
-    bool zero_flag;
+    cpu_word_size registers[2] = {0,0};
+    bool zero_flag = 0;
 
     DualRegisters()=default;
     DualRegisters(Unpacker& p) {

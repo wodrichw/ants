@@ -15,17 +15,17 @@ class Unpacker;
 struct KeyboardEvent;
 
 struct EngineState {
-    BoxManager box_manager; 
+    BoxManager box_manager;
     EntityManager entity_manager;
-    EventSystem root_event_system;
-    CommandMap command_map;
+    EventSystem root_event_system = {};
+    CommandMap command_map = {};
     SoftwareManager software_manager;
 
     PrimaryMode primary_mode;
     EditorMode editor_mode;
     GameState state;
 
-    KeyboardChordEvent keyboard_chord_event;
+    KeyboardChordEvent keyboard_chord_event = {};
     bool is_reload_game = false;
 
    public:

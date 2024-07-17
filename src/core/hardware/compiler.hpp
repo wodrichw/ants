@@ -2,7 +2,6 @@
 
 #include "hardware/command_config.hpp"
 #include "hardware/machine_code.hpp"
-#include "hardware/parse_args.hpp"
 #include "hardware/compile_args.hpp"
 
 // This class is not joined with Parser even though they are very similar

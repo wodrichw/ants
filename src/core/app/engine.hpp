@@ -9,8 +9,8 @@ struct EngineState;
 class Engine {
     ProjectArguments config;
     Unpacker unpacker;
-    Renderer* renderer;
-    EngineState* state;
+    Renderer* renderer = {};
+    EngineState* state = {};
 
    public:
 
@@ -20,7 +20,7 @@ class Engine {
     ~Engine();
     void update();
     void render();
-   
+
    private:
     void initialize();
     Renderer* create_renderer() const;

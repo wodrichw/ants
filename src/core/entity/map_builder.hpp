@@ -9,8 +9,8 @@
 class BspListener : public ITCODBspCallback {
    private:
     MapSectionData &section_data;  // a section_data to dig
-    int room_num;                  // room number
-    int lastx, lasty;              // center of the last room
+    int room_num = 0;                  // room number
+    int lastx = 0, lasty = 0;              // center of the last room
 
    public:
     BspListener(MapSectionData &section_data)

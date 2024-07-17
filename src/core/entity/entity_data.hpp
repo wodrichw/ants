@@ -10,12 +10,12 @@ class Unpacker;
 
 struct EntityData {
    public:
-    long x, y;
+    long x = 0, y = 0;
 
-    char ch;
-    long fov_radius;
-    tcod::ColorRGB col;
-    RenderPosition last_rendered_pos;
+    char ch = '\0';
+    long fov_radius = 0;
+    tcod::ColorRGB col = {};
+    RenderPosition last_rendered_pos = {};
 
     EntityData(char ch, long fov_radius, tcod::ColorRGB col);
     EntityData(long x, long y, char ch, long fov_radius, tcod::ColorRGB col);

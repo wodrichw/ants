@@ -16,6 +16,6 @@ class AntGameFacade {
 
     private:
 
-    Engine engine;
-    ulong clock_timeout;
+    Engine engine = {};
+    ulong clock_timeout = {};
 };

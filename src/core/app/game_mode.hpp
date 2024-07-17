@@ -35,7 +35,7 @@ class Mode {
 };
 
 class EditorMode : public Mode {
-    EventSystem event_system;
+    EventSystem event_system = {};
     Renderer& renderer;
     LayoutBox& box;
     TextEditor editor;
@@ -96,7 +96,7 @@ class EditorMode : public Mode {
 };
 
 class PrimaryMode : public Mode {
-    EventSystem event_system;
+    EventSystem event_system = {};
     LayoutBox& box;
     HardwareManager hardware_manager;
     EntityManager& entity_manager;
@@ -110,23 +110,23 @@ class PrimaryMode : public Mode {
           entity_manager(entity_manager),
           renderer(renderer),
           is_reload_game(is_reload_game) {
-        
+
         initialize(software_manager);
     }
-    
+
     PrimaryMode(Unpacker& p, LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer, bool& is_reload_game)
         : box(box),
           hardware_manager(p, command_map),
           entity_manager(entity_manager),
           renderer(renderer),
           is_reload_game(is_reload_game) {
-        SPDLOG_DEBUG("Unpacking primary mode object"); 
+        SPDLOG_DEBUG("Unpacking primary mode object");
         initialize(software_manager);
         entity_manager.rebuild_workers(hardware_manager, software_manager);
         SPDLOG_TRACE("Completed unpacking the primary mode object");
     }
-          
-    
+
+
     void initialize(SoftwareManager& software_manager) {
         SPDLOG_DEBUG("Adding the primary mode event system subscriptions");
         event_system.keyboard_events.add(
@@ -157,19 +157,19 @@ class PrimaryMode : public Mode {
         event_system.keyboard_events.add(
             A_KEY_EVENT,
             new CreateAntHandler(entity_manager, hardware_manager, software_manager));
-        
+
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, LEFT_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, -1, 0)
-        );        
+        );
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, RIGHT_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 1, 0)
-        );        
+        );
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, UP_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, -1)
-        );        
+        );
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, DOWN_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, 1)
@@ -177,15 +177,15 @@ class PrimaryMode : public Mode {
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, H_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, -1, 0)
-        );        
+        );
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, L_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 1, 0)
-        );        
+        );
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, K_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, -1)
-        );        
+        );
         event_system.keyboard_chord_events.add(
             {D_KEY_EVENT, J_KEY_EVENT},
             new DigHandler(entity_manager.map, entity_manager.player, entity_manager.player.inventory, 0, 1)

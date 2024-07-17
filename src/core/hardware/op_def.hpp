@@ -25,7 +25,7 @@ struct LoadConstantOp {
    private:
     cpu_word_size& reg;
     bool& zero_flag;
-    cpu_word_size const value;
+    cpu_word_size const value = 0;
 };
 
 struct MoveOp {
@@ -33,8 +33,8 @@ struct MoveOp {
     ushort operator()();
     Map& map;
     MapEntity& entity;
-    schar dx, dy;
-    ulong speed;
+    schar dx = '\0', dy = '\0';
+    ulong speed = 0;
 };
 
 struct DigOp {
@@ -43,8 +43,8 @@ struct DigOp {
     Map& map;
     MapEntity& entity;
     Inventory& inventory;
-    schar dx, dy;
-    ulong speed;
+    schar dx = '\0', dy = '\0';
+    ulong speed = 0 ;
 };
 struct CopyOp {
     CopyOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
@@ -85,13 +85,13 @@ struct JmpOp {
     JmpOp(ushort& op_idx, ushort new_idx);
     ushort operator()();
     ushort& op_idx;
-    ushort new_idx;
+    ushort new_idx = 0;
 };
 
 struct JnzOp {
     JnzOp(ushort& op_idx, ushort new_idx, bool const& zero_flag);
     ushort operator()();
     ushort& op_idx;
-    ushort new_idx;
+    ushort new_idx = 0;
     bool const& zero_flag;
 };

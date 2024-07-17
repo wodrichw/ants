@@ -3,7 +3,7 @@
 #include <string>
 
 struct Status {
-    bool p_err;
+    bool p_err = {};
     std::string err_msg;
 
     Status();

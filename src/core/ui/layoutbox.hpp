@@ -8,8 +8,8 @@ struct LayoutBox {
     enum Orientation { HORIZONTAL, VERTICAL };
 
    private:
-    long const xp, yp, wp, hp;
-    long x, y, w, h;  // absolute coordinates
+    long const xp = 0, yp = 0, wp = 0, hp = 0;
+    long x = 0, y = 0, w = 0, h = 0;  // absolute coordinates
     // local coordinate: (0,0), (w,h) -> (x,y), (x+w,y+h)
     std::pair<LayoutBox*, LayoutBox*> children;
 
@@ -32,8 +32,8 @@ struct LayoutBox {
 struct BoxManager {
     BoxManager(ulong w, ulong h);
 
-    LayoutBox *map_box, *sidebar_box;
-    LayoutBox *text_editor_content_box, *text_editor_registers_box;
+    LayoutBox *map_box = nullptr, *sidebar_box = nullptr;
+    LayoutBox *text_editor_content_box = nullptr, *text_editor_registers_box = nullptr;
 
    private:
     LayoutBox main;

@@ -1,10 +1,7 @@
 #pragma once
 
-#include <functional>
 #include <string>
-#include <unordered_set>
 
-#include "app/globals.hpp"
 #include "hardware/command_config.hpp"
 #include "utils/status.hpp"
 

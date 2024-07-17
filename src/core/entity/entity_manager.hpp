@@ -16,14 +16,14 @@
 #include "ui/colors.hpp"
 
 struct EntityManager {
-    ItemInfoMap item_info_map;
+    ItemInfoMap item_info_map = {};
     Player player;
-    std::vector<Worker*> workers;
+    std::vector<Worker*> workers = {};
     std::vector<Building*> buildings;
     MapWindow map_window;
     Map map;
-    Worker* next_worker;
-    ulong instr_action_clock;
+    Worker* next_worker = nullptr;
+    ulong instr_action_clock = 0;
 
     EntityManager(int map_width, int map_height, ProjectArguments& config)
         : player(EntityData(40, 25, '@', 10, color::white), item_info_map),
@@ -215,7 +215,7 @@ struct EntityManager {
         EntityData& data = next_worker->get_data();
         data.x = new_x;
         data.y = new_y;
-    
+
         MachineCode const& code = software_manager.get();
 
         if (!build_ant(hardware_manager, *next_worker, code)) {
@@ -225,7 +225,7 @@ struct EntityManager {
         SPDLOG_DEBUG("Creating worker ant");
         ulong ant_idx = workers.size();
         software_manager.assign(ant_idx); // before pushing to this->workers
-    
+
         save_ant(next_worker);
         next_worker = create_worker_data();
     }
@@ -235,7 +235,7 @@ struct EntityManager {
         AntInteractor interactor(worker.cpu, worker, map, worker.inventory,
                             worker.program_executor._ops,
                             worker.program_executor.op_idx, worker.move_speed);
-        
+
         Status status;
         hardware_manager.compile(code, interactor, status);
         if(status.p_err) {
@@ -251,7 +251,7 @@ struct EntityManager {
         SPDLOG_DEBUG("Rebuilding worker ant programs - count: {}", workers.size());
         ulong ant_idx = 0;
         for (Worker* worker: workers) {
-            build_ant(hardware_manager, *worker, software_manager[ant_idx]); 
+            build_ant(hardware_manager, *worker, software_manager[ant_idx]);
             ++ant_idx;
         }
         SPDLOG_TRACE("Completed rebuilding worker ant programs");
