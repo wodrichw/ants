@@ -1,8 +1,3 @@
-#include "app/engine_state.hpp"
-
-
-#include "app/engine.hpp"
-
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL_keycode.h>
@@ -14,14 +9,18 @@
 #include <libtcod/console.hpp>
 #include <libtcod/context.hpp>
 
+#include "app/engine_state.hpp"
+#include "app/engine.hpp"
 #include "app/globals.hpp"
 #include "ui/serializer_handler.hpp"
 #include "spdlog/spdlog.h"
+#include "utils/thread_pool.hpp"
 
 EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
     : box_manager(globals::COLS, globals::ROWS),
+      threadPool(8),
       entity_manager(box_manager.map_box->get_width(),
-                     box_manager.map_box->get_height(), config),
+                     box_manager.map_box->get_height(), config, threadPool),
       software_manager(command_map),
       primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game),
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
@@ -34,7 +33,8 @@ EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
 
 EngineState::EngineState(Unpacker& p, ProjectArguments& config, Renderer* renderer)
     : box_manager(globals::COLS, globals::ROWS),
-      entity_manager(p),
+      threadPool(8),
+      entity_manager(p, threadPool),
       software_manager(p, command_map, entity_manager.workers.size()),
       primary_mode(p, *box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game),
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),

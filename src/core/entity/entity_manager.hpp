@@ -11,9 +11,11 @@
 #include "entity/map_section_data.hpp"
 #include "entity/map_window.hpp"
 #include "hardware/hardware_manager.hpp"
+#include "hardware/program_executor.hpp"
 #include "hardware/software_manager.hpp"
 #include "spdlog/spdlog.h"
 #include "ui/colors.hpp"
+#include "utils/thread_pool.hpp"
 
 struct EntityManager {
     ItemInfoMap item_info_map = {};
@@ -24,14 +26,18 @@ struct EntityManager {
     Map map;
     Worker* next_worker = nullptr;
     ulong instr_action_clock = 0;
+    ThreadPool<threadPoolJob>& threadPool;
 
-    EntityManager(int map_width, int map_height, ProjectArguments& config)
+
+    EntityManager(int map_width, int map_height, ProjectArguments& config, ThreadPool<threadPoolJob>& threadPool)
         : player(EntityData(40, 25, '@', 10, color::white), item_info_map),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
           next_worker(create_worker_data()),
-          instr_action_clock(0) {
+          instr_action_clock(0),
+          threadPool(threadPool)
+    {
 
         MapSectionData section;
         if(config.default_map_file_path.empty()) {
@@ -64,7 +70,10 @@ struct EntityManager {
         map_window.set_center(player.get_data().x, player.get_data().y);
     }
 
-    EntityManager(Unpacker& p) : player(p, item_info_map), map_window(p), map(p), next_worker(create_worker_data()) {
+    EntityManager(Unpacker& p, ThreadPool<threadPoolJob>& threadPool) : 
+        player(p, item_info_map), map_window(p), map(p),
+        next_worker(create_worker_data()), threadPool(threadPool) 
+    {
         SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
         p >> msg;
@@ -84,7 +93,7 @@ struct EntityManager {
             }
 
             if(entity_type == WORKER) {
-                save_ant(new Worker(p, instr_action_clock, item_info_map));
+                save_ant(new Worker(p, instr_action_clock, item_info_map, threadPool));
                 continue;
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
@@ -263,7 +272,7 @@ struct EntityManager {
     }
 
     Worker* create_worker_data() {
-        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock, item_info_map);
+        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock, item_info_map, threadPool);
     }
 
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {

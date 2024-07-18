@@ -1,9 +1,9 @@
 #pragma once
 
+#include "hardware/program_executor.hpp"
 #include "ui/text_editor.hpp"
 #include "ui/event_system.hpp"
 #include "hardware/software_manager.hpp"
-#include "hardware/parser.hpp"
 #include "entity/entity_manager.hpp"
 #include "app/game_state.hpp"
 #include "app/game_mode.hpp"
@@ -16,6 +16,7 @@ struct KeyboardEvent;
 
 struct EngineState {
     BoxManager box_manager;
+    ThreadPool<threadPoolJob> threadPool;
     EntityManager entity_manager;
     EventSystem root_event_system = {};
     CommandMap command_map = {};

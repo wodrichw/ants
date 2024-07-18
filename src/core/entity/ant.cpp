@@ -1,12 +1,12 @@
 #include "entity/ant.hpp"
 
 #include <libtcod/color.hpp>
-#include <optional>
 
+#include "hardware/program_executor.hpp"
 #include "ui/colors.hpp"
 #include "entity/entity_data.hpp"
-#include "proto/entity.pb.h"
 #include "spdlog/spdlog.h"
+#include "utils/thread_pool.hpp"
 
 Player::Player(EntityData const& data, ItemInfoMap const& info_map)
     : data(data), inventory(1,1, 1000, info_map) {
@@ -30,11 +30,13 @@ Packer& operator<<(Packer& p, Player const& obj) {
     return p << obj.data << obj.inventory;
 }
 
-Worker::Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const& info_map)
-    : data(data), program_executor(instr_clock), cpu(), inventory(1, 1, 1000, info_map) {
-}
+Worker::Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<threadPoolJob>& threadPool)
+    : data(data), program_executor(instr_clock, max_instruction_per_tick, threadPool), cpu(), inventory(1, 1, 1000, info_map) 
+{ }
 
-Worker::Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const& info_map): data(p), program_executor(p, instr_clock), cpu(p), inventory(p, info_map) {
+Worker::Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<threadPoolJob>& threadPool):
+    data(p), program_executor(p, instr_clock, max_instruction_per_tick, threadPool), cpu(p), inventory(p, info_map) 
+{
     SPDLOG_TRACE("Completed unpacking worker");
 }
 
@@ -42,7 +44,7 @@ EntityData& Worker::get_data() {
     return data;
 }
 
-void Worker::request_move() { program_executor.handleClockPulse(); }
+void Worker::request_move() { program_executor.execute_async(); }
 
 Packer& operator<<(Packer& p, Worker const& obj) {
     SPDLOG_TRACE("Packing worker");

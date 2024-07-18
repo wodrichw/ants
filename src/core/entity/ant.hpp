@@ -7,6 +7,7 @@
 #include "hardware/command_config.hpp"
 #include "entity/entity_data.hpp"
 #include "entity/inventory.hpp"
+#include "utils/thread_pool.hpp"
 
 struct Player: public MapEntity {
     EntityData data;
@@ -26,6 +27,7 @@ struct Player: public MapEntity {
 
 struct Worker: public MapEntity {
     EntityData data;
+    ulong  max_instruction_per_tick = 500;
     ProgramExecutor program_executor;
     DualRegisters cpu = {};
     ushort move_speed = 12; // 60 FPS / 5 moves per sec = 12
@@ -38,8 +40,8 @@ struct Worker: public MapEntity {
         CommandEnum::COPY
     };
 
-    Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const&);
-    Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const&);
+    Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<threadPoolJob>&);
+    Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<threadPoolJob>&);
     ~Worker()=default;
 
     EntityData& get_data();
@@ -50,3 +52,4 @@ struct Worker: public MapEntity {
 
     friend Packer& operator<<(Packer& p, Worker const& obj);
 };
+

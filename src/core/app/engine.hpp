@@ -1,7 +1,6 @@
 #pragma once
 
 #include "app/arg_parse.hpp"
-#include "utils/serializer.hpp"
 
 class Renderer;
 struct EngineState;

@@ -6,15 +6,16 @@
 
 #include <libtcod.hpp>
 #include <libtcod/console.hpp>
-#include <vector>
 
 #include "entity/entity_manager.hpp"
 #include "entity/entity_data.hpp"
+#include "hardware/program_executor.hpp"
 #include "ui/event_system.hpp"
 #include "ui/render.hpp"
 #include "ui/text_editor_handler.hpp"
 #include "ui/ui_handlers.hpp"
 #include "hardware/hardware_manager.hpp"
+#include "utils/thread_pool.hpp"
 
 class Mode {
    public:
@@ -102,24 +103,46 @@ class PrimaryMode : public Mode {
     EntityManager& entity_manager;
     Renderer& renderer;
     bool& is_reload_game;
+    const ThreadPool<threadPoolJob>& threadpool;
 
    public:
-    PrimaryMode(LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer, bool& is_reload_game)
-        : box(box),
-          hardware_manager(command_map),
-          entity_manager(entity_manager),
-          renderer(renderer),
-          is_reload_game(is_reload_game) {
+    PrimaryMode(
+            LayoutBox& box,
+            CommandMap const& command_map,
+            SoftwareManager& software_manager,
+            EntityManager& entity_manager,
+            Renderer& renderer,
+            bool& is_reload_game,
+            const ThreadPool<threadPoolJob>& threadPool
+    ): 
+            box(box),
+            hardware_manager(command_map),
+            entity_manager(entity_manager),
+            renderer(renderer),
+            is_reload_game(is_reload_game),
+            threadpool(threadPool)
+    {
 
         initialize(software_manager);
     }
 
-    PrimaryMode(Unpacker& p, LayoutBox& box, CommandMap const& command_map, SoftwareManager& software_manager, EntityManager& entity_manager, Renderer& renderer, bool& is_reload_game)
-        : box(box),
-          hardware_manager(p, command_map),
-          entity_manager(entity_manager),
-          renderer(renderer),
-          is_reload_game(is_reload_game) {
+    PrimaryMode(
+            Unpacker& p,
+            LayoutBox& box,
+            CommandMap const& command_map,
+            SoftwareManager& software_manager,
+            EntityManager& entity_manager,
+            Renderer& renderer,
+            bool& is_reload_game,
+            const ThreadPool<threadPoolJob>& threadPool
+     ):
+            box(box),
+            hardware_manager(p, command_map),
+            entity_manager(entity_manager),
+            renderer(renderer),
+            is_reload_game(is_reload_game),
+            threadpool(threadPool)
+    {
         SPDLOG_DEBUG("Unpacking primary mode object");
         initialize(software_manager);
         entity_manager.rebuild_workers(hardware_manager, software_manager);
@@ -230,14 +253,23 @@ class PrimaryMode : public Mode {
             entity_manager.map_window);
     }
 
+    //TODO: (threadpool) make sure that we don't call handleClockPulse until all the jobs on the threadpool
+    // is finished
     void update() override {
         entity_manager.update();
 
         for(ProgramExecutor* exec : hardware_manager) {
             exec->reset();
         }
+
         for(ProgramExecutor* exec : hardware_manager) {
-            exec->handleClockPulse();
+            exec->execute_async();
+        }
+
+        threadpool.await_jobs();
+
+        for(ProgramExecutor* exec : hardware_manager) {
+            exec->execute_sync();
         }
     }
 

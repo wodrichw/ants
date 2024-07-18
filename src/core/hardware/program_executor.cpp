@@ -5,11 +5,30 @@
 #include "spdlog/spdlog.h"
 #include "utils/serializer.hpp"
 
-ProgramExecutor::ProgramExecutor(ulong const& instr_clock):
-    op_idx(0), instr_trigger(0), has_executed(false), instr_clock(instr_clock)
+ProgramExecutor::ProgramExecutor(
+    ulong const& instr_clock,
+    ulong max_instruction_per_tick,
+    ThreadPool<threadPoolJob>& threadpool
+):
+    op_idx(0),
+    instr_trigger(0),
+    has_executed(false),
+    instr_clock(instr_clock),
+    max_instruction_per_tick(max_instruction_per_tick),
+    threadpool(threadpool)
 {}
 
-ProgramExecutor::ProgramExecutor(Unpacker& p, ulong const& instr_clock): instr_clock(instr_clock) {
+ProgramExecutor::ProgramExecutor(
+    Unpacker& p,
+    ulong const& instr_clock,
+    ulong max_instruction_per_tick,
+    ThreadPool<threadPoolJob>& threadpool
+):
+    instr_clock(instr_clock),
+    max_instruction_per_tick(max_instruction_per_tick),
+    threadpool(threadpool)
+        
+{
     ant_proto::ProgramExecutor msg;
     p >> msg;
 
@@ -21,21 +40,45 @@ ProgramExecutor::ProgramExecutor(Unpacker& p, ulong const& instr_clock): instr_c
 
 void ProgramExecutor::reset() { has_executed = false; }
 
-void ProgramExecutor::handleClockPulse() {
-    if (has_executed) return;
-    has_executed = true;
 
+
+
+void ProgramExecutor::execute_async() {
     // SPDLOG_INFO("Handling clock pulse for program_executor - clock: {} trigger: {}", instr_clock, instr_trigger);
     if ((instr_clock % (instr_trigger + 1)) != 0) return;
+    instr_trigger = 0; // if not 0, then a syncronous move is occurring
 
-    instr_trigger = 0;
-    for(int i = 0; i < 500 && op_idx < _ops.size() && instr_trigger == 0; ++i) {
-        instr_trigger = _ops[op_idx]();
-        ++op_idx;
-        SPDLOG_TRACE("Incrementing op_idx to {}", op_idx);
-    }
+
+    threadPool.submit_job(threadPoolJob(*this));
 
     // SPDLOG_TRACE("Clock pulse handled for program_executor");
+}
+
+
+void ProgramExecutor::execute() {
+    _ops[op_idx]();
+    instr_trigger = _ops[op_idx].num_ticks;
+    op_idx++;
+}
+
+void ProgramExecutor::execute_sync() {
+    if( has_executed )  return;
+    has_executed = true;
+    execute();
+}
+
+bool ProgramExecutor::is_sync() {
+    return _ops[op_idx].num_ticks == 0;
+}
+
+void threadPoolJob::run() {
+	for(ulong i = 1; i < pe.max_instruction_per_tick && pe.op_idx < pe._ops.size(); ++i) {
+		if( pe.is_sync() ) { // break if a syncronous instruction
+			break;
+		}
+		pe.execute();
+		SPDLOG_TRACE("Incrementing op_idx to {}", op_idx);
+	}
 }
 
 Packer& operator<<(Packer& p, ProgramExecutor const& obj) {
