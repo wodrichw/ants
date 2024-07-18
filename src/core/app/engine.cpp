@@ -56,12 +56,12 @@ EngineState* Engine::create_state() {
 }
 
 void Engine::update() {
-    state->update();
 
     if (state->is_reload_game) {
         delete state;
         state = new EngineState(config, renderer);
     }
+    state->update();
     // SPDLOG_TRACE("Engine update complete");
 }
 
