@@ -8,7 +8,6 @@ struct EngineState;
 
 class Engine {
     ProjectArguments config;
-    Unpacker unpacker;
     Renderer* renderer = {};
     EngineState* state = {};
 

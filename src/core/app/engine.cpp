@@ -5,19 +5,15 @@
 #include "spdlog/spdlog.h"
 
 Engine::Engine()
-    : config(0, nullptr), unpacker(config.save_path),
-      renderer(create_renderer()), state(create_state()) {
+    : config(0, nullptr), renderer(create_renderer()), state(create_state()) {
     initialize();
 }
 Engine::Engine(int argc, char* argv[])
-    : config(argc, argv), unpacker(config.save_path),
-      renderer(create_renderer()), state(create_state()) {
+    : config(argc, argv), renderer(create_renderer()), state(create_state()) {
     initialize();
 }
 Engine::Engine(ProjectArguments& config)
-    : config(config),
-      unpacker(config.save_path), renderer(create_renderer()),
-      state(create_state()) {
+    : config(config), renderer(create_renderer()), state(create_state()) {
     initialize();
 }
 
@@ -52,6 +48,7 @@ Renderer* Engine::create_renderer() const {
 }
 
 EngineState* Engine::create_state() {
+    Unpacker unpacker(config.save_path);
     return unpacker.is_valid() ? new EngineState(unpacker, config, renderer) : new EngineState(config, renderer);
 }
 
@@ -59,7 +56,7 @@ void Engine::update() {
 
     if (state->is_reload_game) {
         delete state;
-        state = new EngineState(config, renderer);
+        state = create_state();
     }
     state->update();
     // SPDLOG_TRACE("Engine update complete");
