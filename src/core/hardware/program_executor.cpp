@@ -8,25 +8,25 @@
 ProgramExecutor::ProgramExecutor(
     ulong const& instr_clock,
     ulong max_instruction_per_tick,
-    ThreadPool<threadPoolJob>& threadpool
+    ThreadPool<AsyncProgramJob>& job_pool
 ):
     op_idx(0),
     instr_trigger(0),
     has_executed(false),
     instr_clock(instr_clock),
     max_instruction_per_tick(max_instruction_per_tick),
-    threadpool(threadpool)
+    job_pool(job_pool)
 {}
 
 ProgramExecutor::ProgramExecutor(
     Unpacker& p,
     ulong const& instr_clock,
     ulong max_instruction_per_tick,
-    ThreadPool<threadPoolJob>& threadpool
+    ThreadPool<AsyncProgramJob>& job_pool
 ):
     instr_clock(instr_clock),
     max_instruction_per_tick(max_instruction_per_tick),
-    threadpool(threadpool)
+    job_pool(job_pool)
         
 {
     ant_proto::ProgramExecutor msg;
@@ -49,15 +49,15 @@ void ProgramExecutor::execute_async() {
     instr_trigger = 0; // if not 0, then a syncronous move is occurring
 
 
-    threadPool.submit_job(threadPoolJob(*this));
+    job_pool.submit_job(std::make_unique<AsyncProgramJob>(*this));
 
     // SPDLOG_TRACE("Clock pulse handled for program_executor");
 }
 
 
 void ProgramExecutor::execute() {
-    _ops[op_idx]();
-    instr_trigger = _ops[op_idx].num_ticks;
+    (*_ops[op_idx])();
+    instr_trigger = _ops[op_idx]->get_num_ticks();
     op_idx++;
 }
 
@@ -68,16 +68,16 @@ void ProgramExecutor::execute_sync() {
 }
 
 bool ProgramExecutor::is_sync() {
-    return _ops[op_idx].num_ticks == 0;
+    return _ops[op_idx]->get_num_ticks() == 0;
 }
 
-void threadPoolJob::run() {
+void AsyncProgramJob::run() {
 	for(ulong i = 1; i < pe.max_instruction_per_tick && pe.op_idx < pe._ops.size(); ++i) {
 		if( pe.is_sync() ) { // break if a syncronous instruction
 			break;
 		}
 		pe.execute();
-		SPDLOG_TRACE("Incrementing op_idx to {}", op_idx);
+		SPDLOG_TRACE("Incrementing op_idx to {}", pe.op_idx);
 	}
 }
 

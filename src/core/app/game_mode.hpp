@@ -103,7 +103,7 @@ class PrimaryMode : public Mode {
     EntityManager& entity_manager;
     Renderer& renderer;
     bool& is_reload_game;
-    const ThreadPool<threadPoolJob>& threadpool;
+    const ThreadPool<AsyncProgramJob>& job_pool;
 
    public:
     PrimaryMode(
@@ -113,14 +113,14 @@ class PrimaryMode : public Mode {
             EntityManager& entity_manager,
             Renderer& renderer,
             bool& is_reload_game,
-            const ThreadPool<threadPoolJob>& threadPool
+            const ThreadPool<AsyncProgramJob>& job_pool
     ): 
             box(box),
             hardware_manager(command_map),
             entity_manager(entity_manager),
             renderer(renderer),
             is_reload_game(is_reload_game),
-            threadpool(threadPool)
+            job_pool(job_pool)
     {
 
         initialize(software_manager);
@@ -134,14 +134,14 @@ class PrimaryMode : public Mode {
             EntityManager& entity_manager,
             Renderer& renderer,
             bool& is_reload_game,
-            const ThreadPool<threadPoolJob>& threadPool
+            const ThreadPool<AsyncProgramJob>& job_pool
      ):
             box(box),
             hardware_manager(p, command_map),
             entity_manager(entity_manager),
             renderer(renderer),
             is_reload_game(is_reload_game),
-            threadpool(threadPool)
+            job_pool(job_pool)
     {
         SPDLOG_DEBUG("Unpacking primary mode object");
         initialize(software_manager);
@@ -253,7 +253,7 @@ class PrimaryMode : public Mode {
             entity_manager.map_window);
     }
 
-    //TODO: (threadpool) make sure that we don't call handleClockPulse until all the jobs on the threadpool
+    //TODO: (job_pool) make sure that we don't call handleClockPulse until all the jobs on the job_pool
     // is finished
     void update() override {
         entity_manager.update();
@@ -266,7 +266,7 @@ class PrimaryMode : public Mode {
             exec->execute_async();
         }
 
-        threadpool.await_jobs();
+        job_pool.await_jobs();
 
         for(ProgramExecutor* exec : hardware_manager) {
             exec->execute_sync();

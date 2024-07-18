@@ -26,17 +26,17 @@ struct EntityManager {
     Map map;
     Worker* next_worker = nullptr;
     ulong instr_action_clock = 0;
-    ThreadPool<threadPoolJob>& threadPool;
+    ThreadPool<AsyncProgramJob>& job_pool;
 
 
-    EntityManager(int map_width, int map_height, ProjectArguments& config, ThreadPool<threadPoolJob>& threadPool)
+    EntityManager(int map_width, int map_height, ProjectArguments& config, ThreadPool<AsyncProgramJob>& job_pool)
         : player(EntityData(40, 25, '@', 10, color::white), item_info_map),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
           next_worker(create_worker_data()),
           instr_action_clock(0),
-          threadPool(threadPool)
+          job_pool(job_pool)
     {
 
         MapSectionData section;
@@ -70,9 +70,9 @@ struct EntityManager {
         map_window.set_center(player.get_data().x, player.get_data().y);
     }
 
-    EntityManager(Unpacker& p, ThreadPool<threadPoolJob>& threadPool) : 
+    EntityManager(Unpacker& p, ThreadPool<AsyncProgramJob>& job_pool) : 
         player(p, item_info_map), map_window(p), map(p),
-        next_worker(create_worker_data()), threadPool(threadPool) 
+        next_worker(create_worker_data()), job_pool(job_pool) 
     {
         SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
@@ -93,7 +93,7 @@ struct EntityManager {
             }
 
             if(entity_type == WORKER) {
-                save_ant(new Worker(p, instr_action_clock, item_info_map, threadPool));
+                save_ant(new Worker(p, instr_action_clock, item_info_map, job_pool));
                 continue;
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
@@ -272,7 +272,7 @@ struct EntityManager {
     }
 
     Worker* create_worker_data() {
-        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock, item_info_map, threadPool);
+        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock, item_info_map, job_pool);
     }
 
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {

@@ -40,8 +40,8 @@ struct Worker: public MapEntity {
         CommandEnum::COPY
     };
 
-    Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<threadPoolJob>&);
-    Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<threadPoolJob>&);
+    Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<AsyncProgramJob>&);
+    Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<AsyncProgramJob>&);
     ~Worker()=default;
 
     EntityData& get_data();

@@ -16,7 +16,7 @@ struct KeyboardEvent;
 
 struct EngineState {
     BoxManager box_manager;
-    ThreadPool<threadPoolJob> threadPool;
+    ThreadPool<AsyncProgramJob> job_pool;
     EntityManager entity_manager;
     EventSystem root_event_system = {};
     CommandMap command_map = {};

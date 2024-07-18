@@ -18,11 +18,11 @@
 
 EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
     : box_manager(globals::COLS, globals::ROWS),
-      threadPool(8),
+      job_pool(8),
       entity_manager(box_manager.map_box->get_width(),
-                     box_manager.map_box->get_height(), config, threadPool),
+                     box_manager.map_box->get_height(), config, job_pool),
       software_manager(command_map),
-      primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game),
+      primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
     
@@ -33,10 +33,10 @@ EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
 
 EngineState::EngineState(Unpacker& p, ProjectArguments& config, Renderer* renderer)
     : box_manager(globals::COLS, globals::ROWS),
-      threadPool(8),
-      entity_manager(p, threadPool),
+      job_pool(8),
+      entity_manager(p, job_pool),
       software_manager(p, command_map, entity_manager.workers.size()),
-      primary_mode(p, *box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game),
+      primary_mode(p, *box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
     

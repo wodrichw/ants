@@ -20,11 +20,11 @@ struct AntInteractor {
     MapEntity& entity;
     Map& map;
     Inventory& inventory;
-    std::vector<Op>& ops;
+    std::vector<std::unique_ptr<Op>>& ops;
     ushort& op_idx;
     ushort move_speed = 0;
     AntInteractor(DualRegisters& registers, MapEntity& entity, Map& map, Inventory& inventory,
-               std::vector<Op>& ops, ushort& op_idx, ushort move_speed): registers(registers), entity(entity),
+               std::vector<std::unique_ptr<Op>>& ops, ushort& op_idx, ushort move_speed): registers(registers), entity(entity),
                 map(map), inventory(inventory), ops(ops), op_idx(op_idx), move_speed(move_speed) {}
 };
 
