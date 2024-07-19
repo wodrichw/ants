@@ -30,6 +30,10 @@ EventPublisher<KeyboardEventType, KeyboardEvent>& GameState::get_keyboard_publis
     return mode->get_keyboard_publisher();
 }
 
+EventPublisher<KeyboardChordEventType, KeyboardChordEvent>& GameState::get_keyboard_chord_publisher() {
+    return mode->get_keyboard_chord_publisher();
+}
+
 EventPublisher<CharKeyboardEventType, CharKeyboardEvent>& GameState::get_char_keyboard_publisher() {
     return mode->get_char_keyboard_publisher();
 }

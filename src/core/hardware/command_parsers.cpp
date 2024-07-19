@@ -59,7 +59,7 @@ void LoadConstantDeparser::operator()(DeparseArgs &args) {
     cpu_word_size const value = v0 | (v1 << 8) | (v2 << 16) << (v3 << 24);
 
     std::stringstream ss;
-    ss << "LOAD " << register_name << " " << value;
+    ss << "LDI " << register_name << " " << value;
     args.lines.push_back(ss.str());
     SPDLOG_TRACE("Load Constant command deparsed");
 }
@@ -230,6 +230,54 @@ void MoveAntDeparser::operator()(DeparseArgs &args) {
     std::string const &dir = ss.str();
     args.lines.push_back(dir);
     SPDLOG_TRACE("Move Ant command deparsed: {}", dir);
+}
+
+void DigAntParser::operator()(ParseArgs &args) {
+    SPDLOG_TRACE("Parsing Dig EntityData command");
+    uchar const instruction = CommandEnum::DIG;
+    schar dx = 0, dy = 0;
+
+    TokenParser::direction(args.code_stream, dx, dy, args.status);
+    if(args.status.p_err) return;
+
+    // (0, 1) (1, 0) (0, -1) (-1, 0) [START]
+    // (1, 2) (2, 1) (1,  0) ( 0, 1) [+1, +1]
+    // (0, 2) (1, 1) (0,  0) ( 0, 1) [/2, --]
+    // (0, 2) (2, 1) (0,  0) ( 0, 1) [x2, --]
+    //  2      3      0        1
+
+    args.code.push_back(((instruction << 3) | (((dx + 1) / 2) * 2)) + (dy + 1));
+
+    TokenParser::terminate(args.code_stream, args.status,
+                           "Dig ant operator expects 1 arguments.");
+    SPDLOG_TRACE("Dig EntityData command parsed");
+}
+
+void DigAntDeparser::operator()(DeparseArgs &args) {
+    SPDLOG_TRACE("Deparsing Dig Ant command");
+    uchar const movement = (*(args.code_it++)) & 0b11;
+
+    std::stringstream ss;
+    ss << "DIG ";
+
+    switch(movement) {
+        case 0:
+            ss << "UP";
+            break;
+        case 1:
+            ss << "LEFT";
+            break;
+        case 2:
+            ss << "DOWN";
+            break;
+        default:
+            ss << "RIGHT";
+            break;
+    }
+
+    std::string const &dir = ss.str();
+    args.lines.push_back(dir);
+    SPDLOG_TRACE("Dig Ant command deparsed: {}", dir);
 }
 
 void JumpParser::operator()(ParseArgs &args) {

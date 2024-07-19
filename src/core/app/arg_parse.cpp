@@ -5,6 +5,7 @@
 #include "spdlog/spdlog.h"
 // ArgumentParser
 // ============================================================================
+ArgumentParser::ArgumentParser() {}
 ArgumentParser::ArgumentParser(int argc, char* argv[]) {
     for(int i = 1; i < argc; i += 2) {
         // Check if the argument is a key
@@ -78,6 +79,16 @@ ProjectArguments::ProjectArguments(int argc, char* argv[])
     }
     setup_logging();
 }
+
+ProjectArguments::ProjectArguments(
+    std::string const& default_map_file_path,
+    std::string const& save_path,
+    bool is_render, bool is_debug_graphics, bool is_walls_enabled):
+        default_map_file_path(default_map_file_path), save_path(save_path),
+        is_render(is_render), is_debug_graphics(is_debug_graphics),
+        is_walls_enabled(is_walls_enabled) {
+            setup_logging();
+        }
 
 void ProjectArguments::help() const {
     std::cout << "Usage: ants [options]\n";

@@ -9,6 +9,8 @@ message DualRegisters {
 
 message ProgramExecutor {
     uint32 op_idx = 1;
+    uint64 instr_trigger = 2;
+    bool has_executed = 3;
 }
 
 message LabelRecord {

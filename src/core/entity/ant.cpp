@@ -1,19 +1,19 @@
 #include "entity/ant.hpp"
 
 #include <libtcod/color.hpp>
-#include <optional>
 
+#include "hardware/program_executor.hpp"
 #include "ui/colors.hpp"
 #include "entity/entity_data.hpp"
-#include "proto/entity.pb.h"
 #include "spdlog/spdlog.h"
+#include "utils/thread_pool.hpp"
 
-Player::Player(EntityData const& data)
-    : data(data) {
+Player::Player(EntityData const& data, ItemInfoMap const& info_map)
+    : data(data), inventory(1,1, 1000, info_map) {
         SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
 }
 
-Player::Player(Unpacker& p) : data(p) {
+Player::Player(Unpacker& p, ItemInfoMap const& info_map) : data(p), inventory(p, info_map) {
     SPDLOG_TRACE("Completed unpacking player");
 }
 
@@ -23,16 +23,20 @@ EntityData& Player::get_data() {
 
 MapEntityType Player::get_type() const { return PLAYER; }
 
+void Player::request_move() {}
+
 Packer& operator<<(Packer& p, Player const& obj) {
     SPDLOG_DEBUG("Packing player");
-    return p << obj.data;
+    return p << obj.data << obj.inventory;
 }
 
-Worker::Worker(EntityData const& data)
-    : data(data), program_executor(), cpu() {
-}
+Worker::Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool)
+    : data(data), program_executor(instr_clock, max_instruction_per_tick, job_pool), cpu(), inventory(1, 1, 1000, info_map) 
+{ }
 
-Worker::Worker(Unpacker& p): data(p), program_executor(p), cpu(p) {
+Worker::Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool):
+    data(p), program_executor(p, instr_clock, max_instruction_per_tick, job_pool), cpu(p), inventory(p, info_map) 
+{
     SPDLOG_TRACE("Completed unpacking worker");
 }
 
@@ -40,9 +44,13 @@ EntityData& Worker::get_data() {
     return data;
 }
 
+void Worker::request_move() { 
+    program_executor.execute_sync(); 
+}
+
 Packer& operator<<(Packer& p, Worker const& obj) {
     SPDLOG_TRACE("Packing worker");
-    return p << obj.data << obj.program_executor << obj.cpu;
+    return p << obj.data << obj.program_executor << obj.cpu << obj.inventory;
 }
 
 void toggle_color(tcod::ColorRGB& col) {

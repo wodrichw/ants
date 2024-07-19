@@ -16,6 +16,7 @@ DEFINE_PARSER(SubParser);
 DEFINE_PARSER(IncParser);
 DEFINE_PARSER(DecParser);
 DEFINE_PARSER(MoveAntParser);
+DEFINE_PARSER(DigAntParser);
 DEFINE_PARSER(JumpParser);
 DEFINE_PARSER(JumpNotZeroParser);
 
@@ -32,5 +33,6 @@ DEFINE_DEPARSER(SubDeparser);
 DEFINE_DEPARSER(IncDeparser);
 DEFINE_DEPARSER(DecDeparser);
 DEFINE_DEPARSER(MoveAntDeparser);
+DEFINE_DEPARSER(DigAntDeparser);
 DEFINE_DEPARSER(JumpDeparser);
 DEFINE_DEPARSER(JumpNotZeroDeparser);

@@ -10,9 +10,9 @@
 enum BuildingType { NURSERY };
 
 struct Building {
-    Rect const border;
-    long id;
-    tcod::ColorRGB color;
+    Rect const border = {};
+    long id = 0;
+    tcod::ColorRGB color = {};
 
     Building(Rect const& border, int id, tcod::ColorRGB color)
         : border(border), id(id), color(color) {}

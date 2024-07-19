@@ -242,7 +242,10 @@ class Map {
     bool can_place(long x, long y) const {
         Tile const& tile = get_tile_const(x, y);
         if(tile.is_wall) return false;
-        if(tile.entity != nullptr) return false;
+        if(tile.entity != nullptr) {
+            tile.entity->request_move();
+            return tile.entity == nullptr;
+        }
         return true;
     }
 
@@ -265,19 +268,42 @@ class Map {
         long new_x = x + dx, new_y = y + dy;
         SPDLOG_TRACE("Moving entity - new x: {} new y: {}", new_x, new_y);
 
+        // remove entity from map so another entity can take its place if needed
+        remove_entity(entity);
         if(is_walls_enabled && !can_place(new_x, new_y)) {
             SPDLOG_TRACE("Cannot move entity to ({}, {})", new_x, new_y);
+
+            // unable to move the obstacle so move the entity back
+            add_entity(entity);
             return false;
         }
 
-        set_entity(new_x, new_y, &entity);
-        remove_entity(entity);
         data.x = new_x;
         data.y = new_y;
+        add_entity(entity);
 
         SPDLOG_TRACE("Calling entity move callback");
         entity.move_callback(x, y, new_x, new_y);
         SPDLOG_TRACE("Successfully moved the entity");
+        return true;
+    }
+
+    bool dig(MapEntity& entity, long dx, long dy) {
+        SPDLOG_DEBUG("Entity is digging - dx: {} dy: {}", dx, dy);
+        EntityData& data = entity.get_data();
+        long x = data.x, y = data.y;
+
+        long new_x = x + dx, new_y = y + dy;
+        SPDLOG_TRACE("Entity digging - new x: {} new y: {}", new_x, new_y);
+
+        Tile& tile = get_tile(new_x, new_y);
+        if (!tile.is_wall) {
+            SPDLOG_TRACE("Failed to dig at non-wall position");
+            return false;
+        }        
+
+        tile.is_wall = false;
+        SPDLOG_TRACE("Entity successfully dug at - x: {} y: {}", new_x, new_y);
         return true;
     }
 

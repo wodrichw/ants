@@ -4,63 +4,35 @@
 #include "ui/render.hpp"
 #include "ui/subscriber.hpp"
 #include "entity/entity_manager.hpp"
+#include "entity/entity_actions.hpp"
 
-class MoveLeftHandler: public Subscriber<KeyboardEvent> {
+class MoveHandler: public Subscriber<KeyboardEvent> {
     Map& map;
     MapEntity& entity;
+    long dx = {}, dy = {};
 public:
-    MoveLeftHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
-    {}
-
-    void operator()(KeyboardEvent const&) { 
-        map.move_entity(entity, -1, 0);
-    }
-};
-
-class MoveRightHandler: public Subscriber<KeyboardEvent> {
-    Map& map;
-    MapEntity& entity;
-public:
-    MoveRightHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
-    {}
+    MoveHandler(Map& map, MapEntity& entity, long dx, long dy):
+        map(map), entity(entity), dx(dx), dy(dy) {}
 
     void operator()(KeyboardEvent const&) {
-        map.move_entity(entity, 1, 0);
+        map.move_entity(entity, dx, dy);
     }
 };
 
-class MoveUpHandler: public Subscriber<KeyboardEvent> {
+class DigHandler: public Subscriber<KeyboardChordEvent> {
     Map& map;
     MapEntity& entity;
+    Inventory& inventory;
+    long dx= {}, dy = {};
 public:
-    MoveUpHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
+    DigHandler(Map& map, MapEntity& entity, Inventory& inventory, long dx, long dy):
+        map(map), entity(entity), inventory(inventory), dx(dx), dy(dy)
     {}
 
-    void operator()(KeyboardEvent const&) {
-        map.move_entity(entity, 0, -1);
+    void operator()(KeyboardChordEvent const&) {
+        handle_dig(map, entity, inventory, dx, dy);
     }
 };
-
-class MoveDownHandler: public Subscriber<KeyboardEvent> {
-    Map& map;
-    MapEntity& entity;
-public:
-    MoveDownHandler(Map& map, MapEntity& entity):
-        map(map),
-        entity(entity)
-    {}
-
-    void operator()(KeyboardEvent const&) {
-        map.move_entity(entity, 0, 1);
-    }
-};
-
 class ClickHandler: public Subscriber<MouseEvent> {
     Map& map;
     Renderer& renderer;
@@ -70,7 +42,7 @@ public:
         renderer(renderer)
     {}
 
-    void operator()(MouseEvent const& event) { 
+    void operator()(MouseEvent const& event) {
         long x = 0, y = 0;
         renderer.pixel_to_tile_coordinates(event.x, event.y, x, y);
         map.click(x, y);
@@ -84,8 +56,15 @@ class CreateAntHandler: public Subscriber<KeyboardEvent> {
 public:
     CreateAntHandler(EntityManager& entity_manager, HardwareManager& hardware_manager, SoftwareManager& software_manager):
         entity_manager(entity_manager), hardware_manager(hardware_manager), software_manager(software_manager) {}
-    void operator()(KeyboardEvent const&) { 
+    void operator()(KeyboardEvent const&) {
         entity_manager.create_ant(hardware_manager, software_manager);
     }
 };
 
+class ReloadGameHandler: public Subscriber<KeyboardEvent> {
+    public:
+    ReloadGameHandler(bool& is_reload_game) : is_reload_game(is_reload_game) {}
+    void operator()(KeyboardEvent const&) { is_reload_game = true; }
+    private:
+    bool& is_reload_game;
+};

@@ -43,6 +43,10 @@ CommandMap::CommandMap() {
 
     // MOVE command
     insert(new CommandConfig("MOVE", CommandEnum::MOVE, MoveAntParser(), MoveAntDeparser(), MoveAntCompiler()));
+
+    // DIG command
+    insert(new CommandConfig("DIG", CommandEnum::DIG, DigAntParser(), DigAntDeparser(), DigAntCompiler()));
+        
     // JMP command
     insert(new CommandConfig("JMP", CommandEnum::JMP, JumpParser(), JumpDeparser(), JumpCompiler()));
 

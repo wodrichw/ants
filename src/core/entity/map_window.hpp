@@ -26,5 +26,5 @@ class MapWindow {
 
    private:
     std::vector<Rect> rooms, corridors;
-    TCODMap* map;
+    TCODMap* map = nullptr;
 };

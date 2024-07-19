@@ -1,6 +1,7 @@
 # Collect Source Files
 message(STATUS "Collecting source files for ants")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+set(ANT_CORE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "ANT_CORE_INCLUDE_DIRS")
 message(STATUS "proto_include ${PROTOBUF_INCLUDE_DIRS_1}")
 include_directories(${PROTOBUF_INCLUDE_DIRS_1})
 

@@ -1,5 +1,10 @@
 #pragma once
 
+#include <unordered_set>
+#include <spdlog/spdlog.h>
+
+using ulong = unsigned long;
+
 enum MouseEventType
 {
     LEFT_MOUSE_EVENT,
@@ -18,6 +23,7 @@ enum KeyboardEventType
     UP_KEY_EVENT, DOWN_KEY_EVENT, RETURN_KEY_EVENT, BACKSPACE_KEY_EVENT,
     COLON_KEY_EVENT, SPACE_KEY_EVENT, BACK_SLASH_KEY_EVENT, UNKNOWN_KEY_EVENT
 };
+using KeyboardChordEventType = std::pair<KeyboardEventType,KeyboardEventType>;
 
 enum CharKeyboardEventType
 {
@@ -35,15 +41,75 @@ struct KeyboardEvent
     KeyboardEventType type = UNKNOWN_KEY_EVENT;
 };
 
+struct KeyboardChordEvent
+{
+    KeyboardChordEventType chord = std::make_pair(UNKNOWN_KEY_EVENT, UNKNOWN_KEY_EVENT);
+    void set_key(KeyboardEventType key) {
+        if (chord.first == UNKNOWN_KEY_EVENT) {
+            SPDLOG_DEBUG("Set first chord key: {}", static_cast<ulong>(key));
+            chord.first = key;
+            return;
+        }
+
+        SPDLOG_DEBUG("Set second chord key: {}", static_cast<ulong>(key));
+        chord.second = key;
+    }
+
+    void unset_key(KeyboardEventType key) {
+        if (chord.first == key) chord.first = UNKNOWN_KEY_EVENT;
+
+        // always reset for now
+        chord.second = UNKNOWN_KEY_EVENT;
+    }
+};
+
 struct CharKeyboardEvent
 {
     CharKeyboardEventType type = CHAR_KEY_EVENT;
     char key = 0;
 };
 
+namespace std {
+    template <>
+    struct hash<MouseEvent> {
+        std::size_t operator()(MouseEvent const& e) const noexcept {
+            return static_cast<std::size_t>(e.type);
+        }
+    };
+    
+    template <>
+    struct hash<KeyboardEvent> {
+        std::size_t operator()(KeyboardEvent const& e) const noexcept {
+            return static_cast<std::size_t>(e.type);
+        }
+    };
+
+    template <>
+    struct hash<CharKeyboardEvent> {
+        std::size_t operator()(CharKeyboardEvent const& e) const noexcept {
+            return static_cast<std::size_t>(e.type);
+        }
+    };
+
+    template <>
+    struct hash<KeyboardChordEventType> {
+        std::size_t operator()(KeyboardChordEventType const& e) const noexcept {
+            ulong constexpr HASH_MULT = 196613UL;
+            return static_cast<std::size_t>(e.first) * HASH_MULT + static_cast<std::size_t>(e.second);
+        }
+    };
+
+    template <>
+    struct hash<KeyboardChordEvent> {
+        std::size_t operator()(KeyboardChordEvent const& e) const noexcept {
+            std::hash<KeyboardChordEventType> hash;
+            return hash(e.chord);
+        }
+    };
+}
+
 template <typename Event>
 struct Subscriber
 {
     virtual void operator()(Event const& event) = 0;
 };
-

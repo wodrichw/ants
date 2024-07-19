@@ -5,9 +5,9 @@ class Mode;
 
 class GameState {
     public:
-    Mode* mode;
-    Mode* primary_mode;
-    Mode* editor_mode;
+    Mode* mode = nullptr;
+    Mode* primary_mode = nullptr;
+    Mode* editor_mode = nullptr;
 
     GameState(Mode* primary_mode, Mode* editor_mode);
 
@@ -20,5 +20,6 @@ class GameState {
 
     EventPublisher<MouseEventType, MouseEvent>& get_mouse_publisher();
     EventPublisher<KeyboardEventType, KeyboardEvent>& get_keyboard_publisher();
+    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>& get_keyboard_chord_publisher();
     EventPublisher<CharKeyboardEventType, CharKeyboardEvent>& get_char_keyboard_publisher();
 };

@@ -8,7 +8,6 @@
 #include "app/globals.hpp"
 #include "entity/map.hpp"
 #include "entity/map_window.hpp"
-#include "spdlog/spdlog.h"
 #include "ui/layoutbox.hpp"
 
 // make sure the values are positive for modulus operations

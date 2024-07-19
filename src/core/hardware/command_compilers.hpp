@@ -16,5 +16,6 @@ DEFINE_COMPILER(SubCompiler);
 DEFINE_COMPILER(IncCompiler);
 DEFINE_COMPILER(DecCompiler);
 DEFINE_COMPILER(MoveAntCompiler);
+DEFINE_COMPILER(DigAntCompiler);
 DEFINE_COMPILER(JumpCompiler);
 DEFINE_COMPILER(JumpNotZeroCompiler);

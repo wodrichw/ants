@@ -1,3 +1,10 @@
 add_subdirectory(proto)
 add_subdirectory(core)
-add_subdirectory(py_wrapper)
+
+if (PYWRAP)
+    add_subdirectory(py_wrapper)
+endif()
+
+if (BENCH)
+    add_subdirectory(benchmark)
+endif()

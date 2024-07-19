@@ -15,6 +15,7 @@ message Player {}
 message EntityManager {
     int64 worker_count = 1;
     int64 building_count = 2;
+    uint64 instr_action_clock = 3;
 }
 
 message Building {
@@ -43,4 +44,16 @@ message Chunk {
     int64 is_explored = 4;
     int64 in_fov = 5;
     int64 is_wall = 6;
+}
+
+message Inventory {
+    uint64 max_stack_count = 1;
+    uint64 stack_size = 2;
+    uint64 max_weight = 3;
+    uint64 record_count = 4;
+}
+
+message InventoryRecord {
+    uint64 type = 1;
+    uint64 count = 2;
 }

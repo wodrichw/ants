@@ -1,3 +1,5 @@
+message(STATUS "Compiling Python wrapper")
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)  
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../core)
 include_directories(${Python3_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS_1})

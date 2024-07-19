@@ -13,7 +13,11 @@ using ulong = unsigned long;
 class Packer {
    public:
     Packer(std::string const& path) : output(path, std::ios::binary) {
-        if(!output) SPDLOG_ERROR("Failed to open file for writing: '{}'", path);
+        if(path == "") return;
+        if(!output) {
+            SPDLOG_ERROR("Failed to open file for writing: '{}'", path);
+            return;
+        }
     }
     ~Packer() { close(); }
 
@@ -54,7 +58,11 @@ class Packer {
 class Unpacker {
    public:
     Unpacker(std::string const& path) : input(path, std::ios::binary) {
-        if(!input) SPDLOG_ERROR("Failed to open file for reading: '{}'", path);
+        if (path == "") return;
+        if(!input) {
+            SPDLOG_ERROR("Failed to open file for reading: '{}'", path);
+            return;
+        }
     }
     ~Unpacker() { close(); }
 

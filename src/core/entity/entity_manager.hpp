@@ -11,24 +11,33 @@
 #include "entity/map_section_data.hpp"
 #include "entity/map_window.hpp"
 #include "hardware/hardware_manager.hpp"
+#include "hardware/program_executor.hpp"
 #include "hardware/software_manager.hpp"
 #include "spdlog/spdlog.h"
 #include "ui/colors.hpp"
+#include "utils/thread_pool.hpp"
 
 struct EntityManager {
+    ItemInfoMap item_info_map = {};
     Player player;
-    std::vector<Worker*> workers;
+    ThreadPool<AsyncProgramJob>& job_pool;
+    std::vector<Worker*> workers = {};
     std::vector<Building*> buildings;
     MapWindow map_window;
     Map map;
-    Worker* next_worker;
+    Worker* next_worker = nullptr;
+    ulong instr_action_clock = 0;
 
-    EntityManager(int map_width, int map_height, ProjectArguments& config)
-        : player(EntityData(40, 25, '@', 10, color::white)),
+
+    EntityManager(int map_width, int map_height, ProjectArguments& config, ThreadPool<AsyncProgramJob>& job_pool)
+        : player(EntityData(40, 25, '@', 10, color::white), item_info_map),
+          job_pool(job_pool),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
-          next_worker(create_worker_data()) {
+          next_worker(create_worker_data()),
+          instr_action_clock(0)
+    {
 
         MapSectionData section;
         if(config.default_map_file_path.empty()) {
@@ -61,10 +70,14 @@ struct EntityManager {
         map_window.set_center(player.get_data().x, player.get_data().y);
     }
 
-    EntityManager(Unpacker& p) : player(p), map_window(p), map(p), next_worker(create_worker_data()) {
+    EntityManager(Unpacker& p, ThreadPool<AsyncProgramJob>& job_pool) : 
+        player(p, item_info_map), job_pool(job_pool), map_window(p),
+        map(p), next_worker(create_worker_data()) 
+    {
         SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
         p >> msg;
+        instr_action_clock = msg.instr_action_clock();
 
         ulong worker_count = msg.worker_count();
         SPDLOG_DEBUG("Unpacking workers - count: {}", worker_count);
@@ -80,7 +93,7 @@ struct EntityManager {
             }
 
             if(entity_type == WORKER) {
-                save_ant(new Worker(p));
+                save_ant(new Worker(p, instr_action_clock, item_info_map, job_pool));
                 continue;
             }
             SPDLOG_ERROR("Unknown serialized ant type: {}",
@@ -166,6 +179,7 @@ struct EntityManager {
     }
 
     void update() {
+        ++instr_action_clock;
         if(!map.needs_update) return;
         SPDLOG_TRACE("Updating EntityManager");
         map.needs_update = false;
@@ -210,7 +224,7 @@ struct EntityManager {
         EntityData& data = next_worker->get_data();
         data.x = new_x;
         data.y = new_y;
-    
+
         MachineCode const& code = software_manager.get();
 
         if (!build_ant(hardware_manager, *next_worker, code)) {
@@ -220,17 +234,17 @@ struct EntityManager {
         SPDLOG_DEBUG("Creating worker ant");
         ulong ant_idx = workers.size();
         software_manager.assign(ant_idx); // before pushing to this->workers
-    
+
         save_ant(next_worker);
         next_worker = create_worker_data();
     }
 
     bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& code) {
         SPDLOG_TRACE("Building ant program - x: {} y: {} - code: {} bytes", worker.get_data().x, worker.get_data().y, code.size());
-        AntInteractor interactor(worker.cpu, worker, map,
+        AntInteractor interactor(worker.cpu, worker, map, worker.inventory,
                             worker.program_executor._ops,
-                            worker.program_executor.op_idx);
-        
+                            worker.program_executor.op_idx, worker.move_speed);
+
         Status status;
         hardware_manager.compile(code, interactor, status);
         if(status.p_err) {
@@ -246,7 +260,7 @@ struct EntityManager {
         SPDLOG_DEBUG("Rebuilding worker ant programs - count: {}", workers.size());
         ulong ant_idx = 0;
         for (Worker* worker: workers) {
-            build_ant(hardware_manager, *worker, software_manager[ant_idx]); 
+            build_ant(hardware_manager, *worker, software_manager[ant_idx]);
             ++ant_idx;
         }
         SPDLOG_TRACE("Completed rebuilding worker ant programs");
@@ -258,11 +272,12 @@ struct EntityManager {
     }
 
     Worker* create_worker_data() {
-        return new Worker(EntityData('w', 10, color::light_green));
+        return new Worker(EntityData('w', 10, color::light_green), instr_action_clock, item_info_map, job_pool);
     }
 
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {
         ant_proto::EntityManager msg;
+        msg.set_instr_action_clock(obj.instr_action_clock);
         msg.set_worker_count(obj.workers.size());
         msg.set_building_count(obj.buildings.size());
         p << obj.player << obj.map_window << obj.map << msg;

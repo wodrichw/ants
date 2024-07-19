@@ -5,8 +5,8 @@
 #include "utils/serializer.hpp"
 
 struct Rect {
-    long x1, y1, w, h, x2, y2;
-    long center_x, center_y;
+    long x1 = 0, y1 = 0, w = 0, h = 0, x2 = 0, y2 = 0;
+    long center_x = 0, center_y = 0;
     Rect() : x1(0), y1(0), w(0), h(0), x2(0), y2(0), center_x(0), center_y(0) {}
     Rect(long x1, long y1, long w, long h) : w(w), h(h) {
         SPDLOG_TRACE("New Room Rect: ({}, {}) -> {}x{}", x1, y1, w, h);

@@ -61,7 +61,7 @@ class tcodRenderer : public Renderer {
     const std::array<int, 4> get_rect(LayoutBox const& box, long x, long y,
                                       int w, int h);
 
-    bool is_debug_graphics;
+    bool is_debug_graphics = false;
     tcod::Context context;
     tcod::Console root_console;
 };
