@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <ctime>
 #include <optional>
 #include <thread>
 #include <list>
@@ -44,7 +45,8 @@ public:
     {}
 
     void operator()() {
-        std::chrono::nanoseconds initial_backoff(1000);
+        std::chrono::nanoseconds initial_backoff(10);
+        std::chrono::nanoseconds max_backoff(1000);
         std::chrono::nanoseconds backoff(initial_backoff);
         while ( threadpool_active ) {
             {
@@ -68,6 +70,7 @@ public:
             } else {
                 std::this_thread::sleep_for(backoff);
                 backoff *= 2;
+                if (backoff > max_backoff) backoff = max_backoff;
             }
         }
     }
