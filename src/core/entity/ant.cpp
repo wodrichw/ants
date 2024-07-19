@@ -44,7 +44,9 @@ EntityData& Worker::get_data() {
     return data;
 }
 
-void Worker::request_move() { program_executor.execute_sync(); }
+void Worker::request_move() { 
+    program_executor.execute_sync(); 
+}
 
 Packer& operator<<(Packer& p, Worker const& obj) {
     SPDLOG_TRACE("Packing worker");

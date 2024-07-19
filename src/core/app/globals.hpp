@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mutex>
+
 using cpu_word_size = unsigned int;
 
 namespace globals {
@@ -14,4 +16,6 @@ namespace globals {
     const long TEXTBOXWIDTH = 25;
     const long REGBOXWIDTH = 8;
     const long REGBOXHEIGHT = 1;
+
+    extern std::mutex threadpool_mutex;
 };  // namespace globals

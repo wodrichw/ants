@@ -9,10 +9,6 @@ void NoOP::operator()() {
     SPDLOG_TRACE("NOP operation executed");
 }
 
-ushort NoOP::get_num_ticks() const {
-    return 1;
-}
-
 // LOAD CONSTANT TO REGISTER ////////////////////
 LoadConstantOp::LoadConstantOp(cpu_word_size& reg, bool& zero_flag, cpu_word_size const value)
     : reg(reg), zero_flag(zero_flag), value(value) {
@@ -23,10 +19,6 @@ void LoadConstantOp::operator()() {
     SPDLOG_TRACE("Writing value {} to register", value);
     reg = value;
     zero_flag = value == 0;
-}
-
-ushort LoadConstantOp::get_num_ticks() const {
-    return 0;
 }
 
 // MOVE /////////////////////////////////////////
@@ -41,10 +33,6 @@ void MoveOp::operator()() {
     SPDLOG_TRACE("Moving ant by dx: {}, dy: {}", dx, dy);
 }
 
-ushort MoveOp::get_num_ticks() const {
-    return speed;
-}
-
 // DIG /////////////////////////////////////////
 DigOp::DigOp(Map& map, MapEntity& entity, Inventory& inventory, schar dx, schar dy, ulong speed)
     : map(map), entity(entity), inventory(inventory), dx(dx), dy(dy), speed(speed) {
@@ -55,10 +43,6 @@ void DigOp::operator()() {
     SPDLOG_DEBUG("Executing DigOp");
     handle_dig(map, entity, inventory, dx, dy);
     SPDLOG_TRACE("Digging ant by dx: {}, dy: {}", dx, dy);
-}
-
-ushort DigOp::get_num_ticks() const {
-    return speed;
 }
 
 // COPY REGISTER TO REGISTER ////////////////////
@@ -75,10 +59,6 @@ void CopyOp::operator()() {
     SPDLOG_TRACE("Copying register with result {}", reg_dst);
 }
 
-ushort CopyOp::get_num_ticks() const {
-    return 0;
-}
-
 // ADD REGISTER TO REGISTER ////////////////////
 AddOp::AddOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag)
     : reg_src(reg_src),
@@ -91,10 +71,6 @@ void AddOp::operator()() {
     reg_dst += reg_src;
     zero_flag = reg_dst == 0;
     SPDLOG_TRACE("Adding registers - result: {}", reg_dst);
-}
-
-ushort AddOp::get_num_ticks() const {
-    return 0;
 }
 
 // SUB REGISTER TO REGISTER ////////////////////
@@ -111,10 +87,6 @@ void SubOp::operator()() {
     SPDLOG_TRACE("Subtracting registers - result: {}", reg_dst);
 }
 
-ushort SubOp::get_num_ticks() const {
-    return 0;
-}
-
 // INC REGISTER ////////////////////////////////
 IncOp::IncOp(cpu_word_size& reg, bool& zero_flag)
     : reg(reg), zero_flag(zero_flag) {
@@ -125,10 +97,6 @@ void IncOp::operator()() {
     ++reg;
     zero_flag = reg == 0;
     SPDLOG_TRACE("Incremented register - result: {} - zero flag: {}", reg, zero_flag);
-}
-
-ushort IncOp::get_num_ticks() const {
-    return 0;
 }
 
 // DEC REGISTER ////////////////////////////////
@@ -143,13 +111,9 @@ void DecOp::operator()() {
     SPDLOG_TRACE("Decremented register - result: {} - zero flag: {}", reg, zero_flag);
 }
 
-ushort DecOp::get_num_ticks() const {
-    return 0;
-}
-
 // JMP /////////////////////////////////////////
 JmpOp::JmpOp(ushort& op_idx, ushort new_idx)
-    : op_idx(op_idx), new_idx(new_idx - 1) {
+    : op_idx(op_idx), new_idx(new_idx-1) {
         SPDLOG_DEBUG("JmpOp created - jumping to: {}", new_idx);
     }
 
@@ -157,10 +121,6 @@ void JmpOp::operator()() {
     SPDLOG_DEBUG("Executing JmpOp");
     op_idx = new_idx;
     SPDLOG_TRACE("Jumped to op_idx {}", op_idx);
-}
-
-ushort JmpOp::get_num_ticks() const {
-    return 0;
 }
 
 // JNZ /////////////////////////////////////////
@@ -177,8 +137,4 @@ void JnzOp::operator()() {
     }
     SPDLOG_TRACE("Zero flag off - jumping to op_idx {}", new_idx);
     op_idx = new_idx;
-}
-
-ushort JnzOp::get_num_ticks() const {
-    return 0;
 }

@@ -20,23 +20,23 @@
 struct EntityManager {
     ItemInfoMap item_info_map = {};
     Player player;
+    ThreadPool<AsyncProgramJob>& job_pool;
     std::vector<Worker*> workers = {};
     std::vector<Building*> buildings;
     MapWindow map_window;
     Map map;
     Worker* next_worker = nullptr;
     ulong instr_action_clock = 0;
-    ThreadPool<AsyncProgramJob>& job_pool;
 
 
     EntityManager(int map_width, int map_height, ProjectArguments& config, ThreadPool<AsyncProgramJob>& job_pool)
         : player(EntityData(40, 25, '@', 10, color::white), item_info_map),
+          job_pool(job_pool),
           map_window(Rect::from_center(player.get_data().x, player.get_data().y,
                                        map_width, map_height)),
           map(map_window.border, config.is_walls_enabled),
           next_worker(create_worker_data()),
-          instr_action_clock(0),
-          job_pool(job_pool)
+          instr_action_clock(0)
     {
 
         MapSectionData section;
@@ -71,8 +71,8 @@ struct EntityManager {
     }
 
     EntityManager(Unpacker& p, ThreadPool<AsyncProgramJob>& job_pool) : 
-        player(p, item_info_map), map_window(p), map(p),
-        next_worker(create_worker_data()), job_pool(job_pool) 
+        player(p, item_info_map), job_pool(job_pool), map_window(p),
+        map(p), next_worker(create_worker_data()) 
     {
         SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;

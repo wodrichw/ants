@@ -13,22 +13,14 @@ class Map;
 struct MapEntity;
 class Inventory;
 
-struct Op {
-    virtual void operator()()=0;
-    virtual unsigned short get_num_ticks() const=0;
-    virtual ~Op() {}
-};
-
-struct NoOP: Op {
-    void operator()() override;
-    ushort get_num_ticks() const override;
+struct NoOP {
+    void operator()();
 };
 
 // load a constant to the register
-struct LoadConstantOp: Op {
+struct LoadConstantOp {
     LoadConstantOp(cpu_word_size& reg, bool& zero_flag, cpu_word_size const value);
     void operator()();
-    ushort get_num_ticks() const;
 
    private:
     cpu_word_size& reg;
@@ -36,78 +28,69 @@ struct LoadConstantOp: Op {
     cpu_word_size const value = 0;
 };
 
-struct MoveOp: Op {
+struct MoveOp {
     MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ulong speed);
     void operator()();
-    ushort get_num_ticks() const;
     Map& map;
     MapEntity& entity;
     schar dx = '\0', dy = '\0';
     ulong speed = 0;
 };
 
-struct DigOp: Op {
+struct DigOp {
     DigOp(Map& map, MapEntity& entity, Inventory& inventory, schar dx, schar dy, ulong speed);
     void operator()();
-    ushort get_num_ticks() const;
     Map& map;
     MapEntity& entity;
     Inventory& inventory;
     schar dx = '\0', dy = '\0';
     ulong speed = 0 ;
 };
-struct CopyOp: Op {
+struct CopyOp {
     CopyOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
     void operator()();
-    ushort get_num_ticks() const;
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
-struct AddOp: Op {
+struct AddOp {
     AddOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
     void operator()();
-    ushort get_num_ticks() const;
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
-struct SubOp: Op {
+struct SubOp {
     SubOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
     void operator()();
-    ushort get_num_ticks() const;
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
-struct IncOp: Op {
+struct IncOp {
     IncOp(cpu_word_size& reg, bool& zero_flag);
     void operator()();
-    ushort get_num_ticks() const;
     cpu_word_size& reg;
     bool& zero_flag;
 };
 
-struct DecOp: Op {
+struct DecOp {
     DecOp(cpu_word_size& reg, bool& zero_flag);
     void operator()();
-    ushort get_num_ticks() const;
     cpu_word_size& reg;
     bool& zero_flag;
 };
 
-struct JmpOp: Op {
+struct JmpOp {
     JmpOp(ushort& op_idx, ushort new_idx);
     void operator()();
-    ushort get_num_ticks() const;
     ushort& op_idx;
     ushort new_idx = 0;
 };
 
-struct JnzOp: Op {
+struct JnzOp {
     JnzOp(ushort& op_idx, ushort new_idx, bool const& zero_flag);
     void operator()();
-    ushort get_num_ticks() const;
     ushort& op_idx;
     ushort new_idx = 0;
     bool const& zero_flag;

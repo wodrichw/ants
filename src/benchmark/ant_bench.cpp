@@ -17,13 +17,15 @@ static void run_small(benchmark::State& state) {
     run_save(state, "small_sq");
 }
 static void run_mid(benchmark::State& state) {
-    run_save(state, "mid_sq");
+    run_save(state, "100_ants");
 }
 static void run_counter(benchmark::State& state) {
     run_save(state, "count");
 }
-BENCHMARK(run_small);
+// BENCHMARK(run_small);
 BENCHMARK(run_mid);
-BENCHMARK(run_counter);
+// BENCHMARK(run_counter);
+
+
 
 BENCHMARK_MAIN();

@@ -253,8 +253,6 @@ class PrimaryMode : public Mode {
             entity_manager.map_window);
     }
 
-    //TODO: (job_pool) make sure that we don't call handleClockPulse until all the jobs on the job_pool
-    // is finished
     void update() override {
         entity_manager.update();
 

@@ -1,12 +1,17 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <cassert>
+#include <chrono>
 #include <optional>
 #include <thread>
-#include <vector>
+#include <list>
 #include <deque>
 #include <mutex>
+
+#include "app/globals.hpp"
+#include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
 
@@ -15,58 +20,54 @@ class ThreadWork {
     std::atomic_bool& is_working;
     std::atomic_bool const& threadpool_active;
     std::atomic_bool running_task;
-    std::deque<std::unique_ptr<ThreadTask>>& pending_jobs;
-    std::mutex& threadpool_mutex;
+    std::deque<ThreadTask>& pending_jobs;
     std::optional<ThreadTask> active_task;
+    // TODO: consolidate counts into one for just the number of unfinished jobs
+    std::atomic_ullong& pending_jobs_count;
+    std::atomic_ullong& active_worker_count;
 
 public:
-    ThreadWork(
+    explicit ThreadWork(
         std::atomic_bool& is_working,
         std::atomic_bool const& threadpool_active,
-        std::deque<std::unique_ptr<ThreadTask>>& pending_jobs,
-        std::mutex& threadpool_mutex
+        std::deque<ThreadTask>& pending_jobs,
+        std::atomic_ullong& pending_jobs_count,
+        std::atomic_ullong& active_worker_count
     ) :
         is_working(is_working),
         threadpool_active(threadpool_active),
         running_task(false),
         pending_jobs(pending_jobs),
-        threadpool_mutex(threadpool_mutex),
-        active_task()
-    {}
-
-    ThreadWork(ThreadWork const& that) :
-        is_working(that.is_working),
-        threadpool_active(that.threadpool_active),
-        running_task(that.running_task),
-        pending_jobs(that.pending_jobs),
-        threadpool_mutex(threadpool_mutex),
-        active_task(that.active_task)
-    {}
-
-
-    ThreadWork(ThreadWork&& that) :
-        is_working(that.is_working),
-        threadpool_active(that.threadpool_active),
-        running_task(false),
-        pending_jobs(that.pending_jobs),
-        threadpool_mutex(that.threadpool_mutex),
-        active_task(std::move(that.active_task))
+        active_task(),
+        pending_jobs_count(pending_jobs_count),
+        active_worker_count(active_worker_count)
     {}
 
     void operator()() {
-        while (threadpool_active.load()) {
+        std::chrono::nanoseconds initial_backoff(1000);
+        std::chrono::nanoseconds backoff(initial_backoff);
+        while ( threadpool_active ) {
             {
-                std::scoped_lock lock(threadpool_mutex);
+                std::scoped_lock lock(globals::threadpool_mutex);
                 if (!pending_jobs.empty()) {
-                    active_task.emplace(std::move(*pending_jobs.front()));
+                    active_task.emplace(std::move(pending_jobs.front()));
                     pending_jobs.pop_front();
-                }
+                    ++active_worker_count;
+                    --pending_jobs_count;
+                    SPDLOG_TRACE("aquired async op");
+                    backoff = initial_backoff;
+                    
+                } 
             }
             if (active_task.has_value()) {
                 running_task = true;
                 active_task->run();
+                --active_worker_count;
                 running_task = false;
                 active_task.reset(); // Clear the active task after it's done
+            } else {
+                std::this_thread::__sleep_for(std::chrono::seconds(0), backoff);
+                backoff *= 2;
             }
         }
     }
@@ -79,16 +80,21 @@ public:
     template <class ThreadTask>
     ThreadWorker(
         std::atomic_bool const& threadpool_active,
-        std::deque<std::unique_ptr<ThreadTask>>& pending_jobs,
-        std::mutex& threadpool_mutex
+        std::deque<ThreadTask>& pending_jobs,
+        std::atomic_ullong& pending_jobs_count,
+        std::atomic_ullong& active_worker_count
     ) :
         _is_working(false),
-        _thread(ThreadWork<ThreadTask>(
-            _is_working,
-            threadpool_active,
-            pending_jobs,
-            threadpool_mutex
-        ))
+        _thread([&]() {
+            ThreadWork<ThreadTask> thread_work(
+                _is_working,
+                threadpool_active,
+                pending_jobs,
+                pending_jobs_count,
+                active_worker_count
+            );
+            thread_work();
+        })
     { }
 
     bool is_working() const {
@@ -108,21 +114,22 @@ public:
 
 template <class ThreadTask>
 class ThreadPool {
-    std::vector<std::unique_ptr<ThreadWorker>> workers;
-    std::deque<std::unique_ptr<ThreadTask>> pending_jobs;
-    std::mutex threadpool_mutex;
+    std::list<ThreadWorker> workers;
+    std::deque<ThreadTask> pending_jobs;
     std::atomic_bool is_active;
+    std::atomic_ullong pending_jobs_count;
+    std::atomic_ullong active_worker_count;
 
 public:
     ThreadPool(ulong number_threads) :
         workers(),
         pending_jobs(),
-        threadpool_mutex(),
-        is_active(true)
+        is_active(true),
+        pending_jobs_count(),
+        active_worker_count()
     {
-        workers.reserve(number_threads);
         for (ulong i = 0; i < number_threads; ++i) {
-            workers.push_back(std::make_unique<ThreadWorker>(is_active, pending_jobs, threadpool_mutex));
+            workers.emplace_back(is_active, pending_jobs, pending_jobs_count, active_worker_count);
         }
     }
 
@@ -131,28 +138,22 @@ public:
     ThreadPool& operator=(const ThreadPool<ThreadTask>&) = delete;
 
     void await_jobs() const {
-        while (true) {
-            bool all_workers_done = true;
-            for (const auto& worker : workers) {
-                if (worker->is_working()) {
-                    all_workers_done = false;
-                    break;
-                }
-            }
-            if (all_workers_done) break;
+        while (active_worker_count > 0 || pending_jobs_count > 0) {
+            /*do nothing */
         }
     }
 
-    void submit_job(std::unique_ptr<ThreadTask> task) {
-        std::scoped_lock lock(threadpool_mutex);
+    void submit_job(ThreadTask& task) {
+        ++pending_jobs_count;
+        std::scoped_lock lock(globals::threadpool_mutex);
         pending_jobs.push_back(std::move(task));
     }
 
     ~ThreadPool() {
-        is_active.store(false);
-        for (auto& worker : workers) {
-            worker.reset(); // This will join the thread in the worker's destructor
-        }
+        is_active = false;
         assert(pending_jobs.empty());
     }
 };
+
+
+
