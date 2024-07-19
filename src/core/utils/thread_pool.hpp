@@ -66,7 +66,7 @@ public:
                 running_task = false;
                 active_task.reset(); // Clear the active task after it's done
             } else {
-                std::this_thread::__sleep_for(std::chrono::seconds(0), backoff);
+                std::this_thread::sleep_for(backoff);
                 backoff *= 2;
             }
         }
