@@ -401,7 +401,10 @@ class Map {
 
     bool in_fov(long x, long y) const {
         // SPDLOG_TRACE("Checking if tile at ({}, {}) is in fov", x, y);
-        return get_tile_const(x, y).in_fov;
+
+        // TODO: make it so that you can always return true from a command line setting
+        // return get_tile_const(x, y).in_fov;
+        return true;
     }
 
     bool is_explored(long x, long y) const {
