@@ -74,6 +74,9 @@ CommandMap::CommandMap() {
 
     // RETURN command
     insert(new CommandConfig("RET", CommandEnum::RET, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<ReturnOp>()));
+
+    // CHECK command
+    insert(new CommandConfig("CHK", CommandEnum::CHECK, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<CheckOp>()));
 }
 
 CommandMap::~CommandMap() {

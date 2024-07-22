@@ -8,6 +8,8 @@ struct RenderPosition {
 class Packer;
 class Unpacker;
 
+using uchar = unsigned char;
+
 struct EntityData {
    public:
     long x = 0, y = 0;
@@ -33,6 +35,8 @@ struct MapEntity {
     virtual void move_callback(long x, long y, long new_x, long new_y) = 0;
     virtual void click_callback(long x, long y) = 0;
     virtual void request_move() = 0;
+    virtual void handle_empty_space(uchar bits) = 0;
+    virtual void handle_full_space(uchar bits) = 0;
     virtual MapEntityType get_type() const = 0;
     friend Packer& operator<<(Packer& p, MapEntity const&) { return p; }
 };

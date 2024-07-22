@@ -1,6 +1,6 @@
 
 # Command List
-- ADD, CALL, COPY, DEC, DIG, INC, JNF, JNZ, JMP, LT, LOAD, MOVE, NOP, POP, PUSH, RT, RET, SUB
+- ADD, CALL, CHK, COPY, DEC, DIG, INC, JNF, JNZ, JMP, LT, LOAD, MOVE, NOP, POP, PUSH, RT, RET, SUB
 - Total: 17
 
 # Instruction Encoding (8 bit words)
@@ -10,7 +10,7 @@
 # NOP Instruction (8 bits)
 - Instruction: 0b00000
 
-# Movement Instruction (8 bits)
+# Movement Instruction (8 bits) // SYNC
 - Instruction: 0b00001
 
 # Load Constant Instruction (40 bits)
@@ -36,8 +36,11 @@
 - Additional: 0b000
 - Address: next 16 bits (2 instructions)
 
-# Turn Instructions
+# Turn Instructions (8 bits)
 - Left (0b01111) / Right (0b10000)
 
-# Dig Instruction
+# Dig Instruction (8 bits) // SYNC
 - Instruction: 0b10001
+
+# Check Instruction (8 bits)
+- Instruction: 0b10010

@@ -278,9 +278,15 @@ class Map {
             return false;
         }
 
+        // notify that the entity was successfully removed
+        notify_all_removed_entity(x, y);
+
         data.x = new_x;
         data.y = new_y;
         add_entity(entity);
+
+        // notify that the entity was successfully moved
+        notify_all_moved_entity(new_x, new_y, entity);
 
         SPDLOG_TRACE("Calling entity move callback");
         entity.move_callback(x, y, new_x, new_y);
@@ -471,10 +477,49 @@ class Map {
         Chunk const& chunk = get_chunk_const(x, y);
         return chunk[get_local_idx(chunk.x, chunk.y, x, y)];
     }
+
+    uchar flip_direction_bits(uchar bits) {
+        //DLUR -> URDL
+        return ((bits >> 2) | (bits << 2)) & 0b1111;
+    }
+
+    void notify_removed_entity(long x, long y, uchar bits) {
+        MapEntity* entity = get_tile(x, y).entity;
+        if (entity == nullptr)  return;
+        entity->handle_empty_space(bits);
+    }
+
+    void notify_moved_entity(MapEntity& source, long x, long y, uchar bits) {
+        uchar source_bits = flip_direction_bits(bits);
+        if (can_place(x, y)) {
+            source.handle_empty_space(source_bits);
+            return;
+        }
+        source.handle_full_space(source_bits);
+    
+        MapEntity* entity = get_tile(x, y).entity;
+        if (entity == nullptr) return;
+        entity->handle_full_space(bits);
+    }
+
     void set_entity(long x, long y, MapEntity* entity) {
         SPDLOG_DEBUG("Setting entity at ({}, {})", x, y);
         get_tile(x, y).entity = entity;
         needs_update = true;
+    }
+
+    void notify_all_removed_entity(long x, long y) {
+        notify_removed_entity(x - 1, y, 0b0001); // right
+        notify_removed_entity(x, y + 1, 0b0010); // up
+        notify_removed_entity(x + 1, y, 0b0100); // left
+        notify_removed_entity(x, y - 1, 0b1000); // down
+    }
+    
+    void notify_all_moved_entity(long x, long y, MapEntity& entity) {
+        notify_moved_entity(entity, x - 1, y, 0b0001); // right
+        notify_moved_entity(entity, x, y + 1, 0b0010); // up
+        notify_moved_entity(entity, x + 1, y, 0b0100); // left
+        notify_moved_entity(entity, x, y - 1, 0b1000);  // down
     }
 
     Chunks chunks;

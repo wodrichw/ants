@@ -20,6 +20,8 @@ struct Player: public MapEntity {
     void request_move();
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
+    void handle_empty_space(uchar bits);
+    void handle_full_space(uchar bits);
     MapEntityType get_type() const;
 
     friend Packer& operator<<(Packer& p, Player const& obj);
@@ -47,6 +49,8 @@ struct Worker: public MapEntity {
     void request_move();
     void move_callback(long x, long y, long new_x, long new_y);
     void click_callback(long x, long y);
+    void handle_empty_space(uchar bits);
+    void handle_full_space(uchar bits);
     MapEntityType get_type() const;
 
     friend Packer& operator<<(Packer& p, Worker const& obj);

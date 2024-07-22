@@ -5,6 +5,7 @@
 #include "app/globals.hpp"
 
 
+using uchar = unsigned char;
 using schar = signed char;
 using ushort = unsigned short;
 using ulong = unsigned long;
@@ -24,7 +25,6 @@ struct LoadConstantOp {
    private:
     cpu_word_size& reg;
     bool& zero_flag;
-    bool& instr_failed_flag;
     cpu_word_size const value = 0;
 };
 
@@ -44,7 +44,6 @@ struct CopyOp {
     void operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
-    bool& instr_failed_flag;
 };
 
 struct AddOp {
@@ -52,7 +51,6 @@ struct AddOp {
     void operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
-    bool& instr_failed_flag;
 };
 
 struct SubOp {
@@ -60,7 +58,6 @@ struct SubOp {
     void operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
-    bool& instr_failed_flag;
 };
 
 struct IncOp {
@@ -68,7 +65,6 @@ struct IncOp {
     void operator()();
     cpu_word_size& reg;
     bool& zero_flag;
-    bool& instr_failed_flag;
 };
 
 struct DecOp {
@@ -76,7 +72,6 @@ struct DecOp {
     void operator()();
     cpu_word_size& reg;
     bool& zero_flag;
-    bool& instr_failed_flag;
 };
 
 struct JmpOp {
@@ -84,7 +79,6 @@ struct JmpOp {
     void operator()();
     ushort& instr_ptr_register;
     ushort address = 0;
-    bool& instr_failed_flag;
 };
 
 struct JnzOp {
@@ -93,7 +87,6 @@ struct JnzOp {
     ushort& instr_ptr_register;
     ushort address = 0;
     bool const& zero_flag;
-    bool& instr_failed_flag;
 };
 
 struct JnfOp {
@@ -112,7 +105,6 @@ struct CallOp {
     ushort& instr_ptr_register;
     ushort& base_ptr_register;
     ushort& stack_ptr_register;
-    bool& instr_failed_flag;
 
     ushort address = 0;
 };
@@ -122,7 +114,6 @@ struct TurnLeftOp {
     void operator()();
     bool& dir_flag1;
     bool& dir_flag2;
-    bool& instr_failed_flag;
 };
 
 struct TurnRightOp {
@@ -130,7 +121,6 @@ struct TurnRightOp {
     void operator()();
     bool& dir_flag1;
     bool& dir_flag2;
-    bool& instr_failed_flag;
 };
 
 struct PopOp {
@@ -140,7 +130,6 @@ struct PopOp {
     cpu_word_size* ram;
     cpu_word_size& reg;
     ushort& stack_ptr_register;
-    bool& instr_failed_flag;
 };
 
 struct PushOp {
@@ -150,7 +139,6 @@ struct PushOp {
     cpu_word_size* ram;
     cpu_word_size& reg;
     ushort& stack_ptr_register;
-    bool& instr_failed_flag;
 };
 
 struct ReturnOp {
@@ -161,5 +149,14 @@ struct ReturnOp {
     ushort& instr_ptr_register;
     ushort& base_ptr_register;
     ushort& stack_ptr_register;
+};
+
+struct CheckOp {
+    CheckOp(DualRegisters&);
+    void operator()();
+
+    bool& dir_flag1;
+    bool& dir_flag2;
+    uchar& is_space_empty_flags;
     bool& instr_failed_flag;
 };
