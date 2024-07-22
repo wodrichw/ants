@@ -8,6 +8,7 @@
 #include "app/globals.hpp"
 
 using ulong = unsigned long;
+using ushort = unsigned short;
 
 class Packer;
 class Unpacker;
@@ -27,8 +28,8 @@ struct AsyncProgramJob {
 
 struct ProgramExecutor {
    public:
-    std::vector<Op> _ops;
-    unsigned short op_idx = 0;
+    std::vector<Op> _ops = {};
+    ushort& instr_ptr_register;
     ulong instr_trigger = 0;
     bool has_executed_async = false;
     bool has_executed_sync = false;
@@ -36,8 +37,8 @@ struct ProgramExecutor {
     ulong max_instruction_per_tick = 0;
     ThreadPool<AsyncProgramJob>& job_pool;
 
-    ProgramExecutor(ulong const& instr_clock, ulong max_instruction_per_tick, ThreadPool<AsyncProgramJob>&);
-    ProgramExecutor(Unpacker& p, ulong const& instr_clock, ulong max_instruction_per_tick, ThreadPool<AsyncProgramJob>&);
+    ProgramExecutor(ulong const& instr_clock, ulong max_instruction_per_tick, ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
+    ProgramExecutor(Unpacker& p, ulong const& instr_clock, ulong max_instruction_per_tick, ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
     void reset();
     void execute_async();
     void execute();

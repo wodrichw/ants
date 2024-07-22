@@ -180,6 +180,32 @@ struct EntityManager {
 
     void update() {
         ++instr_action_clock;
+
+        // Move / dig the ants on the map
+        for (Worker* worker: workers) {
+            DualRegisters& cpu = worker->cpu;
+
+            // Direction Truth Table
+            // A B | DX DY
+            // 0 0 |  1  0
+            // 0 1 |  0 -1
+            // 1 0 | -1  0
+            // 1 1 |  0  1
+
+            long dx = (1 - cpu.dir_flag2) * (-2 * cpu.dir_flag1 + 1);
+            long dy = cpu.dir_flag2 * (2 * cpu.dir_flag1 - 1);
+            if (cpu.is_move_flag) {
+                cpu.is_move_flag = false;
+                SPDLOG_DEBUG("Moving worker - dx: {} dy: {}", dx, dy);
+                cpu.instr_failed_flag = !map.move_entity(*worker, dx, dy);
+            }
+            if (cpu.is_dig_flag) {
+                cpu.is_dig_flag = false;
+                SPDLOG_DEBUG("Digging worker - dx: {} dy: {}", dx, dy);
+                cpu.instr_failed_flag = !map.dig(*worker, dx, dy);
+            }
+        }
+
         if(!map.needs_update) return;
         SPDLOG_TRACE("Updating EntityManager");
         map.needs_update = false;
@@ -239,15 +265,12 @@ struct EntityManager {
         next_worker = create_worker_data();
     }
 
-    bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& code) {
-        SPDLOG_TRACE("Building ant program - x: {} y: {} - code: {} bytes", worker.get_data().x, worker.get_data().y, code.size());
-        AntInteractor interactor(worker.cpu, worker, map, worker.inventory,
-                            worker.program_executor._ops,
-                            worker.program_executor.op_idx, worker.move_speed);
+    bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& machine_code) {
+        SPDLOG_TRACE("Building ant program - x: {} y: {} - machine_code: {} bytes", worker.get_data().x, worker.get_data().y, machine_code.size());
 
-        Status status;
-        hardware_manager.compile(code, interactor, status);
-        if(status.p_err) {
+        CompileArgs compile_args(machine_code.code, worker.cpu, worker.program_executor._ops);
+        hardware_manager.compile(compile_args);
+        if(compile_args.status.p_err) {
             SPDLOG_ERROR("Failed to compile the program for the ant");
             return false;
         }

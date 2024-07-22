@@ -4,11 +4,18 @@ package ant_proto;
 message DualRegisters {
     uint32 register0 = 1;
     uint32 register1 = 2;
-    bool zero_flag = 3;
+    uint32 instr_ptr_register = 3;
+    uint32 base_ptr_register = 4;
+    uint32 stack_ptr_register = 5;
+    bool zero_flag = 6;
+    bool dir_flag1 = 7;
+    bool dir_flag2 = 8;
+    bool is_move_flag = 9;
+    bool is_dig_flag = 10;
+    bool instr_failed_flag = 11;
 }
 
 message ProgramExecutor {
-    uint32 op_idx = 1;
     uint64 instr_trigger = 2;
     bool has_executed = 3;
 }

@@ -2,14 +2,15 @@
 #include "hardware/parse_args.hpp"
 #include "hardware/command_parsers.hpp"
 #include "hardware/command_compilers.hpp"
+#include "hardware/op_def.hpp"
 
 #include "spdlog/spdlog.h"
 
 CommandConfig::CommandConfig(
     const std::string &command_string, CommandEnum command_enum,
-    std::function<void(ParseArgs &args)> parse,
-    std::function<void(DeparseArgs &args)> deparse,
-    std::function<void(CompileArgs &args)> compile):
+    std::function<void(CommandConfig const&, ParseArgs&)> parse,
+    std::function<void(CommandConfig const&, DeparseArgs&)> deparse,
+    std::function<void(CommandConfig const&, CompileArgs&)> compile):
         command_string(command_string),
         command_enum(command_enum),
         parse(parse), deparse(deparse), compile(compile) {
@@ -21,37 +22,58 @@ CommandMap::CommandMap() {
     SPDLOG_TRACE("Creating command map");
     
     // Empty command
-    insert(new CommandConfig("NOP", CommandEnum::NOP, NOP_Parser(), NOP_Deparser(), NOP_Compiler()));
+    insert(new CommandConfig("NOP", CommandEnum::NOP, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<NoOP, 1>()));
 
     // Load constant command to register
-    insert(new CommandConfig("LDI", CommandEnum::LOAD, LoadConstantParser(), LoadConstantDeparser(), LoadConstantCompiler()));
+    insert(new CommandConfig("LOAD", CommandEnum::LOAD, LoadConstantParser(), LoadConstantDeparser(), LoadConstantCompiler<LoadConstantOp>()));
 
     // Copy register to register
-    insert(new CommandConfig("CPY", CommandEnum::COPY, CopyParser(), CopyDeparser(), CopyCompiler()));
+    insert(new CommandConfig("COPY", CommandEnum::COPY, TwoRegisterCommandParser(), TwoRegisterCommandDeparser(), TwoRegisterCommandCompiler<CopyOp>()));
 
     // Add second register to the first
-    insert(new CommandConfig("ADD", CommandEnum::ADD, AddParser(), AddDeparser(), AddCompiler()));
+    insert(new CommandConfig("ADD", CommandEnum::ADD, TwoRegisterCommandParser(), TwoRegisterCommandDeparser(), TwoRegisterCommandCompiler<AddOp>()));
 
     // Subtract second register from the first
-    insert(new CommandConfig("SUB", CommandEnum::SUB, SubParser(), SubDeparser(), SubCompiler()));
+    insert(new CommandConfig("SUB", CommandEnum::SUB, TwoRegisterCommandParser(), TwoRegisterCommandDeparser(), TwoRegisterCommandCompiler<SubOp>()));
 
     // Increment register
-    insert(new CommandConfig("INC", CommandEnum::INC, IncParser(), IncDeparser(), IncCompiler()));
+    insert(new CommandConfig("INC", CommandEnum::INC, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<IncOp>()));
 
     // Decrement register
-    insert(new CommandConfig("DEC", CommandEnum::DEC, DecParser(), DecDeparser(), DecCompiler()));
+    insert(new CommandConfig("DEC", CommandEnum::DEC, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<DecOp>()));
 
     // MOVE command
-    insert(new CommandConfig("MOVE", CommandEnum::MOVE, MoveAntParser(), MoveAntDeparser(), MoveAntCompiler()));
+    insert(new CommandConfig("MOVE", CommandEnum::MOVE, NoArgCommandParser(), NoArgCommandDeparser(), MoveAntCompiler<MoveOp>()));
 
     // DIG command
-    insert(new CommandConfig("DIG", CommandEnum::DIG, DigAntParser(), DigAntDeparser(), DigAntCompiler()));
+    insert(new CommandConfig("DIG", CommandEnum::DIG, NoArgCommandParser(), NoArgCommandDeparser(), DigAntCompiler<DigOp>()));
         
     // JMP command
-    insert(new CommandConfig("JMP", CommandEnum::JMP, JumpParser(), JumpDeparser(), JumpCompiler()));
-
+    insert(new CommandConfig("JMP", CommandEnum::JMP, JumpParser(), JumpDeparser(), JumpCompiler<JmpOp>()));
+ 
     // JNZ command
-    insert(new CommandConfig("JNZ", CommandEnum::JNZ, JumpNotZeroParser(), JumpNotZeroDeparser(), JumpNotZeroCompiler()));
+    insert(new CommandConfig("JNZ", CommandEnum::JNZ, JumpParser(), JumpDeparser(), JumpCompiler<JnzOp>()));
+
+    // JNF command
+    insert(new CommandConfig("JNF", CommandEnum::JNF, JumpParser(), JumpDeparser(), JumpCompiler<JnfOp>()));
+
+    // CALL command
+    insert(new CommandConfig("CALL", CommandEnum::CALL, JumpParser(), JumpDeparser(), JumpCompiler<CallOp>()));
+
+    // LEFT command
+    insert(new CommandConfig("LT", CommandEnum::LT, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<TurnLeftOp>()));
+
+    // POP command
+    insert(new CommandConfig("POP", CommandEnum::POP, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<PopOp>()));
+
+    // PUSH command
+    insert(new CommandConfig("PUSH", CommandEnum::PUSH, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<PushOp>()));
+
+    // RIGHT command
+    insert(new CommandConfig("RT", CommandEnum::RT, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<TurnRightOp>()));
+
+    // RETURN command
+    insert(new CommandConfig("RET", CommandEnum::RET, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<ReturnOp>()));
 }
 
 CommandMap::~CommandMap() {

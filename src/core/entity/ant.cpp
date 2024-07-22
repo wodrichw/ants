@@ -31,11 +31,11 @@ Packer& operator<<(Packer& p, Player const& obj) {
 }
 
 Worker::Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool)
-    : data(data), program_executor(instr_clock, max_instruction_per_tick, job_pool), cpu(), inventory(1, 1, 1000, info_map) 
+    : data(data), cpu(), program_executor(instr_clock, max_instruction_per_tick, cpu.instr_ptr_register, job_pool), inventory(1, 1, 1000, info_map) 
 { }
 
 Worker::Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool):
-    data(p), program_executor(p, instr_clock, max_instruction_per_tick, job_pool), cpu(p), inventory(p, info_map) 
+    data(p), cpu(p), program_executor(p, instr_clock, max_instruction_per_tick, cpu.instr_ptr_register, job_pool), inventory(p, info_map) 
 {
     SPDLOG_TRACE("Completed unpacking worker");
 }
