@@ -5,21 +5,21 @@
 #include "app/globals.hpp"
 
 
+using uchar = unsigned char;
 using schar = signed char;
 using ushort = unsigned short;
 using ulong = unsigned long;
 
-class Map;
-struct MapEntity;
-class Inventory;
+struct DualRegisters;
 
 struct NoOP {
+    NoOP(DualRegisters&);
     void operator()();
 };
 
 // load a constant to the register
 struct LoadConstantOp {
-    LoadConstantOp(cpu_word_size& reg, bool& zero_flag, cpu_word_size const value);
+    LoadConstantOp(DualRegisters&, cpu_word_size& reg, cpu_word_size const value);
     void operator()();
 
    private:
@@ -29,69 +29,134 @@ struct LoadConstantOp {
 };
 
 struct MoveOp {
-    MoveOp(Map& map, MapEntity& entity, schar dx, schar dy, ulong speed);
+    MoveOp(DualRegisters&);
     void operator()();
-    Map& map;
-    MapEntity& entity;
-    schar dx = '\0', dy = '\0';
-    ulong speed = 0;
+    bool& is_move_flag;
 };
 
 struct DigOp {
-    DigOp(Map& map, MapEntity& entity, Inventory& inventory, schar dx, schar dy, ulong speed);
+    DigOp(DualRegisters&);
     void operator()();
-    Map& map;
-    MapEntity& entity;
-    Inventory& inventory;
-    schar dx = '\0', dy = '\0';
-    ulong speed = 0 ;
+    bool& is_dig_flag;
 };
 struct CopyOp {
-    CopyOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
+    CopyOp(DualRegisters&, cpu_word_size& reg_src, cpu_word_size& reg_dst);
     void operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct AddOp {
-    AddOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
+    AddOp(DualRegisters&, cpu_word_size& reg_src, cpu_word_size& reg_dst);
     void operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct SubOp {
-    SubOp(cpu_word_size& reg_src, cpu_word_size& reg_dst, bool& zero_flag);
+    SubOp(DualRegisters&, cpu_word_size& reg_src, cpu_word_size& reg_dst);
     void operator()();
     cpu_word_size& reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct IncOp {
-    IncOp(cpu_word_size& reg, bool& zero_flag);
+    IncOp(DualRegisters&, cpu_word_size& reg);
     void operator()();
     cpu_word_size& reg;
     bool& zero_flag;
 };
 
 struct DecOp {
-    DecOp(cpu_word_size& reg, bool& zero_flag);
+    DecOp(DualRegisters&, cpu_word_size& reg);
     void operator()();
     cpu_word_size& reg;
     bool& zero_flag;
 };
 
 struct JmpOp {
-    JmpOp(ushort& op_idx, ushort new_idx);
+    JmpOp(DualRegisters&, ushort address);
     void operator()();
-    ushort& op_idx;
-    ushort new_idx = 0;
+    ushort& instr_ptr_register;
+    ushort address = 0;
 };
 
 struct JnzOp {
-    JnzOp(ushort& op_idx, ushort new_idx, bool const& zero_flag);
+    JnzOp(DualRegisters&, ushort address);
     void operator()();
-    ushort& op_idx;
-    ushort new_idx = 0;
+    ushort& instr_ptr_register;
+    ushort address = 0;
     bool const& zero_flag;
+};
+
+struct JnfOp {
+    JnfOp(DualRegisters&, ushort address);
+    void operator()();
+    ushort& instr_ptr_register;
+    ushort address = 0;
+    bool& instr_failed_flag;
+};
+
+struct CallOp {
+    CallOp(DualRegisters&, ushort address);
+    void operator()();
+
+    cpu_word_size* ram;
+    ushort& instr_ptr_register;
+    ushort& base_ptr_register;
+    ushort& stack_ptr_register;
+
+    ushort address = 0;
+};
+
+struct TurnLeftOp {
+    TurnLeftOp(DualRegisters&);
+    void operator()();
+    bool& dir_flag1;
+    bool& dir_flag2;
+};
+
+struct TurnRightOp {
+    TurnRightOp(DualRegisters&);
+    void operator()();
+    bool& dir_flag1;
+    bool& dir_flag2;
+};
+
+struct PopOp {
+    PopOp(DualRegisters&, cpu_word_size& reg);
+    void operator()();
+
+    cpu_word_size* ram;
+    cpu_word_size& reg;
+    ushort& stack_ptr_register;
+};
+
+struct PushOp {
+    PushOp(DualRegisters&, cpu_word_size& reg);
+    void operator()();
+
+    cpu_word_size* ram;
+    cpu_word_size& reg;
+    ushort& stack_ptr_register;
+};
+
+struct ReturnOp {
+    ReturnOp(DualRegisters&);
+    void operator()();
+
+    cpu_word_size* ram;
+    ushort& instr_ptr_register;
+    ushort& base_ptr_register;
+    ushort& stack_ptr_register;
+};
+
+struct CheckOp {
+    CheckOp(DualRegisters&);
+    void operator()();
+
+    bool& dir_flag1;
+    bool& dir_flag2;
+    uchar& is_space_empty_flags;
+    bool& instr_failed_flag;
 };

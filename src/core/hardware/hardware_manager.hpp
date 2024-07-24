@@ -5,6 +5,7 @@
 #include <hardware/compiler.hpp>
 
 struct ProgramExecutor;
+struct CompileArgs;
 
 struct HardwareManager {
     private:
@@ -16,7 +17,7 @@ struct HardwareManager {
     HardwareManager(CommandMap const&);
     HardwareManager(Unpacker&, CommandMap const&);
     void push_back(ProgramExecutor*);
-    void compile(MachineCode const& machine_code, AntInteractor& interactor, Status& status);
+    void compile(CompileArgs&);
 
     ExecutorList::iterator begin() { return exec_list.begin(); }
     ExecutorList::iterator end() { return exec_list.end(); }

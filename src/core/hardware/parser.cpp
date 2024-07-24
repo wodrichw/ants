@@ -26,6 +26,7 @@ void Parser::parse(std::vector<std::string> const& program_code, MachineCode &ma
         return;
     }
 
+    SPDLOG_INFO("Parsing {} lines of code text", active_code.size());
     for(std::string const& line : active_code) {
         SPDLOG_DEBUG("Parsing line: {}", line);
         ParseArgs args(line, machine_code.code, machine_code.labels, status);
@@ -43,14 +44,16 @@ void Parser::parse(std::vector<std::string> const& program_code, MachineCode &ma
         }
 
         CommandConfig const& command = *it->second;
-        command.parse(args);          // parse command
+        command.parse(command, args);          // parse command
         if(status.p_err) return;  // return if error parsing command
+
+        SPDLOG_TRACE("Current parsed code size: {} bytes", machine_code.code.size());
     }
     SPDLOG_INFO("Successfully parsed: {} / {} lines -> {} bytes", active_code.size(), program_code.size(), machine_code.code.size());
 }
 
 void Parser::deparse(MachineCode const& machine_code, std::vector<std::string>& program_code, Status& status) {
-    SPDLOG_DEBUG("Staring deparsing instructions");
+    SPDLOG_INFO("Starting deparsing instructions <- {} bytes", machine_code.code.size());
     DeparseArgs args(machine_code.code.begin(), machine_code.labels, program_code, status);
     while(args.code_it != machine_code.code.end()) {
         uchar instruction_code = *args.code_it >> 3;
@@ -58,7 +61,7 @@ void Parser::deparse(MachineCode const& machine_code, std::vector<std::string>& 
         CommandEnum instruction = static_cast<CommandEnum>(instruction_code);
         CommandConfig const& command = command_map.at(instruction);
         SPDLOG_DEBUG("Instruction name: {}", command.command_string);
-        command.deparse(args);
+        command.deparse(command, args);
 
         if (status.p_err) {
             SPDLOG_ERROR("Failed to deparse instruction: {}", command.command_string);
@@ -83,7 +86,7 @@ void Parser::deparse(MachineCode const& machine_code, std::vector<std::string>& 
     SPDLOG_INFO("Successfully deparsed: {} bytes -> {} lines", machine_code.code.size(), program_code.size());
 }
 
-bool Parser::handle_label(LabelMap &labels, std::string const &word, ushort op_idx, Status& status) {
+bool Parser::handle_label(LabelMap &labels, std::string const &word, ushort address, Status& status) {
     SPDLOG_TRACE("Checking if label: {}", word);
     if(word[word.length() - 1] != ':') {
         SPDLOG_TRACE("Word is not a label");
@@ -95,7 +98,7 @@ bool Parser::handle_label(LabelMap &labels, std::string const &word, ushort op_i
         return false;
     }
     std::string label(word.substr(0, word.length() - 1));
-    labels.insert(op_idx, label);
+    labels.insert(address, label);
     SPDLOG_DEBUG("Added label: {}", label);
     return true;
 }

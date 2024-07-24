@@ -57,11 +57,13 @@ std::string TokenParser::get_label(std::istringstream &ss, Status &status) {
 }
 
 void TokenParser::terminate(std::istringstream &ss, Status &status,
-                            const std::string &err_msg) {
+                            std::string const& cmd_name,
+                            std::string const& err_msg) {
     std::string word;
     ss >> word;
     if(ss) {
         status.error(err_msg);
-        SPDLOG_ERROR("Additional characters remained: {}", err_msg);
+        SPDLOG_ERROR("Additional characters remained: {} - {}", cmd_name, err_msg);
     }
+    (void)cmd_name;
 }

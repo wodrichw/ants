@@ -24,6 +24,8 @@ EntityData& Player::get_data() {
 MapEntityType Player::get_type() const { return PLAYER; }
 
 void Player::request_move() {}
+void Player::handle_empty_space(uchar) {}
+void Player::handle_full_space(uchar) {}
 
 Packer& operator<<(Packer& p, Player const& obj) {
     SPDLOG_DEBUG("Packing player");
@@ -31,11 +33,11 @@ Packer& operator<<(Packer& p, Player const& obj) {
 }
 
 Worker::Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool)
-    : data(data), program_executor(instr_clock, max_instruction_per_tick, job_pool), cpu(), inventory(1, 1, 1000, info_map) 
+    : data(data), cpu(), program_executor(instr_clock, max_instruction_per_tick, cpu.instr_ptr_register, job_pool), inventory(1, 1, 1000, info_map) 
 { }
 
 Worker::Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool):
-    data(p), program_executor(p, instr_clock, max_instruction_per_tick, job_pool), cpu(p), inventory(p, info_map) 
+    data(p), cpu(p), program_executor(p, instr_clock, max_instruction_per_tick, cpu.instr_ptr_register, job_pool), inventory(p, info_map) 
 {
     SPDLOG_TRACE("Completed unpacking worker");
 }
@@ -46,6 +48,28 @@ EntityData& Worker::get_data() {
 
 void Worker::request_move() { 
     program_executor.execute_sync(); 
+}
+
+void Worker::handle_empty_space(uchar bits) {
+    cpu.is_space_empty_flags |= bits;
+    // SPDLOG_INFO("Update worker empty space flags: D:{} L:{} U:{} R:{} - bits: {}",
+    //     (cpu.is_space_empty_flags >> 3) & 1,
+    //     (cpu.is_space_empty_flags >> 2) & 1,
+    //     (cpu.is_space_empty_flags >> 1) & 1,
+    //     (cpu.is_space_empty_flags >> 0) & 1,
+    //     bits
+    // );
+}
+
+void Worker::handle_full_space(uchar bits) {
+    cpu.is_space_empty_flags &= ~bits;
+    // SPDLOG_INFO("Update worker full space flags: D:{} L:{} U:{} R:{} - bits: {}",
+    //     (cpu.is_space_empty_flags >> 3) & 1,
+    //     (cpu.is_space_empty_flags >> 2) & 1,
+    //     (cpu.is_space_empty_flags >> 1) & 1,
+    //     (cpu.is_space_empty_flags >> 0) & 1,
+    //     bits
+    // );
 }
 
 Packer& operator<<(Packer& p, Worker const& obj) {
