@@ -25,6 +25,7 @@ struct Tile {
 
 struct Chunk {
     long x = 0, y = 0;
+    ulong scents = 0;
     bool update_parity = true;
     std::vector<Tile> tiles;
     Chunk() = default;
@@ -41,6 +42,7 @@ struct Chunk {
 
         x = msg.x();
         y = msg.y();
+        scents = msg.scents();
         update_parity = msg.update_parity();
         tiles.reserve(globals::CHUNK_AREA);
 
@@ -64,6 +66,7 @@ struct Chunk {
         ant_proto::Chunk msg;
         msg.set_x(obj.x);
         msg.set_y(obj.y);
+        msg.set_scents(obj.scents);
         msg.set_update_parity(obj.update_parity);
 
         ulong is_explored = 0, in_fov = 0, is_wall = 0;
@@ -289,7 +292,13 @@ class Map {
         notify_all_moved_entity(new_x, new_y, entity);
 
         SPDLOG_TRACE("Calling entity move callback");
-        entity.move_callback(x, y, new_x, new_y);
+        ulong right_scents = get_chunk(new_x + 8, new_y).scents;
+        ulong up_scents = get_chunk(new_x, new_y - 8).scents;
+        ulong left_scents = get_chunk(new_x - 8, new_y).scents;
+        ulong down_scents = get_chunk(new_x, new_y + 8).scents;
+    
+        entity.move_callback({ x, y, new_x, new_y,
+            {right_scents, up_scents, left_scents, down_scents}});
         SPDLOG_TRACE("Successfully moved the entity");
         return true;
     }
@@ -438,6 +447,11 @@ class Map {
             (offset * 2 - 1) * (2 * chunk_depth - chunk_x + chunk_y - offset);
         // SPDLOG_TRACE("Chunk index for tile ({}, {}) is {}", x, y, chunk_idx);
         return chunk_idx;
+    }
+
+    ulong& get_chunk_scents(MapEntity& entity) {
+        EntityData& data = entity.get_data();
+        return get_chunk(data.x, data.y).scents;
     }
 
     friend Packer& operator<<(Packer& p, Map const& obj) {

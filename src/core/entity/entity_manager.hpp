@@ -204,6 +204,24 @@ struct EntityManager {
                 SPDLOG_DEBUG("Digging worker - dx: {} dy: {}", dx, dy);
                 cpu.instr_failed_flag = !map.dig(*worker, dx, dy);
             }
+            if (cpu.delta_scents) {
+                ulong& chunk_scents = map.get_chunk_scents(*worker);
+
+                ulong updated_scents = 0;
+                ulong offset = 0;
+                while (cpu.delta_scents != 0) {
+                    ulong delta_scent = cpu.delta_scents & 0xFF;
+                    ulong prev_scent = chunk_scents & 0xFF;
+                    ulong scent = (prev_scent + delta_scent) & 0xFF;
+                    updated_scents |= (scent << offset);
+
+                    chunk_scents >>= 8;
+                    cpu.delta_scents >>= 8;
+                    offset += 8;
+                }
+                chunk_scents = updated_scents;
+                // SPDLOG_INFO("Chunk scent: {}", chunk_scents);
+            }
         }
 
         if(!map.needs_update) return;

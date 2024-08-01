@@ -92,13 +92,19 @@ void Player::click_callback(long, long) {
     toggle_color(data.col);
 }
 
-void Player::move_callback(long, long, long, long) {}
+void Player::move_callback(EntityMoveUpdate const&) {}
 
 void Worker::click_callback(long, long) {
     SPDLOG_INFO("Worker clicked - toggling color");
     toggle_color(data.col);
 }
 
-void Worker::move_callback(long, long, long, long) {}
+void Worker::move_callback(EntityMoveUpdate const& update) {
+    ScentBehaviors& scent_behaviors = cpu.scent_behaviors;
+    scent_behaviors.read_scent_behavior((ulong*)update.abs_scents);
+    scent_behaviors.write_scent_behavior();
+
+    // SPDLOG_INFO("Move callback - worker - {}", cpu.is_space_empty_flags);
+}
 
 MapEntityType Worker::get_type() const { return WORKER; }

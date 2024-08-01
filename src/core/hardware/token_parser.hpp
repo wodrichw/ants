@@ -21,11 +21,13 @@ namespace TokenParser {
     // A -> 0
     // B -> 1
     // ...
-    uchar register_idx(std::istringstream &ss);
+    uchar letter_idx(std::istringstream &ss);
 
     // Parse direction keyword to a dx and dy pair
     void direction(std::istringstream &ss, schar &dx, schar &dy,
                    Status& status);
+    
+    schar get_signed_byte(std::istringstream& ss, Status& status);
 
     std::string get_label(std::istringstream &ss, Status& status);
 
