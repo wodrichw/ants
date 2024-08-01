@@ -38,26 +38,18 @@ void ScentReader::operator()(ulong abs_scents[4]) {
 
     // Horizontal - positive values push to the left
     // Vertical - positive values push forward
-    long horizontal_weight = 0, vertical_weight = 0, max_value = 0;
+    long left_scent = 0, right_scent = 0, up_scent = 0, down_scent = 0;
     for (ulong priorities = base_priorities; priorities != 0; priorities >>= 8) {
         // Get and shift priorities
         long priority = static_cast<long>(static_cast<schar>(priorities & 0xFF));
-        max_value += std::abs(priority) * 0xFF;
 
         // Get and shift left / right scents
-        update_scent_and_sum(horizontal_weight, left_scents, priority);
-        update_scent_and_sum(horizontal_weight, right_scents, -priority);
+        update_scent_and_sum(left_scent, left_scents, priority);
+        update_scent_and_sum(right_scent, right_scents, priority);
 
         // Get and shift forward /reverse scents
-        update_scent_and_sum(vertical_weight, up_scents, priority);
-        update_scent_and_sum(vertical_weight, down_scents, -priority);
-    }
-
-    if (horizontal_weight == 0 && vertical_weight == 0) {
-        // randomize if no weights
-        long rand_dir = rand();
-        horizontal_weight = 2 * (rand_dir & 1) - 1;
-        vertical_weight = 2 * ((rand_dir >> 1) & 1) - 1;
+        update_scent_and_sum(up_scent, up_scents, priority);
+        update_scent_and_sum(down_scent, down_scents, priority);
     }
 
     bool can_move_right = is_space_empty_flag & 1;
@@ -65,27 +57,16 @@ void ScentReader::operator()(ulong abs_scents[4]) {
     bool can_move_left = (is_space_empty_flag >> 2 ) & 1;
     bool can_move_down = (is_space_empty_flag >> 3 ) & 1;
 
-    long left_scent = can_move_left ? (max_value + horizontal_weight) : 0;
-    long right_scent = can_move_right ? (max_value - horizontal_weight) : 0;
+    long min_scent = std::min({left_scent, right_scent, up_scent, down_scent}) - 1;
 
-    long up_scent = can_move_up ? (max_value + vertical_weight) : 0;
-    long down_scent = can_move_down ? (max_value - vertical_weight) : 0;
-    
-    bool use_max = true;
+    left_scent = can_move_left ? (-min_scent + left_scent) : 0;
+    right_scent = can_move_right ? (-min_scent + right_scent) : 0;
 
-    if(use_max) {
-        long max_value = std::max({left_scent, right_scent, up_scent, down_scent});
+    up_scent = can_move_up ? (-min_scent + up_scent) : 0;
+    down_scent = can_move_down ? (-min_scent + down_scent) : 0;
+    // SPDLOG_INFO("Scent reader - left: {} right {} up: {} down: {} min: {}", left_scent, right_scent, up_scent, down_scent, min_scent);
 
-        if (max_value == right_scent) scent_dir1 = false, scent_dir2 = false;
-        else if (max_value == up_scent) scent_dir1 = false, scent_dir2 = true;
-        else if (max_value == left_scent) scent_dir1 = true, scent_dir2 = false;
-        else scent_dir1 = true, scent_dir1 = true;
-        return;
-    }
-
-    // SPDLOG_INFO("Scent reader - left: {} right {} up: {} down: {}", left_scent, right_scent, up_scent, down_scent);
-
-    long total_scent = left_scent + right_scent + up_scent + down_scent + 1;
+    long total_scent = left_scent + right_scent + up_scent + down_scent;
 
     long rand_dir = rand() % total_scent;
     long accumulated_value = 0;

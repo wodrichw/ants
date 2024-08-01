@@ -19,14 +19,14 @@ struct Tile {
     bool is_wall = true;
     MapEntity* entity = nullptr;
     Building* building = nullptr;
+    ulong scents = 0;
     Tile(bool is_explored = false, bool in_fov = false, bool is_wall = true)
         : is_explored(is_explored), in_fov(in_fov), is_wall(is_wall) {}
 };
 
 struct Chunk {
     long x = 0, y = 0;
-    ulong scents = 0;
-    bool update_parity = true;
+     bool update_parity = true;
     std::vector<Tile> tiles;
     Chunk() = default;
     Chunk(long x, long y, bool update_parity)
@@ -42,7 +42,6 @@ struct Chunk {
 
         x = msg.x();
         y = msg.y();
-        scents = msg.scents();
         update_parity = msg.update_parity();
         tiles.reserve(globals::CHUNK_AREA);
 
@@ -66,7 +65,6 @@ struct Chunk {
         ant_proto::Chunk msg;
         msg.set_x(obj.x);
         msg.set_y(obj.y);
-        msg.set_scents(obj.scents);
         msg.set_update_parity(obj.update_parity);
 
         ulong is_explored = 0, in_fov = 0, is_wall = 0;
@@ -292,10 +290,10 @@ class Map {
         notify_all_moved_entity(new_x, new_y, entity);
 
         SPDLOG_TRACE("Calling entity move callback");
-        ulong right_scents = get_chunk(new_x + 8, new_y).scents;
-        ulong up_scents = get_chunk(new_x, new_y - 8).scents;
-        ulong left_scents = get_chunk(new_x - 8, new_y).scents;
-        ulong down_scents = get_chunk(new_x, new_y + 8).scents;
+        ulong right_scents = get_tile(new_x + 1, new_y).scents;
+        ulong up_scents = get_tile(new_x, new_y - 1).scents;
+        ulong left_scents = get_tile(new_x - 1, new_y).scents;
+        ulong down_scents = get_tile(new_x, new_y + 1).scents;
     
         entity.move_callback({ x, y, new_x, new_y,
             {right_scents, up_scents, left_scents, down_scents}});
@@ -449,9 +447,13 @@ class Map {
         return chunk_idx;
     }
 
-    ulong& get_chunk_scents(MapEntity& entity) {
+    ulong& get_tile_scents(MapEntity& entity) {
         EntityData& data = entity.get_data();
-        return get_chunk(data.x, data.y).scents;
+        return get_tile(data.x, data.y).scents;
+    }
+
+    ulong get_tile_scents2(long x, long y) const {
+        return get_tile_const(x, y).scents;
     }
 
     friend Packer& operator<<(Packer& p, Map const& obj) {

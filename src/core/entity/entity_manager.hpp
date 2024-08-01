@@ -205,22 +205,22 @@ struct EntityManager {
                 cpu.instr_failed_flag = !map.dig(*worker, dx, dy);
             }
             if (cpu.delta_scents) {
-                ulong& chunk_scents = map.get_chunk_scents(*worker);
+                ulong& tile_scents = map.get_tile_scents(*worker);
 
                 ulong updated_scents = 0;
                 ulong offset = 0;
                 while (cpu.delta_scents != 0) {
                     ulong delta_scent = cpu.delta_scents & 0xFF;
-                    ulong prev_scent = chunk_scents & 0xFF;
+                    ulong prev_scent = tile_scents & 0xFF;
                     ulong scent = (prev_scent + delta_scent) & 0xFF;
                     updated_scents |= (scent << offset);
 
-                    chunk_scents >>= 8;
+                    tile_scents >>= 8;
                     cpu.delta_scents >>= 8;
                     offset += 8;
                 }
-                chunk_scents = updated_scents;
-                // SPDLOG_INFO("Chunk scent: {}", chunk_scents);
+                tile_scents = updated_scents;
+                // SPDLOG_INFO("Tile scent: {} - x: {} y: {}", tile_scents, worker->get_data().x, worker->get_data().y);
             }
         }
 

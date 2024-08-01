@@ -44,7 +44,6 @@ message Chunk {
     int64 is_explored = 4;
     int64 in_fov = 5;
     int64 is_wall = 6;
-    uint64 scents = 7;
 }
 
 message Inventory {

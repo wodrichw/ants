@@ -41,6 +41,22 @@ class NoneRenderer : public Renderer {
     };
 };
 
+class MapTileRenderer {
+    virtual void operator()(TCOD_ConsoleTile& tile, long x, long y)=0;
+};
+
+struct TcodMapTileRenderer : public MapTileRenderer {
+    Map const& map;
+    TcodMapTileRenderer(Map const& map);
+    void operator()(TCOD_ConsoleTile& tile, long x, long y);
+};
+
+struct ScentMapTileRenderer : public MapTileRenderer {
+    Map const& map;
+    ScentMapTileRenderer(Map const& map);
+    void operator()(TCOD_ConsoleTile& tile, long x, long y);
+};
+
 class tcodRenderer : public Renderer {
    public:
     tcodRenderer(bool is_debug_graphics);
