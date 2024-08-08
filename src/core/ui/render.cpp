@@ -126,7 +126,6 @@ void ScentMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
 
     ulong scents = map.get_tile_scents_by_coord(x, y);
     unsigned char scent = static_cast<signed char>(scents >> scent_idx);
-    if (scents > 0) SPDLOG_INFO("Scent: {}", scent);
     TCOD_ColorRGBA scent_color{scent, scent, scent, 255};
 
     if(map.in_fov(x, y)) {

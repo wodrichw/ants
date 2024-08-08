@@ -12,15 +12,20 @@ void update_scent_and_sum(long& total, ulong& scents, long priority) {
 }
 
 void DecrementScent::operator()(ulong& scent) {
-    // if (scent == 0) return false; // not really needed since over/underflow is impossible
+    if (scent == 0) return;
     scent = (scent + 0xFF) & 0xFF; // equivalent to --scent since this will truncated
     // return true;
 }
 
 void IncrementScent::operator()(ulong& scent) {
-    // if (scent == 0) return false; // not really needed since over/underflow is impossible
-    scent = (scent + 1) & 0xFF; // equivalent to ++scent since this will truncated
-    // return true;
+    if (scent == 255) return;
+
+    ulong inc_scent = 1;
+    if (scent < 64) inc_scent = 8;
+    else if (scent < 128) inc_scent = 4;
+    else if (scent < 160) inc_scent = 2;
+
+    scent = (scent + inc_scent) & 0xFF;
 }
 
 ScentReader::ScentReader(bool& scent_dir1, bool& dir_flag2, uchar const& is_space_empty_flag, ulong const& priorities)
