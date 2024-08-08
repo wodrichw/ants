@@ -452,7 +452,7 @@ class Map {
         return get_tile(data.x, data.y).scents;
     }
 
-    ulong get_tile_scents2(long x, long y) const {
+    ulong get_tile_scents_by_coord(long x, long y) const {
         return get_tile_const(x, y).scents;
     }
 

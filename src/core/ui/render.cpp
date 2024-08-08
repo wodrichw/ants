@@ -66,13 +66,14 @@ tcodRenderer::tcodRenderer(bool is_debug_graphics)
     root_console = context.new_console(globals::COLS, globals::ROWS);
     SPDLOG_TRACE("Created root console - completed creating tcod renderer");
 
+    use_default_tile_rendering();
+
     (void)this->is_debug_graphics;
 }
 
 void tcodRenderer::render_map(LayoutBox const &box, Map const &map,
                               MapWindow const &window) {
-    // SPDLOG_TRACE("Rendering map");
-    ScentMapTileRenderer tile_renderer(map);
+    std::unique_ptr<MapTileRenderer> tile_renderer = generate_tile_renderer(map);
 
     // SPDLOG_TRACE("Rendering map with border ({}, {}) - {}x{}",
     for(long local_x = 0; local_x < window.border.w; ++local_x) {
@@ -83,7 +84,7 @@ void tcodRenderer::render_map(LayoutBox const &box, Map const &map,
             // SPDLOG_TRACE("Rendering tile at ({}, {}) - local ({}, {})", x, y,
             // local_x, local_y);
             auto &tile = clear_tile(box, local_x, local_y);
-            tile_renderer(tile, x, y);
+            (*tile_renderer)(tile, x, y);
         }
     }
     // render the debug info on the screen
@@ -114,15 +115,18 @@ void TcodMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
     }
 }
 
-ScentMapTileRenderer::ScentMapTileRenderer(Map const& map): map(map) {} 
+ScentMapTileRenderer::ScentMapTileRenderer(Map const& map, ulong scent_idx): map(map), scent_idx(scent_idx) {
+    SPDLOG_TRACE("Created scent map tile renderer with scent_idx: {}", scent_idx);
+} 
 void ScentMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
     // SPDLOG_TRACE("Rendering map");
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA darkGround = color::dark_grey;
     TCOD_ColorRGBA lightWall = color::indian_red;
-    TCOD_ColorRGBA lightGround = color::grey;
 
-    unsigned char scent = static_cast<signed char>(map.get_tile_scents2(x, y)) * 10;
+    ulong scents = map.get_tile_scents_by_coord(x, y);
+    unsigned char scent = static_cast<signed char>(scents >> scent_idx);
+    if (scents > 0) SPDLOG_INFO("Scent: {}", scent);
     TCOD_ColorRGBA scent_color{scent, scent, scent, 255};
 
     if(map.in_fov(x, y)) {
@@ -282,4 +286,18 @@ const std::array<int, 4> tcodRenderer::get_rect(LayoutBox const &box, long x,
     long abs_x = 0, abs_y = 0;
     box.get_abs_pos(x, y, abs_x, abs_y);
     return {(int)abs_x, (int)abs_y, w, h};
+}
+
+void tcodRenderer::use_default_tile_rendering() {
+    SPDLOG_INFO("Using default map tile renderer");
+    generate_tile_renderer = [](Map const& map) {
+        return std::make_unique<TcodMapTileRenderer>(map);
+    };
+}
+
+void tcodRenderer::use_scent_tile_rendering(ulong scent_idx) {
+    SPDLOG_INFO("Using scent map tile renderer - scent index: {}", scent_idx);
+    generate_tile_renderer = [scent_idx](Map const& map) {
+        return std::make_unique<ScentMapTileRenderer>(map, scent_idx);
+    };
 }

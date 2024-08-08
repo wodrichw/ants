@@ -24,6 +24,8 @@ class Renderer {
     virtual void present() = 0;
     virtual void pixel_to_tile_coordinates(int pixel_x, int pixel_y,
                                            long& tile_x, long& tile_y) = 0;
+    virtual void use_default_tile_rendering() = 0;
+    virtual void use_scent_tile_rendering(ulong) = 0;
 };
 
 class NoneRenderer : public Renderer {
@@ -39,9 +41,12 @@ class NoneRenderer : public Renderer {
         tile_x = 0;
         tile_y = 0;
     };
+    void use_default_tile_rendering() {}
+    void use_scent_tile_rendering(ulong) {}
 };
 
-class MapTileRenderer {
+struct MapTileRenderer {
+    virtual ~MapTileRenderer() {}
     virtual void operator()(TCOD_ConsoleTile& tile, long x, long y)=0;
 };
 
@@ -53,7 +58,8 @@ struct TcodMapTileRenderer : public MapTileRenderer {
 
 struct ScentMapTileRenderer : public MapTileRenderer {
     Map const& map;
-    ScentMapTileRenderer(Map const& map);
+    ulong scent_idx;
+    ScentMapTileRenderer(Map const& map, ulong scent_idx);
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
 
@@ -70,6 +76,8 @@ class tcodRenderer : public Renderer {
     void present();
     void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
                                    long& tile_y);
+    void use_default_tile_rendering();
+    void use_scent_tile_rendering(ulong);
 
    private:
     TCOD_ConsoleTile& get_tile(LayoutBox const& box, long x, long y);
@@ -80,4 +88,5 @@ class tcodRenderer : public Renderer {
     bool is_debug_graphics = false;
     tcod::Context context;
     tcod::Console root_console;
+    std::function<std::unique_ptr<MapTileRenderer>(Map const&)> generate_tile_renderer;
 };
