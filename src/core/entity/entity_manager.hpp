@@ -63,11 +63,8 @@ struct EntityManager {
         SPDLOG_INFO("Moving player to nursery building: ({}, {})", center_x,
                     center_y);
         player.data.x = center_x, player.data.y = center_y;
-        map.add_building(*buildings[0]);
 
-        SPDLOG_DEBUG("Adding player entity to the map");
-        map.add_entity(player);
-        map_window.set_center(player.get_data().x, player.get_data().y);
+        initialize();
     }
 
     EntityManager(Unpacker& p, ThreadPool<AsyncProgramJob>& job_pool) : 
@@ -112,13 +109,23 @@ struct EntityManager {
             if(building_type == NURSERY) {
                 Building* building = new Nursery(p);
                 buildings.push_back(building);
-                map.add_building(*building);
                 continue;
             }
 
             SPDLOG_ERROR("Unknown serialized building type: {}",
                          static_cast<uint>(building_type));
             exit(1);
+        }
+        initialize();
+    }
+
+    void initialize() {
+        SPDLOG_DEBUG("Adding player entity to the map");
+        map.add_entity(player);
+        map_window.set_center(player.get_data().x, player.get_data().y);
+
+        for (Building* building: buildings) {
+            map.add_building(*building);
         }
     }
 
