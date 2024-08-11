@@ -177,9 +177,10 @@ void SetScentPriorityDeparser::operator()(CommandConfig const& config, DeparseAr
     SPDLOG_TRACE("Deparsing {} command", config.command_string);
     uchar const reg_name = 'A' + ((*args.code_it) & 1);
     schar const priority = static_cast<schar>(*(++args.code_it));
+    std::string sign = priority < 0 ? "-" : "";
 
     std::stringstream ss;
-    ss << config.command_string << " " << reg_name << " " << priority;
+    ss << config.command_string << " " << reg_name << " " << sign << std::abs(priority);
     args.lines.push_back(ss.str());
 
     ++args.code_it;
