@@ -250,9 +250,17 @@ class Map {
         return true;
     }
 
-    void add_entity(MapEntity& entity) {
+    void add_entity_wo_events(MapEntity& entity) {
         EntityData& data = entity.get_data();
         set_entity(data.x, data.y, &entity);
+    }
+
+    void add_entity(MapEntity& entity) {
+        add_entity_wo_events(entity);
+        
+        // notify that the entity was successfully moved
+        auto entity_data = entity.get_data();
+        notify_all_moved_entity(entity_data.x, entity_data.y, entity);
     }
 
     void remove_entity(MapEntity& entity) {
@@ -275,7 +283,7 @@ class Map {
             SPDLOG_TRACE("Cannot move entity to ({}, {})", new_x, new_y);
 
             // unable to move the obstacle so move the entity back
-            add_entity(entity);
+            add_entity_wo_events(entity);
             return false;
         }
 
@@ -286,9 +294,6 @@ class Map {
         data.y = new_y;
         add_entity(entity);
 
-        // notify that the entity was successfully moved
-        notify_all_moved_entity(new_x, new_y, entity);
-
         SPDLOG_TRACE("Calling entity move callback");
         ulong right_scents = get_tile(new_x + 1, new_y).scents;
         ulong up_scents = get_tile(new_x, new_y - 1).scents;
@@ -297,6 +302,7 @@ class Map {
     
         entity.move_callback({ x, y, new_x, new_y,
             {right_scents, up_scents, left_scents, down_scents}});
+
         SPDLOG_TRACE("Successfully moved the entity");
         return true;
     }
