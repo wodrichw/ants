@@ -275,6 +275,16 @@ class Map {
         long x = data.x, y = data.y;
 
         long new_x = x + dx, new_y = y + dy;
+
+        SPDLOG_TRACE("Calling entity move callback");
+        ulong right_scents = get_tile(new_x + 1, new_y).scents;
+        ulong up_scents = get_tile(new_x, new_y - 1).scents;
+        ulong left_scents = get_tile(new_x - 1, new_y).scents;
+        ulong down_scents = get_tile(new_x, new_y + 1).scents;
+    
+        entity.move_callback({ x, y, new_x, new_y,
+            {right_scents, up_scents, left_scents, down_scents}});
+    
         SPDLOG_TRACE("Moving entity - new x: {} new y: {}", new_x, new_y);
 
         // remove entity from map so another entity can take its place if needed
@@ -293,15 +303,6 @@ class Map {
         data.x = new_x;
         data.y = new_y;
         add_entity(entity);
-
-        SPDLOG_TRACE("Calling entity move callback");
-        ulong right_scents = get_tile(new_x + 1, new_y).scents;
-        ulong up_scents = get_tile(new_x, new_y - 1).scents;
-        ulong left_scents = get_tile(new_x - 1, new_y).scents;
-        ulong down_scents = get_tile(new_x, new_y + 1).scents;
-    
-        entity.move_callback({ x, y, new_x, new_y,
-            {right_scents, up_scents, left_scents, down_scents}});
 
         SPDLOG_TRACE("Successfully moved the entity");
         return true;

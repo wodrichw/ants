@@ -303,6 +303,7 @@ void CheckOp::operator()() {
     uchar idx = (dir_flag1 << 1) | dir_flag2;
     bool is_empty = (is_space_empty_flags >> idx) & 1;
     instr_failed_flag = !is_empty;
+    SPDLOG_TRACE("Checking direction: {} -> {}", "RULD"[idx], (is_empty ? "EMPTY": "FULL"));
 }
 
 // SCENT ON /////////////////////////////////////////

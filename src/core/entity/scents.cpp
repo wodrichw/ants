@@ -11,21 +11,13 @@ void update_scent_and_sum(long& total, ulong& scents, long priority) {
     scents >>= 8;
 }
 
-void DecrementScent::operator()(ulong& scent) {
-    if (scent == 0) return;
-    scent = (scent + 0xFF) & 0xFF; // equivalent to --scent since this will truncated
+void DecrementScent::operator()(ulong& delta_scent) {
+    delta_scent = (delta_scent + 0xFF) & 0xFF; // equivalent to --scent since this will truncated
     // return true;
 }
 
-void IncrementScent::operator()(ulong& scent) {
-    if (scent == 255) return;
-
-    ulong inc_scent = 1;
-    if (scent < 64) inc_scent = 8;
-    else if (scent < 128) inc_scent = 4;
-    else if (scent < 160) inc_scent = 2;
-
-    scent = (scent + inc_scent) & 0xFF;
+void IncrementScent::operator()(ulong& delta_scent) {
+    delta_scent = (delta_scent + 1) & 0xFF;
 }
 
 ScentReader::ScentReader(bool& scent_dir1, bool& dir_flag2, uchar const& is_space_empty_flag, ulong const& priorities)
@@ -69,9 +61,9 @@ void ScentReader::operator()(ulong abs_scents[4]) {
 
     up_scent = can_move_up ? (-min_scent + up_scent) : 0;
     down_scent = can_move_down ? (-min_scent + down_scent) : 0;
-    // SPDLOG_INFO("Scent reader - left: {} right {} up: {} down: {} min: {}", left_scent, right_scent, up_scent, down_scent, min_scent);
+    // SPDLOG_DEBUG("Scent reader - left: {} right {} up: {} down: {} min: {}", left_scent, right_scent, up_scent, down_scent, min_scent);
 
-    long total_scent = left_scent + right_scent + up_scent + down_scent;
+    long total_scent = left_scent + right_scent + up_scent + down_scent + 1;
 
     long rand_dir = rand() % total_scent;
     long accumulated_value = 0;
@@ -79,22 +71,26 @@ void ScentReader::operator()(ulong abs_scents[4]) {
     accumulated_value += right_scent;
     if (rand_dir < accumulated_value) {
         // turn right;
+        SPDLOG_TRACE("Scent turn right");
         scent_dir1 = false, scent_dir2 = false;
         return;
     }
     accumulated_value += up_scent;
     if (rand_dir < accumulated_value) {
         // turn up;
+        SPDLOG_TRACE("Scent turn up");
         scent_dir1 = false, scent_dir2 = true;
         return;
     }
     accumulated_value += left_scent;
     if (rand_dir < accumulated_value) {
         // turn left;
+        SPDLOG_TRACE("Scent turn left");
         scent_dir1 = true, scent_dir2 = false;
         return;
     }
     // turn down;
+    SPDLOG_TRACE("Scent turn down");
     scent_dir1 = true, scent_dir2 = true;
 }
 

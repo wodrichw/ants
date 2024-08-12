@@ -54,5 +54,8 @@ struct Worker: public MapEntity {
     MapEntityType get_type() const;
 
     friend Packer& operator<<(Packer& p, Worker const& obj);
+
+    private:
+    void debug_empty_space_flags();
 };
 
