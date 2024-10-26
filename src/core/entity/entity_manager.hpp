@@ -21,8 +21,8 @@ struct EntityManager {
     ulong current_depth;
     ulong player_depth;
     ThreadPool<AsyncProgramJob>& job_pool;
-    std::vector<std::vector<Worker*>> workers = {{}};
-    std::vector<std::vector<Building*>> buildings = {{}};
+    std::vector<std::vector<Worker*>> workers = {};
+    std::vector<std::vector<Building*>> buildings = {};
     MapWindow map_window;
     MapManager map_manager;
     Worker* next_worker = nullptr;
@@ -40,6 +40,10 @@ struct EntityManager {
           next_worker(create_worker_data()),
           instr_action_clock(0)
     {
+        // initialize workers and buildings for ground level
+        workers.push_back({});
+        buildings.push_back({});
+
         int center_x = map_manager.get_first_room().center_x;
         int center_y = map_manager.get_first_room().center_y;
         buildings[current_depth].push_back(new Nursery(center_x - 1, center_y - 1, 0));
@@ -57,52 +61,76 @@ struct EntityManager {
         player(p, item_info_map), job_pool(job_pool), map_window(p),
         map_manager(p, current_depth), next_worker(create_worker_data()) 
     {
-        SPDLOG_DEBUG("Unpacking EntityManager");
         ant_proto::EntityManager msg;
         p >> msg;
         instr_action_clock = msg.instr_action_clock();
+        ulong max_depth = msg.max_depth();
+        player_depth = msg.player_depth();
 
-        ulong worker_count = msg.worker_count();
-        SPDLOG_DEBUG("Unpacking workers - count: {}", worker_count);
-        for(ulong i = 0; i < worker_count; ++i) {
-            ant_proto::Integer worker_msg;
-            p >> worker_msg;
-            MapEntityType entity_type =
-                static_cast<MapEntityType>(worker_msg.value());
+        SPDLOG_DEBUG("Unpacking EntityManager, max_depth {}, player_depth {}", max_depth, player_depth);
 
-            if(entity_type == PLAYER) {
-                SPDLOG_WARN("Unexpected player in Worker ant array");
-                continue;
-            }
-
-            if(entity_type == WORKER) {
-                save_ant(new Worker(p, instr_action_clock, item_info_map, job_pool));
-                continue;
-            }
-            SPDLOG_ERROR("Unknown serialized ant type: {}",
-                         static_cast<uint>(entity_type));
-            exit(1);
+        SPDLOG_TRACE("Initializing workers and buildings for unpacking");
+        for(ulong i = 0; i < max_depth; ++i) {
+            workers.push_back({});
+            buildings.push_back({});
         }
 
-        ulong building_count = msg.building_count();
-        SPDLOG_DEBUG("Unpacking building - count: {}", building_count);
-        for(ulong i = 0; i < building_count; ++i) {
-            ant_proto::Integer building_type_msg;
-            p >> building_type_msg;
-            BuildingType building_type =
-                static_cast<BuildingType>(building_type_msg.value());
+        SPDLOG_DEBUG("Unpacking workers");
+        for(current_depth = 0; current_depth < max_depth; ++current_depth) {
+            ant_proto::WorkerLevel worker_level_msg;
+            p >> worker_level_msg;
+            ulong worker_level_count = worker_level_msg.worker_count();
+            SPDLOG_DEBUG("Unpacking worker level count {}", worker_level_count);
+            for(ulong j = 0; j < worker_level_count; ++j) {
+                ant_proto::Integer worker_msg;
+                p >> worker_msg;
+                MapEntityType entity_type =
+                    static_cast<MapEntityType>(worker_msg.value());
 
-            if(building_type == NURSERY) {
-                Building* building = new Nursery(p);
-                buildings[current_depth].push_back(building);
-                map_manager.get_map().add_building(*building);
-                continue;
+                if(entity_type == PLAYER) {
+                    SPDLOG_WARN("Unexpected player in Worker ant array");
+                    continue;
+                }
+
+                if(entity_type == WORKER) {
+                    save_ant(new Worker(p, instr_action_clock, item_info_map, job_pool));
+                    continue;
+                }
+
+                SPDLOG_ERROR("Unknown serialized ant type: {}",
+                             static_cast<uint>(entity_type));
+                exit(1);
             }
-
-            SPDLOG_ERROR("Unknown serialized building type: {}",
-                         static_cast<uint>(building_type));
-            exit(1);
         }
+
+        SPDLOG_DEBUG("Unpacking buildings");
+        for(current_depth = 0; current_depth < max_depth; ++current_depth) {
+            ant_proto::BuildingLevel building_level_msg;
+            p >> building_level_msg;
+            ulong building_level_count = building_level_msg.building_count();
+            SPDLOG_DEBUG("Unpacking building level count {}", building_level_count);
+            for(ulong j = 0; j < building_level_count; ++j) {
+                ant_proto::Integer building_type_msg;
+                p >> building_type_msg;
+                BuildingType building_type =
+                    static_cast<BuildingType>(building_type_msg.value());
+
+                if(building_type == NURSERY) {
+                    Building* building = new Nursery(p);
+                    buildings[current_depth].push_back(building);
+                    map_manager.get_map().add_building(*building);
+                    continue;
+                }
+
+                SPDLOG_ERROR("Unknown serialized building type: {}",
+                             static_cast<uint>(building_type));
+                exit(1);
+            }
+        }
+
+        current_depth = msg.current_depth();
+
+        SPDLOG_TRACE("Unpack of EntityManager finished");
     }
 
     ~EntityManager() {
@@ -130,6 +158,7 @@ struct EntityManager {
         if (current_depth == 0) return false;
         --current_depth;
         map_manager.go_up();
+        map_manager.get_map().update_chunks(map_window.border);
         return true;
     }
 
@@ -138,6 +167,7 @@ struct EntityManager {
         SPDLOG_TRACE("MAP LEVEL GO DOWN REQUST");
         ++current_depth;
         map_manager.go_down();
+        map_manager.get_map().update_chunks(map_window.border);
         if (current_depth == workers.size()) {
             workers.push_back({});
         }
@@ -203,6 +233,33 @@ struct EntityManager {
 
     void update() {
         ++instr_action_clock;
+        // Move / dig the ants on the map
+        for (size_t depth = 0; depth < workers.size(); ++depth) {
+            for (Worker* worker: workers[depth]) {
+                DualRegisters& cpu = worker->cpu;
+
+                // Direction Truth Table
+                // A B | DX DY
+                // 0 0 |  1  0
+                // 0 1 |  0 -1
+                // 1 0 | -1  0
+                // 1 1 |  0  1
+
+                long dx = (1 - cpu.dir_flag2) * (-2 * cpu.dir_flag1 + 1);
+                long dy = cpu.dir_flag2 * (2 * cpu.dir_flag1 - 1);
+                if (cpu.is_move_flag) {
+                    cpu.is_move_flag = false;
+                    SPDLOG_DEBUG("Moving worker - dx: {} dy: {}", dx, dy);
+                    cpu.instr_failed_flag = !map_manager.get_map(depth).move_entity(*worker, dx, dy);
+                }
+                if (cpu.is_dig_flag) {
+                    cpu.is_dig_flag = false;
+                    SPDLOG_DEBUG("Digging worker - dx: {} dy: {}", dx, dy);
+                    cpu.instr_failed_flag = !map_manager.get_map(depth).dig(*worker, dx, dy);
+                }
+            }
+        }
+
         if(!map_manager.get_map().needs_update) return;
         SPDLOG_TRACE("Updating EntityManager");
         map_manager.get_map().needs_update = false;
@@ -262,15 +319,12 @@ struct EntityManager {
         next_worker = create_worker_data();
     }
 
-    bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& code) {
-        SPDLOG_TRACE("Building ant program - x: {} y: {} - code: {} bytes", worker.get_data().x, worker.get_data().y, code.size());
-        AntInteractor interactor(worker.cpu, worker, map_manager.get_map(), worker.inventory,
-                            worker.program_executor._ops,
-                            worker.program_executor.op_idx, worker.move_speed);
+    bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& machine_code) {
+        SPDLOG_TRACE("Building ant program - x: {} y: {} - machine_code: {} bytes", worker.get_data().x, worker.get_data().y, machine_code.size());
 
-        Status status;
-        hardware_manager.compile(code, interactor, status);
-        if(status.p_err) {
+        CompileArgs compile_args(machine_code.code, worker.cpu, worker.program_executor._ops);
+        hardware_manager.compile(compile_args);
+        if(compile_args.status.p_err) {
             SPDLOG_ERROR("Failed to compile the program for the ant");
             return false;
         }
@@ -291,6 +345,15 @@ struct EntityManager {
         SPDLOG_TRACE("Completed rebuilding worker ant programs");
     }
 
+    //returns the total number of workers accross all levels
+    ulong num_workers() {
+        ulong n = 0;
+        for(const auto& level_workers: workers) {
+            n += level_workers.size();
+        }
+        return n;
+    }
+
     void save_ant(Worker* worker) {
         map_manager.get_map().add_entity(*worker);
         workers[current_depth].push_back(worker);
@@ -303,13 +366,18 @@ struct EntityManager {
     friend Packer& operator<<(Packer& p, EntityManager const& obj) {
         ant_proto::EntityManager msg;
         msg.set_instr_action_clock(obj.instr_action_clock);
-        msg.set_worker_count(obj.workers.size());
-        msg.set_building_count(obj.buildings.size());
-        p << obj.player << obj.map_window << obj.map_manager.get_map() << msg;
-        SPDLOG_DEBUG("Packing entity manager - workers count: {} building count: {}", obj.workers.size(), obj.buildings.size());
+        msg.set_max_depth(obj.workers.size());
+        msg.set_current_depth(obj.current_depth);
+        msg.set_player_depth(obj.player_depth);
+        SPDLOG_DEBUG("Packing Player, MapWindow, MapManager, then EntityManager");
+        p << obj.player << obj.map_window << obj.map_manager << msg;
 
-        SPDLOG_DEBUG("Packing workers");
-        for (auto level_workers: obj.workers) {
+        SPDLOG_DEBUG("Packing workers, level count {}", obj.workers.size());
+        for (const auto& level_workers: obj.workers) {
+            ant_proto::WorkerLevel worker_level_msg;
+            worker_level_msg.set_worker_count(level_workers.size());
+            p << worker_level_msg;
+            SPDLOG_DEBUG("Packing worker level count {}", level_workers.size());
             for (Worker const* worker: level_workers) {
                 ant_proto::Integer worker_msg;
                 worker_msg.set_value(static_cast<int>(worker->get_type()));
@@ -317,8 +385,12 @@ struct EntityManager {
             }
         }
 
-        SPDLOG_DEBUG("Packing buildings");
-        for(auto level_buildings: obj.buildings) {
+        SPDLOG_DEBUG("Packing buildings, level count {}", obj.buildings.size());
+        for(const auto& level_buildings: obj.buildings) {
+            ant_proto::BuildingLevel building_level_msg;
+            building_level_msg.set_building_count(level_buildings.size());
+            p << building_level_msg;
+            SPDLOG_DEBUG("Packing building level count {}", level_buildings.size());
             for (Building const* building: level_buildings) {
                 ant_proto::Integer building_type_msg;
                 building_type_msg.set_value(static_cast<int>(building->get_type()));

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <cassert>
 #include "app/arg_parse.hpp"
+#include "entity.pb.h"
 #include "entity/map.hpp"
 #include "entity/map_builder.hpp"
 #include "entity/map_section_data.hpp"
@@ -49,6 +51,28 @@ public:
         first_room = section.rooms[0];
     }
 
+    MapManager(Unpacker& p, ulong& current_depth):
+        border(p),
+        is_walls_enabled(),
+        maps(),
+        current_depth(current_depth),
+        map_section_width(),
+        map_section_height(),
+        first_room(p)
+    {
+        ant_proto::MapManager msg;
+        p >> msg;
+        is_walls_enabled = msg.is_walls_enabled();
+        map_section_width = msg.map_section_width();
+        map_section_height = msg.map_section_height();
+
+        ulong max_depth = msg.max_depth();
+        SPDLOG_DEBUG("Unpacking MapManager, map count {}", max_depth);
+        for(ulong i = 0; i < max_depth; ++i) {
+            maps.emplace_back(p, is_walls_enabled);
+        }
+    }
+
     void go_up() {
     }
 
@@ -63,15 +87,14 @@ public:
         }
     }
 
-    // TODO: set up packing
-    MapManager(Unpacker& p, ulong& current_depth): current_depth(current_depth)
-    {
-    }
-
     const Rect& get_first_room() {
         return first_room;
     }
 
+    Map& get_map(size_t depth) {
+        assert(depth < maps.size());
+        return maps[depth];
+    }
 
     Map& get_map() {
         return maps[current_depth];
@@ -81,4 +104,20 @@ public:
         return maps[current_depth];
     }
 
+    friend Packer& operator<<(Packer& p, MapManager const& obj) {
+        ant_proto::MapManager msg;
+        msg.set_is_walls_enabled(obj.is_walls_enabled);
+        msg.set_map_section_width(obj.map_section_width);
+        msg.set_map_section_height(obj.map_section_height);
+        msg.set_max_depth(obj.maps.size());
+        p << obj.border << obj.first_room << msg;
+
+        SPDLOG_DEBUG("Packing MapManager, map count {}", obj.maps.size());
+        
+        for(const auto& map: obj.maps) {
+            p << map;
+        }
+        
+        return p;
+    }
 };

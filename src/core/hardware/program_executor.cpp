@@ -8,9 +8,10 @@
 ProgramExecutor::ProgramExecutor(
     ulong const& instr_clock,
     ulong max_instruction_per_tick,
+    ushort& instr_ptr_register,
     ThreadPool<AsyncProgramJob>& job_pool
 ):
-    op_idx(0),
+    instr_ptr_register(instr_ptr_register),
     instr_trigger(0),
     has_executed_async(false),
     has_executed_sync(false),
@@ -23,8 +24,10 @@ ProgramExecutor::ProgramExecutor(
     Unpacker& p,
     ulong const& instr_clock,
     ulong max_instruction_per_tick,
+    ushort& instr_ptr_register,
     ThreadPool<AsyncProgramJob>& job_pool
 ):
+    instr_ptr_register(instr_ptr_register),
     instr_clock(instr_clock),
     max_instruction_per_tick(max_instruction_per_tick),
     job_pool(job_pool)
@@ -33,10 +36,9 @@ ProgramExecutor::ProgramExecutor(
     ant_proto::ProgramExecutor msg;
     p >> msg;
 
-    op_idx = msg.op_idx();
     instr_trigger = msg.instr_trigger();
     has_executed_sync = msg.has_executed();
-    SPDLOG_TRACE("Completed unpacking program executor - op_idx: {}", op_idx);
+    SPDLOG_TRACE("Completed unpacking program executor");
 }
 
 void ProgramExecutor::reset() { has_executed_sync = false; }
@@ -47,51 +49,50 @@ void ProgramExecutor::reset() { has_executed_sync = false; }
 void ProgramExecutor::execute_async() {
     // SPDLOG_INFO("Handling clock pulse for program_executor - clock: {} trigger: {}", instr_clock, instr_trigger);
     has_executed_async = false;
-    if( op_idx >= _ops.size() ) return;
+    if( instr_ptr_register >= _ops.size() ) return;
     if ((instr_clock % (instr_trigger + 1)) != 0) return;
     instr_trigger = 0; // if not 0, then a syncronous move is occurring
     has_executed_async = true;
     AsyncProgramJob job(*this);
     job_pool.submit_job(job);
 
-    SPDLOG_TRACE("submitted async op {}", op_idx);
+    SPDLOG_TRACE("Submitted async job - instruction address: {}", instr_ptr_register);
 }
 
 
 void ProgramExecutor::execute() {
-    instr_trigger = _ops[op_idx].num_ticks;
-    _ops[op_idx]();
-    op_idx++;
+    instr_trigger = _ops[instr_ptr_register].num_ticks;
+    _ops[instr_ptr_register]();
+    ++instr_ptr_register;
 }
 
 void ProgramExecutor::execute_sync() {
     if( has_executed_sync )  return;
-    if( op_idx >= _ops.size() ) return;
+    if( instr_ptr_register >= _ops.size() ) return;
     if(! has_executed_async ) return;
     has_executed_sync = true;
-    SPDLOG_TRACE("executing sync op {}", op_idx);
+    SPDLOG_TRACE("Executing sync operation at instruction address: {}", instr_ptr_register);
     execute();
 }
 
 bool ProgramExecutor::is_sync() {
-    return _ops[op_idx].num_ticks != 0;
+    return _ops[instr_ptr_register].num_ticks != 0;
 }
 
 void AsyncProgramJob::run() {
-	for(ulong i = 1; i < pe.max_instruction_per_tick && pe.op_idx < pe._ops.size(); ++i) {
+	for(ulong i = 1; i < pe.max_instruction_per_tick && pe.instr_ptr_register < pe._ops.size(); ++i) {
 		if( pe.is_sync() ) { // break if a syncronous instruction
 			break;
 		}
-        SPDLOG_TRACE("executing async op {}", pe.op_idx);
+        SPDLOG_TRACE("Executing async operation at instruction address: {}", pe.instr_ptr_register);
 		pe.execute();
-		SPDLOG_TRACE("Incrementing op_idx to {}", pe.op_idx);
+		SPDLOG_TRACE("Incrementing instruction pointer register to {}", pe.instr_ptr_register);
 	}
 }
 
 Packer& operator<<(Packer& p, ProgramExecutor const& obj) {
-    SPDLOG_TRACE("Packing program executor - op_idx: {}", obj.op_idx);
+    SPDLOG_TRACE("Packing program executor");
     ant_proto::ProgramExecutor msg;
-    msg.set_op_idx(obj.op_idx);
     msg.set_instr_trigger(obj.instr_trigger);
     msg.set_has_executed(obj.has_executed_sync);
     return p << msg;

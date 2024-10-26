@@ -10,7 +10,7 @@ HardwareManager::HardwareManager(Unpacker&, CommandMap const& command_map): comp
 // Does not take ownership
 void HardwareManager::push_back(ProgramExecutor* exec) { exec_list.push_back(exec); }
 
-void HardwareManager::compile(MachineCode const& machine_code, AntInteractor& interactor, Status& status) { compiler.compile(machine_code, interactor, status); }
+void HardwareManager::compile(CompileArgs& args) { compiler.compile(args); }
 
 Packer& operator<<(Packer& p, HardwareManager const&) {
     // Does not take ownership of executor objects.

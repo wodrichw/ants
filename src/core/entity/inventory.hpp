@@ -122,6 +122,9 @@ class Inventory {
     ulong size() const { return items.size(); }
 
     friend Packer& operator<<(Packer& p, Inventory const& obj) {
+        SPDLOG_TRACE("Packing ant inventory - size: {} max stack count: {} stack size: {} max weight: {}",
+                obj.size(), obj.max_stack_count, obj.stack_size, obj.max_weight);
+
         ant_proto::Inventory msg;
         msg.set_max_stack_count(obj.max_stack_count);
         msg.set_stack_size(obj.stack_size);

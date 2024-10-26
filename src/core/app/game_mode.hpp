@@ -238,7 +238,7 @@ class PrimaryMode : public Mode {
         // click listeners
         event_system.mouse_events.add(
             LEFT_MOUSE_EVENT, new ClickHandler(entity_manager.map_manager, renderer));
-        SPDLOG_TRACE("Completed adding the primary mode event system subscriptions");
+        SPDLOG_TRACE("Completed adding the prim(gdbary mode event system subscriptions");
     }
 
     bool is_editor() override { return false; }

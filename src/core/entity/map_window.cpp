@@ -59,10 +59,10 @@ void MapWindow::compute_fov(long x, long y, long radius) {
     to_local_coords(x, y, local_x, local_y, is_valid);
     if(!is_valid) return;
 
-    SPDLOG_TRACE("Computing FOV from ({}, {}) with radius {}", local_x, local_y,
-                 radius);
+    // SPDLOG_TRACE("Computing FOV from ({}, {}) with radius {}", local_x, local_y,
+                //  radius);
     map->computeFov(local_x, local_y, radius);
-    SPDLOG_TRACE("FOV computed");
+    // SPDLOG_TRACE("FOV computed");
 }
 
 void MapWindow::set_wall(long x, long y) {
@@ -115,3 +115,4 @@ Packer& operator<<(Packer& p, MapWindow const& obj) {
     SPDLOG_TRACE("Completed packing map window");
     return p;
 }
+

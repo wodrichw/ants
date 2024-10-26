@@ -31,5 +31,6 @@ namespace TokenParser {
 
     // Check that no more arguments exist to be parsed.
     void terminate(std::istringstream &ss, Status& status,
-                   const std::string &err_msg);
+                   std::string const& cmd_name,
+                   std::string const& err_msg);
 }  // namespace TokenParser

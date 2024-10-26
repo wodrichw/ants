@@ -10,16 +10,31 @@ message EntityData {
     uint32 color = 5;
 }
 
+message Building {
+    int64 id = 1;
+}
+
 message Player {}
 
+message BuildingLevel {
+    int64 building_count=1;
+}
+
+message WorkerLevel {
+    int64 worker_count=1;
+}
+
 message EntityManager {
-    int64 worker_count = 1;
-    int64 building_count = 2;
+    uint64 max_depth = 1;
+    uint64 current_depth = 2;
     uint64 instr_action_clock = 3;
 }
 
-message Building {
-    int64 id = 1;
+message MapManager {
+    bool is_walls_enabled = 1;
+    bool max_depth = 2;
+    int64 map_section_width = 3;
+    int64 map_section_height = 4;
 }
 
 message MapWindow {
@@ -30,7 +45,6 @@ message MapWindow {
 message Map {
     bool needs_update = 1;
     bool chunk_update_parity = 2;
-    bool is_walls_enabled = 3;
 }
 
 message Chunks {
@@ -57,3 +71,4 @@ message InventoryRecord {
     uint64 type = 1;
     uint64 count = 2;
 }
+

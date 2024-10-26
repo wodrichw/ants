@@ -14,12 +14,11 @@ class Compiler {
 
     Compiler(CommandMap const& command_map) : command_map(command_map) {}
 
-    void compile(MachineCode const& machine_code, AntInteractor& interactor, Status& status) {
-        CompileArgs args {machine_code.code.begin(), interactor, status};
-        while(args.code_it != machine_code.code.end()) {
+    void compile(CompileArgs& args) {
+        while(args.code_it != args.code.end()) {
             CommandEnum instruction = static_cast<CommandEnum>(*args.code_it >> 3);
             CommandConfig const& command = command_map.at(instruction);
-            command.compile(args);
+            command.compile(command, args);
         }
     }
 

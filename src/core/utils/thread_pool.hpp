@@ -56,7 +56,7 @@ public:
                     pending_jobs.pop_front();
                     ++active_worker_count;
                     --pending_jobs_count;
-                    SPDLOG_TRACE("aquired async op");
+                    SPDLOG_TRACE("Threadwork acquired task");
                     backoff = initial_backoff;
                     
                 } 

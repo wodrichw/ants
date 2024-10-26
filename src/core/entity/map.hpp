@@ -127,6 +127,7 @@ class Chunks {
             p >> id_msg;
 
             Chunk* chunk = new Chunk(p);
+            SPDLOG_DEBUG("unpacking chunk {}", id_msg.value());
             emplace(id_msg.value(), chunk);
         }
         SPDLOG_TRACE("Completed unpacking chunks");
@@ -183,13 +184,15 @@ class Map {
         add_missing_chunks(border);
     }
 
-    Map(Unpacker& p) : chunks(p) {
+    Map(Unpacker& p, bool is_walls_enabled):
+        chunks(p),
+        is_walls_enabled(is_walls_enabled)
+    {
         ant_proto::Map msg;
         p >> msg;
 
         needs_update = msg.needs_update();
         chunk_update_parity = msg.chunk_update_parity();
-        is_walls_enabled = msg.is_walls_enabled();
         SPDLOG_DEBUG("Unpacking map - needs update: {} chunk update: {} is walls: {}",
             needs_update ? "YES" : "NO",
             chunk_update_parity ? "ON" : "OFF",
@@ -278,9 +281,18 @@ class Map {
             return false;
         }
 
+        // notify that the entity was successfully removed
+        notify_all_removed_entity(x, y);
+
         data.x = new_x;
         data.y = new_y;
         add_entity(entity);
+
+        // This will likely need to be changed once more sophisticated map generation is put in place
+        add_missing_chunks(Rect(new_x, new_y, 1, 1));
+
+        // notify that the entity was successfully moved
+        notify_all_moved_entity(new_x, new_y, entity);
 
         SPDLOG_TRACE("Calling entity move callback");
         entity.move_callback(x, y, new_x, new_y);
@@ -446,7 +458,6 @@ class Map {
         ant_proto::Map msg;
         msg.set_needs_update(obj.needs_update);
         msg.set_chunk_update_parity(obj.chunk_update_parity);
-        msg.set_is_walls_enabled(obj.is_walls_enabled);
         return p << obj.chunks << msg;
     }
 
@@ -474,10 +485,49 @@ class Map {
         Chunk const& chunk = get_chunk_const(x, y);
         return chunk[get_local_idx(chunk.x, chunk.y, x, y)];
     }
+
+    uchar flip_direction_bits(uchar bits) {
+        //DLUR -> URDL
+        return ((bits >> 2) | (bits << 2)) & 0b1111;
+    }
+
+    void notify_removed_entity(long x, long y, uchar bits) {
+        MapEntity* entity = get_tile(x, y).entity;
+        if (entity == nullptr)  return;
+        entity->handle_empty_space(bits);
+    }
+
+    void notify_moved_entity(MapEntity& source, long x, long y, uchar bits) {
+        uchar source_bits = flip_direction_bits(bits);
+        if (can_place(x, y)) {
+            source.handle_empty_space(source_bits);
+            return;
+        }
+        source.handle_full_space(source_bits);
+    
+        MapEntity* entity = get_tile(x, y).entity;
+        if (entity == nullptr) return;
+        entity->handle_full_space(bits);
+    }
+
     void set_entity(long x, long y, MapEntity* entity) {
         SPDLOG_DEBUG("Setting entity at ({}, {})", x, y);
         get_tile(x, y).entity = entity;
         needs_update = true;
+    }
+
+    void notify_all_removed_entity(long x, long y) {
+        notify_removed_entity(x - 1, y, 0b0001); // right
+        notify_removed_entity(x, y + 1, 0b0010); // up
+        notify_removed_entity(x + 1, y, 0b0100); // left
+        notify_removed_entity(x, y - 1, 0b1000); // down
+    }
+    
+    void notify_all_moved_entity(long x, long y, MapEntity& entity) {
+        notify_moved_entity(entity, x - 1, y, 0b0001); // right
+        notify_moved_entity(entity, x, y + 1, 0b0010); // up
+        notify_moved_entity(entity, x + 1, y, 0b0100); // left
+        notify_moved_entity(entity, x, y - 1, 0b1000);  // down
     }
 
     Chunks chunks;

@@ -35,7 +35,7 @@ EngineState::EngineState(Unpacker& p, ProjectArguments& config, Renderer* render
     : box_manager(globals::COLS, globals::ROWS),
       job_pool(8),
       entity_manager(p, job_pool),
-      software_manager(p, command_map, entity_manager.workers.size()),
+      software_manager(p, command_map, entity_manager.num_workers()),
       primary_mode(p, *box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
       editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
       state(&primary_mode, &editor_mode) {
