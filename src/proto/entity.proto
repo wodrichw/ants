@@ -27,12 +27,13 @@ message WorkerLevel {
 message EntityManager {
     uint64 max_depth = 1;
     uint64 current_depth = 2;
-    uint64 instr_action_clock = 3;
+    uint64 player_depth = 3;
+    uint64 instr_action_clock = 4;
 }
 
 message MapManager {
     bool is_walls_enabled = 1;
-    bool max_depth = 2;
+    int64 max_depth = 2;
     int64 map_section_width = 3;
     int64 map_section_height = 4;
 }

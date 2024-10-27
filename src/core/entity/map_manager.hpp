@@ -14,8 +14,8 @@ class MapManager {
     bool is_walls_enabled;
     std::vector<Map> maps; // map collection ordered by depth
     ulong& current_depth; // defined in entity_manager
-    int map_section_width;
-    int map_section_height;
+    ulong map_section_width;
+    ulong map_section_height;
     Rect first_room;
 
 public:
@@ -67,7 +67,12 @@ public:
         map_section_height = msg.map_section_height();
 
         ulong max_depth = msg.max_depth();
+
         SPDLOG_DEBUG("Unpacking MapManager, map count {}", max_depth);
+        SPDLOG_DEBUG("Unpacking MapManager, is_walls_enabled {}", is_walls_enabled);
+        SPDLOG_DEBUG("Unpacking MapManager, map_section_width {}", map_section_width);
+        SPDLOG_DEBUG("Unpacking MapManager, map_section_height {}", map_section_height);
+
         for(ulong i = 0; i < max_depth; ++i) {
             maps.emplace_back(p, is_walls_enabled);
         }
@@ -113,6 +118,9 @@ public:
         p << obj.border << obj.first_room << msg;
 
         SPDLOG_DEBUG("Packing MapManager, map count {}", obj.maps.size());
+        SPDLOG_DEBUG("Packing MapManager, is_walls_enabled {}", obj.is_walls_enabled);
+        SPDLOG_DEBUG("Packing MapManager, map_section_width {}", obj.map_section_width);
+        SPDLOG_DEBUG("Packing MapManager, map_section_height {}", obj.map_section_height);
         
         for(const auto& map: obj.maps) {
             p << map;
