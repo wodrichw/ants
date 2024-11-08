@@ -1,30 +1,54 @@
 syntax = "proto3";
 package ant_proto;
 
+import  "hardware.proto";
+import  "utils.proto";
+
+message Color {
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
+}
+
 message EntityData {
     int64 x = 1;
     int64 y = 2;
 
     int32 ch = 3;
     int64 fov_radius = 4;
-    uint32 color = 5;
+    Color color = 5;
 }
 
 message Building {
     int64 id = 1;
+    Rect rect = 2;
+    Color col = 3;
 }
 
-message Player {}
-
-message BuildingLevel {
-    int64 building_count=1;
+message Player {
+    EntityData data = 1;
+    Inventory inventory = 2;
 }
 
-message WorkerLevel {
-    int64 worker_count=1;
+message Worker {
+    EntityData data = 1;
+    Inventory inventory = 2;
+    ProgramExecutor program_executor = 3;
+    DualRegisters dual_registers = 4;
+    
+}
+
+message Level {
+    repeated Worker workers = 1;
+    repeated Building buildings = 2;
 }
 
 message EntityManager {
+    Player player = 5;
+    MapWindow map_window = 6;
+    MapManager map_manager = 7;
+    repeated Level levels = 8;
+    
     uint64 max_depth = 1;
     uint64 current_depth = 2;
     uint64 player_depth = 3;
@@ -36,21 +60,34 @@ message MapManager {
     int64 max_depth = 2;
     int64 map_section_width = 3;
     int64 map_section_height = 4;
+    repeated Map maps = 5;
+    Rect border = 6;
+    Rect first_room = 7;
 }
 
 message MapWindow {
     int64 room_count = 1;
     int64 corridor_count = 2;
+    repeated Rect rooms = 3;
+    Rect border = 4;
+    repeated Rect corridors = 5;
 }
 
 message Map {
     bool needs_update = 1;
     bool chunk_update_parity = 2;
+    Chunks chunks = 3;
 }
 
 message Chunks {
-    int64 count = 1;
+    repeated ChunkKeyVal chunk_key_vals = 1;
 }
+
+message ChunkKeyVal {
+    uint64 key = 1;
+    Chunk val = 2;
+}
+
 
 message Chunk {
     int64 x = 1;
@@ -65,10 +102,16 @@ message Inventory {
     uint64 max_stack_count = 1;
     uint64 stack_size = 2;
     uint64 max_weight = 3;
-    uint64 record_count = 4;
+    // maps item type to item count
+    repeated InventoryRecord item_records = 4;
 }
 
 message InventoryRecord {
+    // enum ItemType {
+    //     DIRT=0;
+    //     FOOD=1;
+    //     EGG=2;
+    // }
     uint64 type = 1;
     uint64 count = 2;
 }

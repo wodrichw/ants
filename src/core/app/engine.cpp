@@ -1,6 +1,7 @@
 #include "app/engine.hpp"
 #include "app/engine_state.hpp"
 #include "app/arg_parse.hpp"
+#include "engine.pb.h"
 #include "ui/render.hpp"
 #include "spdlog/spdlog.h"
 
@@ -49,7 +50,14 @@ Renderer* Engine::create_renderer() const {
 
 EngineState* Engine::create_state() {
     Unpacker unpacker(config.save_path);
-    return unpacker.is_valid() ? new EngineState(unpacker, config, renderer) : new EngineState(config, renderer);
+    
+    if( unpacker.is_valid() ) {
+        ant_proto::EngineState msg;
+        unpacker >> msg;
+        return new EngineState(msg, config, renderer);
+    } else {
+        return new EngineState(config, renderer);
+    }
 }
 
 void Engine::update() {

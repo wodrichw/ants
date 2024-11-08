@@ -41,6 +41,22 @@ ProgramExecutor::ProgramExecutor(
     SPDLOG_TRACE("Completed unpacking program executor");
 }
 
+ProgramExecutor::ProgramExecutor(
+    const ant_proto::ProgramExecutor& msg,
+    ulong const& instr_clock,
+    ulong max_instruction_per_tick,
+    ushort& instr_ptr_register,
+    ThreadPool<AsyncProgramJob>& job_pool
+):
+    instr_ptr_register(instr_ptr_register),
+    instr_trigger(msg.instr_trigger()),
+    has_executed_sync(msg.has_executed()),
+    instr_clock(instr_clock),
+    max_instruction_per_tick(max_instruction_per_tick),
+    job_pool(job_pool)
+        
+{ }
+
 void ProgramExecutor::reset() { has_executed_sync = false; }
 
 
@@ -88,6 +104,13 @@ void AsyncProgramJob::run() {
 		pe.execute();
 		SPDLOG_TRACE("Incrementing instruction pointer register to {}", pe.instr_ptr_register);
 	}
+}
+
+ant_proto::ProgramExecutor ProgramExecutor::get_proto() {
+    ant_proto::ProgramExecutor msg;
+    msg.set_instr_trigger(instr_trigger);
+    msg.set_has_executed(has_executed_sync);
+    return msg;
 }
 
 Packer& operator<<(Packer& p, ProgramExecutor const& obj) {

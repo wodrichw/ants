@@ -9,6 +9,7 @@
 
 #include "entity/entity_manager.hpp"
 #include "entity/entity_data.hpp"
+#include "hardware.pb.h"
 #include "hardware/program_executor.hpp"
 #include "ui/event_system.hpp"
 #include "ui/render.hpp"
@@ -40,11 +41,11 @@ class EditorMode : public Mode {
     Renderer& renderer;
     LayoutBox& box;
     TextEditor editor;
-    std::vector<std::vector<Worker*>> const& workers;
+    std::vector<Level> const& levels;
 
    public:
-    EditorMode(Renderer& renderer, LayoutBox& box, SoftwareManager& software_manager, std::vector<std::vector<Worker*>> const& workers)
-        : renderer(renderer), box(box), editor(software_manager), workers(workers) {
+    EditorMode(Renderer& renderer, LayoutBox& box, SoftwareManager& software_manager, std::vector<Level> const& levels)
+        : renderer(renderer), box(box), editor(software_manager), levels(levels) {
         // text editor listeners
         event_system.keyboard_events.add(RETURN_KEY_EVENT,
                                          new NewLineHandler(editor));
@@ -71,7 +72,7 @@ class EditorMode : public Mode {
     void on_end() override { editor.close(); }
 
     void render() override {
-        renderer.render_text_editor(box, editor, workers.size());
+        renderer.render_text_editor(box, editor, levels.size());
     }
 
     void update() override {}
@@ -127,7 +128,7 @@ class PrimaryMode : public Mode {
     }
 
     PrimaryMode(
-            Unpacker& p,
+            const ant_proto::HardwareManager msg,
             LayoutBox& box,
             CommandMap const& command_map,
             SoftwareManager& software_manager,
@@ -137,7 +138,7 @@ class PrimaryMode : public Mode {
             const ThreadPool<AsyncProgramJob>& job_pool
      ):
             box(box),
-            hardware_manager(p, command_map),
+            hardware_manager(msg, command_map),
             entity_manager(entity_manager),
             renderer(renderer),
             is_reload_game(is_reload_game),
@@ -308,6 +309,11 @@ class PrimaryMode : public Mode {
     EventPublisher<CharKeyboardEventType, CharKeyboardEvent>&
     get_char_keyboard_publisher() override {
         return event_system.char_keyboard_events;
+    }
+
+    ant_proto::HardwareManager get_proto() const {
+        ant_proto::HardwareManager msg;
+        return msg;
     }
 
     friend Packer& operator<<(Packer& p, PrimaryMode const& obj) {

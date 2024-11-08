@@ -1,12 +1,16 @@
 #pragma once
 
+#include <google/protobuf/map.h>
+#include <google/protobuf/stubs/port.h>
 #include <unordered_map>
 #include "proto/entity.pb.h"
 #include "utils/serializer.hpp"
 using ulong = unsigned long;
 
+// Note: ItemType enum is also defined in protobuf so messing with numbering
+// will mess with the serialization
 enum ItemType {
-    DIRT, FOOD, EGG
+    DIRT=0, FOOD=1, EGG=2
 };
 
 struct ItemInfo {
@@ -53,27 +57,21 @@ class Inventory {
         initialize();
     }
 
-    Inventory(Unpacker& p, ItemInfoMap const& item_info_map): item_info_map(item_info_map) {
+    Inventory(const ant_proto::Inventory msg, ItemInfoMap const& item_info_map): item_info_map(item_info_map) 
+    {
         initialize();
-
-        ant_proto::Inventory msg;
-        p >> msg;
 
         max_stack_count = msg.max_stack_count();
         stack_size = msg.stack_size();
         max_weight = msg.max_weight();
 
-        int record_count = msg.record_count();
-        SPDLOG_TRACE("Unpacking ant inventory - size: {} max stack count: {} stack size: {} max weight: {}", record_count, max_stack_count, stack_size, max_weight);
-        for(int i = 0; i < record_count; ++i) {
-            ant_proto::InventoryRecord record_msg;
-            p >> record_msg;
-
-            ItemType item = static_cast<ItemType>(record_msg.type());
-            ulong count = record_msg.count();
-            add(item, count);
+        for(const auto& item_record: msg.item_records() ) {
+            ulong count = item_record.count(); 
+            add(static_cast<ItemType>(item_record.type()), count);
         }
+        SPDLOG_TRACE("Completed unpacking inventory");
     }
+
 
     ulong max_space_for_item(ItemType item) {
         ulong& current_count = items[item];
@@ -121,24 +119,20 @@ class Inventory {
 
     ulong size() const { return items.size(); }
 
-    friend Packer& operator<<(Packer& p, Inventory const& obj) {
-        SPDLOG_TRACE("Packing ant inventory - size: {} max stack count: {} stack size: {} max weight: {}",
-                obj.size(), obj.max_stack_count, obj.stack_size, obj.max_weight);
-
+    ant_proto::Inventory get_proto() const {
         ant_proto::Inventory msg;
-        msg.set_max_stack_count(obj.max_stack_count);
-        msg.set_stack_size(obj.stack_size);
-        msg.set_max_weight(obj.max_weight);
-        msg.set_record_count(obj.size());
-        p << msg;
 
-        for (auto const& [type, count]: obj.items) {
-            ant_proto::InventoryRecord record_msg;
-            record_msg.set_type(static_cast<ulong>(type));
-            record_msg.set_count(count);
-            p << record_msg;
+        msg.set_max_stack_count(max_stack_count);
+        msg.set_stack_size(stack_size);
+        msg.set_max_weight(max_weight);
+        for(const auto& item: items) {
+            ant_proto::InventoryRecord i_msg;
+            i_msg.set_type(item.first);
+            i_msg.set_count(item.second);
+            *msg.add_item_records() = i_msg;
         }
-        return p;
+
+        return msg;
     }
 
     private:

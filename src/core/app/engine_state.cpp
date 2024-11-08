@@ -3,12 +3,14 @@
 #include <SDL_keycode.h>
 #include <libtcod/context.h>
 #include <libtcod/context_init.h>
-
+#include <fstream>
 #include <libtcod.hpp>
 #include <libtcod/color.hpp>
 #include <libtcod/console.hpp>
 #include <libtcod/context.hpp>
+#include <google/protobuf/util/json_util.h>
 
+#include "engine.pb.h"
 #include "app/engine_state.hpp"
 #include "app/engine.hpp"
 #include "app/globals.hpp"
@@ -23,7 +25,7 @@ EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
                      box_manager.map_box->get_height(), config, job_pool),
       software_manager(command_map),
       primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
-      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
+      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.levels),
       state(&primary_mode, &editor_mode) {
     
     SPDLOG_INFO("Creating engine state");
@@ -31,13 +33,13 @@ EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
     SPDLOG_INFO("Engine initialized without backup");
 }
 
-EngineState::EngineState(Unpacker& p, ProjectArguments& config, Renderer* renderer)
+EngineState::EngineState(const ant_proto::EngineState& msg, ProjectArguments& config, Renderer* renderer)
     : box_manager(globals::COLS, globals::ROWS),
       job_pool(8),
-      entity_manager(p, job_pool),
-      software_manager(p, command_map, entity_manager.num_workers()),
-      primary_mode(p, *box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
-      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.workers),
+      entity_manager(msg.entity_manager(), job_pool),
+      software_manager(msg.software_manger(), command_map),
+      primary_mode(msg.hardware_manager(), *box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
+      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.levels),
       state(&primary_mode, &editor_mode) {
     
     add_listeners(config);
@@ -107,5 +109,17 @@ void EngineState::render() {
 }
 
 Packer& operator<<(Packer& p, EngineState const& obj) {
-    return p << obj.entity_manager << obj.software_manager << obj.primary_mode;
+    ant_proto::EngineState msg;
+    *msg.mutable_entity_manager() = obj.entity_manager.get_proto();
+    *msg.mutable_software_manger() = obj.software_manager.get_proto();
+    *msg.mutable_hardware_manager() = obj.primary_mode.get_proto();
+
+    // UNCOMMMENT BELOW FOR DEBUGGING SERIALIZATION
+    //
+    // std::string json_msg;
+    // google::protobuf::util::MessageToJsonString(msg, &json_msg);
+    // std::ofstream json_f("write.json");
+    // json_f << json_msg;
+
+    return p << msg;
 }

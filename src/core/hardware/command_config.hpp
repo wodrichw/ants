@@ -45,5 +45,4 @@ class CommandMap {
     EnumMap::const_iterator enum_end() const;
     StrMap::const_iterator find(std::string const&) const;
     StrMap::const_iterator str_end() const;
-
 };

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <hardware/compiler.hpp>
+#include "hardware.pb.h"
 
 struct ProgramExecutor;
 struct CompileArgs;
@@ -15,7 +16,7 @@ struct HardwareManager {
 
     public:
     HardwareManager(CommandMap const&);
-    HardwareManager(Unpacker&, CommandMap const&);
+    HardwareManager(const ant_proto::HardwareManager& msg, CommandMap const&);
     void push_back(ProgramExecutor*);
     void compile(CompileArgs&);
 

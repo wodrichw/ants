@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "hardware.pb.h"
 #include "hardware/command_config.hpp"
 #include "hardware/machine_code.hpp"
 #include "hardware/parser.hpp"
@@ -17,28 +18,17 @@ class SoftwareManager {
 
    public:
     SoftwareManager(CommandMap const& command_map) : parser(command_map){};
-    SoftwareManager(Unpacker& p, CommandMap const& command_map, ulong worker_count)
-        : parser(command_map), current_code(new MachineCode(p)) {
-            ant_proto::SoftwareManager sftmgr_msg;
-            p >> sftmgr_msg;
-            ulong code_list_length = sftmgr_msg.code_list_length();
-            code_list.reserve(code_list_length);
-            assigned_current = sftmgr_msg.assigned_current();
-    
-            SPDLOG_DEBUG("Unpacking code list - count: {}", code_list_length);
-            for (ulong i = 0; i < code_list_length; ++i) {
-                code_list.push_back(new MachineCode(p));
-            }
+    SoftwareManager(const ant_proto::SoftwareManager& msg, CommandMap const& command_map):
+        parser(command_map),
+        current_code(new MachineCode(msg.current_code())),
+        assigned_current(msg.assigned_current())
+    {
+        for( const auto& ant_machine_code: msg.ant_machine_codes() )
+            code_list.emplace_back(new MachineCode(ant_machine_code));
 
-            SPDLOG_DEBUG("Unpacking worker/code mappings - count: {}", worker_count);
-            for (ulong i = 0; i < worker_count; ++i) {
-               ant_proto::AntCodeRecord msg;
-               p >> msg;
-
-               ant_mapping[msg.ant_idx()] = msg.code_idx(); 
-               SPDLOG_TRACE("Worker index: {} - code length: {} [index: {}]", msg.ant_idx(), (*this)[msg.ant_idx()].size(), msg.code_idx());
-            }
-        }
+        for( const auto& ant_code_record: msg.ant_code_records() )
+            ant_mapping[ant_code_record.ant_idx()] = ant_code_record.code_idx(); 
+    }
 
     bool has_code() const { return !current_code->is_empty(); }
 
@@ -90,29 +80,23 @@ class SoftwareManager {
         code_list.clear();
     }
 
-    friend Packer& operator<<(Packer& p, SoftwareManager const& obj) {
-        SPDLOG_DEBUG("Packing software manager - assigned current: {}", obj.assigned_current);
-        ant_proto::SoftwareManager sftmgr_msg;
-        sftmgr_msg.set_code_list_length(obj.code_list.size());
-        sftmgr_msg.set_assigned_current(obj.assigned_current);
+    ant_proto::SoftwareManager get_proto() const {
+        ant_proto::SoftwareManager msg;
+        msg.set_assigned_current(assigned_current);
+        *msg.mutable_current_code() = current_code->get_proto();
 
-        SPDLOG_DEBUG("Packing current code");
-        p << (*obj.current_code) << sftmgr_msg;
-    
-        SPDLOG_DEBUG("Packing code list - count: {}", obj.code_list.size());
-        for (MachineCode const* code : obj.code_list) {
-            p << (*code);
-        }
+        const volatile std::string current_code_str = msg.current_code().code();
+        for (const auto& code : code_list)
+            *msg.add_ant_machine_codes() = code->get_proto();
 
-        SPDLOG_DEBUG("Packing machine code ant mapping - size: {}", obj.ant_mapping.size());
-        for (auto const& [ant_idx, code_idx] : obj.ant_mapping) {
-            ant_proto::AntCodeRecord msg;
-            msg.set_ant_idx(ant_idx);
-            msg.set_code_idx(code_idx);
-            p << msg;
+        for (auto const& [ant_idx, code_idx] : ant_mapping) {
+            ant_proto::AntCodeRecord ant_code_record_msg;
+            ant_code_record_msg.set_ant_idx(ant_idx);
+            ant_code_record_msg.set_code_idx(code_idx);
+            *msg.add_ant_code_records() = ant_code_record_msg;
         }
-        return p;
-     }
+        return msg;
+    }
 
    private:
     void clear_current() {

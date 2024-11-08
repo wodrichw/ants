@@ -1,12 +1,10 @@
 #pragma once
 #include <libtcod/color.hpp>
+#include "entity.pb.h"
 struct RenderPosition {
     long x = 0, y = 0;
     bool requires_update = false;
 };
-
-class Packer;
-class Unpacker;
 
 using uchar = unsigned char;
 
@@ -19,12 +17,12 @@ struct EntityData {
     tcod::ColorRGB col = {};
     RenderPosition last_rendered_pos = {};
 
+    ant_proto::EntityData get_proto() const;
+
     EntityData(char ch, long fov_radius, tcod::ColorRGB col);
     EntityData(long x, long y, char ch, long fov_radius, tcod::ColorRGB col);
-    EntityData(Unpacker&);
+    EntityData(const ant_proto::EntityData& msg);
     ~EntityData() = default;
-
-    friend Packer& operator<<(Packer& p, EntityData const& obj);
 };
 
 enum MapEntityType { PLAYER, WORKER };
@@ -38,5 +36,4 @@ struct MapEntity {
     virtual void handle_empty_space(uchar bits) = 0;
     virtual void handle_full_space(uchar bits) = 0;
     virtual MapEntityType get_type() const = 0;
-    friend Packer& operator<<(Packer& p, MapEntity const&) { return p; }
 };

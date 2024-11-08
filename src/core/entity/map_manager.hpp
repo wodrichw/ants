@@ -51,32 +51,24 @@ public:
         first_room = section.rooms[0];
     }
 
-    MapManager(Unpacker& p, ulong& current_depth):
-        border(p),
-        is_walls_enabled(),
+    MapManager(const ant_proto::MapManager& msg, ulong& current_depth):
+        border(msg.border()),
+        is_walls_enabled(msg.is_walls_enabled()),
         maps(),
         current_depth(current_depth),
-        map_section_width(),
-        map_section_height(),
-        first_room(p)
+        map_section_width(msg.map_section_width()),
+        map_section_height(msg.map_section_height()),
+        first_room(msg.first_room())
     {
-        ant_proto::MapManager msg;
-        p >> msg;
-        is_walls_enabled = msg.is_walls_enabled();
-        map_section_width = msg.map_section_width();
-        map_section_height = msg.map_section_height();
 
-        ulong max_depth = msg.max_depth();
-
-        SPDLOG_DEBUG("Unpacking MapManager, map count {}", max_depth);
+        SPDLOG_DEBUG("Unpacking MapManager, map count {}", msg.maps_size());
         SPDLOG_DEBUG("Unpacking MapManager, is_walls_enabled {}", is_walls_enabled);
         SPDLOG_DEBUG("Unpacking MapManager, map_section_width {}", map_section_width);
         SPDLOG_DEBUG("Unpacking MapManager, map_section_height {}", map_section_height);
 
-        for(ulong i = 0; i < max_depth; ++i) {
-            maps.emplace_back(p, is_walls_enabled);
-        }
+        for(const auto& map_msg: msg.maps() ) maps.emplace_back(map_msg, is_walls_enabled);
     }
+
 
     void go_up() {
     }
@@ -109,23 +101,14 @@ public:
         return maps[current_depth];
     }
 
-    friend Packer& operator<<(Packer& p, MapManager const& obj) {
+    ant_proto::MapManager get_proto()  const {
         ant_proto::MapManager msg;
-        msg.set_is_walls_enabled(obj.is_walls_enabled);
-        msg.set_map_section_width(obj.map_section_width);
-        msg.set_map_section_height(obj.map_section_height);
-        msg.set_max_depth(obj.maps.size());
-        p << obj.border << obj.first_room << msg;
+        msg.set_is_walls_enabled(is_walls_enabled);
+        msg.set_map_section_width(map_section_width);
+        msg.set_map_section_height(map_section_height);
+        msg.set_max_depth(maps.size());
+        for( const auto& map: maps ) *msg.add_maps() = map.get_proto();
 
-        SPDLOG_DEBUG("Packing MapManager, map count {}", obj.maps.size());
-        SPDLOG_DEBUG("Packing MapManager, is_walls_enabled {}", obj.is_walls_enabled);
-        SPDLOG_DEBUG("Packing MapManager, map_section_width {}", obj.map_section_width);
-        SPDLOG_DEBUG("Packing MapManager, map_section_height {}", obj.map_section_height);
-        
-        for(const auto& map: obj.maps) {
-            p << map;
-        }
-        
-        return p;
+        return msg;
     }
 };

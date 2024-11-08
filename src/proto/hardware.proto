@@ -16,8 +16,8 @@ message DualRegisters {
 }
 
 message ProgramExecutor {
-    uint64 instr_trigger = 2;
-    bool has_executed = 3;
+    uint64 instr_trigger = 1;
+    bool has_executed = 2;
 }
 
 message LabelRecord {
@@ -31,6 +31,43 @@ message AntCodeRecord {
 }
 
 message SoftwareManager {
-    uint64 code_list_length = 1;
-    bool assigned_current = 2;
+    bool assigned_current = 1;
+    MachineCode current_code = 2;
+    repeated MachineCode ant_machine_codes = 3;
+    repeated AntCodeRecord ant_code_records = 4;
+}
+
+message MachineCode {
+    // repeated Instruction instructions = 1;
+    bytes code = 1;
+    repeated LabelRecord labels = 2;
+}
+
+message Instruction {
+    // enum CommandEnum {
+    //     NOP = 1;
+    //     MOVE = 2;
+    //     LOAD = 3;
+    //     COPY = 4;
+    //     ADD = 5;
+    //     SUB = 6;
+    //     INC = 7;
+    //     DEC = 8;
+    //     PUSH = 9;
+    //     POP = 10;
+    //     JMP = 11;
+    //     JNZ = 12;
+    //     CALL = 13;
+    //     RET = 14;
+    //     JNF = 15;
+    //     LT = 16;
+    //     RT = 17;
+    //     DIG = 18;
+    //     CHECK = 19;
+    // }
+    // bytes binary = 1;
+    // CommandEnum command = 2;
+}
+
+message HardwareManager {
 }
