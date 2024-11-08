@@ -5,6 +5,7 @@
 #include "app/globals.hpp"
 #include "utils/serializer.hpp"
 #include "proto/hardware.pb.h"
+#include "entity/scents.hpp"
 
 using uchar = unsigned char;
 using ushort = unsigned short;
@@ -12,6 +13,9 @@ using ushort = unsigned short;
 struct DualRegisters {
     cpu_word_size registers[2] = {0,0};
     cpu_word_size ram[64] = {};
+    ulong chunk_scents_list[4] = {}; // scents of chunks: right, up, left, down
+    ulong delta_scents = 0; // delta scents of current chunk
+    ScentBehaviors scent_behaviors;
 
     ushort instr_ptr_register = 0;
     ushort base_ptr_register = 0;
@@ -39,8 +43,8 @@ struct DualRegisters {
     ushort wait_move_tick_count = 12; // 60 FPS / 5 moves per sec = 12
     ushort wait_dig_tick_count = 4; // 60 FPS / 15 digs per sec = 4
 
-    DualRegisters()=default;
-    DualRegisters(Unpacker& p) {
+    DualRegisters() : scent_behaviors(is_space_empty_flags) {}
+    DualRegisters(Unpacker& p) : scent_behaviors(is_space_empty_flags) {
         ant_proto::DualRegisters msg;
         p >> msg;
 

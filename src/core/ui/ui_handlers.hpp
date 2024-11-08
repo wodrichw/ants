@@ -68,3 +68,20 @@ class ReloadGameHandler: public Subscriber<KeyboardEvent> {
     private:
     bool& is_reload_game;
 };
+
+class DefaultMapTileRendererHandler: public Subscriber<KeyboardEvent> {
+    Renderer& renderer;
+    public:
+    DefaultMapTileRendererHandler(Renderer& renderer): renderer(renderer) {}
+    void operator()(KeyboardEvent const&) { renderer.use_default_tile_rendering(); }
+};
+
+class ScentMapTileRendererHandler: public Subscriber<KeyboardEvent> {
+    Renderer& renderer;
+    public:
+    ScentMapTileRendererHandler(Renderer& renderer): renderer(renderer) {}
+    void operator()(KeyboardEvent const& event) { 
+        ulong scent_idx = event.type - KeyboardEventType::ONE_KEY_EVENT;
+        renderer.use_scent_tile_rendering(scent_idx);
+    }
+};

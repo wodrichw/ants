@@ -75,7 +75,7 @@ struct OneRegisterCommandCompiler {
         SPDLOG_TRACE("Compiling {} command", config.command_string);
         uchar const register_idx = (*args.code_it) & 1;
         args.ops.push_back({
-            args.cpu.wait_move_tick_count,
+            TickCount,
             Operation(args.cpu, args.cpu[register_idx])
         });
         
@@ -126,6 +126,42 @@ struct JumpCompiler {
         args.ops.push_back({
             TickCount,
             Operation(args.cpu, address)
+        });
+
+        ++args.code_it;
+        SPDLOG_TRACE("{} command compiled", config.command_string);
+        (void)config;
+    }
+};
+
+template<typename Operation, unsigned short TickCount=0>
+struct OneScentCommandCompiler {
+    void operator()(CommandConfig const& config, CompileArgs &args) {
+        SPDLOG_TRACE("Compiling {} command", config.command_string);
+        uchar const scent_idx = (*args.code_it) & 0b111;
+        args.ops.push_back({
+            TickCount,
+            Operation(args.cpu, scent_idx)
+        });
+        
+        ++args.code_it;
+        SPDLOG_TRACE("{} command compiled", config.command_string);
+        (void)config;
+    }
+};
+
+
+template<typename Operation, unsigned short TickCount=0>
+struct SetScentPriorityCompiler {
+    void operator()(CommandConfig const& config, CompileArgs &args) {
+        SPDLOG_TRACE("Compiling {} command", config.command_string);
+        uchar const scent_idx = (*args.code_it) & 0b111;
+        ++args.code_it;
+
+        uchar const priority = (*args.code_it);
+        args.ops.push_back({
+            TickCount,
+            Operation(args.cpu, scent_idx, priority)
         });
 
         ++args.code_it;

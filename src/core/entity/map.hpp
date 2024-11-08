@@ -19,13 +19,14 @@ struct Tile {
     bool is_wall = true;
     MapEntity* entity = nullptr;
     Building* building = nullptr;
+    ulong scents = 0;
     Tile(bool is_explored = false, bool in_fov = false, bool is_wall = true)
         : is_explored(is_explored), in_fov(in_fov), is_wall(is_wall) {}
 };
 
 struct Chunk {
     long x = 0, y = 0;
-    bool update_parity = true;
+     bool update_parity = true;
     std::vector<Tile> tiles;
     Chunk() = default;
     Chunk(long x, long y, bool update_parity)
@@ -249,9 +250,17 @@ class Map {
         return true;
     }
 
-    void add_entity(MapEntity& entity) {
+    void add_entity_wo_events(MapEntity& entity) {
         EntityData& data = entity.get_data();
         set_entity(data.x, data.y, &entity);
+    }
+
+    void add_entity(MapEntity& entity) {
+        add_entity_wo_events(entity);
+        
+        // notify that the entity was successfully moved
+        auto entity_data = entity.get_data();
+        notify_all_moved_entity(entity_data.x, entity_data.y, entity);
     }
 
     void remove_entity(MapEntity& entity) {
@@ -266,6 +275,16 @@ class Map {
         long x = data.x, y = data.y;
 
         long new_x = x + dx, new_y = y + dy;
+
+        SPDLOG_TRACE("Calling entity move callback");
+        ulong right_scents = get_tile(new_x + 1, new_y).scents;
+        ulong up_scents = get_tile(new_x, new_y - 1).scents;
+        ulong left_scents = get_tile(new_x - 1, new_y).scents;
+        ulong down_scents = get_tile(new_x, new_y + 1).scents;
+    
+        entity.move_callback({ x, y, new_x, new_y,
+            {right_scents, up_scents, left_scents, down_scents}});
+    
         SPDLOG_TRACE("Moving entity - new x: {} new y: {}", new_x, new_y);
 
         // remove entity from map so another entity can take its place if needed
@@ -274,7 +293,7 @@ class Map {
             SPDLOG_TRACE("Cannot move entity to ({}, {})", new_x, new_y);
 
             // unable to move the obstacle so move the entity back
-            add_entity(entity);
+            add_entity_wo_events(entity);
             return false;
         }
 
@@ -285,11 +304,6 @@ class Map {
         data.y = new_y;
         add_entity(entity);
 
-        // notify that the entity was successfully moved
-        notify_all_moved_entity(new_x, new_y, entity);
-
-        SPDLOG_TRACE("Calling entity move callback");
-        entity.move_callback(x, y, new_x, new_y);
         SPDLOG_TRACE("Successfully moved the entity");
         return true;
     }
@@ -438,6 +452,15 @@ class Map {
             (offset * 2 - 1) * (2 * chunk_depth - chunk_x + chunk_y - offset);
         // SPDLOG_TRACE("Chunk index for tile ({}, {}) is {}", x, y, chunk_idx);
         return chunk_idx;
+    }
+
+    ulong& get_tile_scents(MapEntity& entity) {
+        EntityData& data = entity.get_data();
+        return get_tile(data.x, data.y).scents;
+    }
+
+    ulong get_tile_scents_by_coord(long x, long y) const {
+        return get_tile_const(x, y).scents;
     }
 
     friend Packer& operator<<(Packer& p, Map const& obj) {

@@ -63,11 +63,8 @@ struct EntityManager {
         SPDLOG_INFO("Moving player to nursery building: ({}, {})", center_x,
                     center_y);
         player.data.x = center_x, player.data.y = center_y;
-        map.add_building(*buildings[0]);
 
-        SPDLOG_DEBUG("Adding player entity to the map");
-        map.add_entity(player);
-        map_window.set_center(player.get_data().x, player.get_data().y);
+        initialize();
     }
 
     EntityManager(Unpacker& p, ThreadPool<AsyncProgramJob>& job_pool) : 
@@ -112,13 +109,23 @@ struct EntityManager {
             if(building_type == NURSERY) {
                 Building* building = new Nursery(p);
                 buildings.push_back(building);
-                map.add_building(*building);
                 continue;
             }
 
             SPDLOG_ERROR("Unknown serialized building type: {}",
                          static_cast<uint>(building_type));
             exit(1);
+        }
+        initialize();
+    }
+
+    void initialize() {
+        SPDLOG_DEBUG("Adding player entity to the map");
+        map.add_entity(player);
+        map_window.set_center(player.get_data().x, player.get_data().y);
+
+        for (Building* building: buildings) {
+            map.add_building(*building);
         }
     }
 
@@ -203,6 +210,24 @@ struct EntityManager {
                 cpu.is_dig_flag = false;
                 SPDLOG_DEBUG("Digging worker - dx: {} dy: {}", dx, dy);
                 cpu.instr_failed_flag = !map.dig(*worker, dx, dy);
+            }
+            if (cpu.delta_scents) {
+                ulong& tile_scents = map.get_tile_scents(*worker);
+
+                ulong updated_scents = 0;
+                ulong offset = 0;
+                while (cpu.delta_scents != 0) {
+                    ulong delta_scent = cpu.delta_scents & 0xFF;
+                    ulong prev_scent = tile_scents & 0xFF;
+                    ulong scent = (prev_scent + delta_scent) & 0xFF;
+                    updated_scents |= (scent << offset);
+
+                    tile_scents >>= 8;
+                    cpu.delta_scents >>= 8;
+                    offset += 8;
+                }
+                tile_scents = updated_scents;
+                // SPDLOG_INFO("Tile scent: {} - x: {} y: {}", tile_scents, worker->get_data().x, worker->get_data().y);
             }
         }
 

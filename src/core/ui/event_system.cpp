@@ -70,6 +70,16 @@ KeyboardEventType get_keyboard_type(SDL_Keycode event) {
         case SDLK_SPACE: return SPACE_KEY_EVENT;
         case SDLK_COLON: return COLON_KEY_EVENT;
         case SDLK_BACKSLASH: return BACK_SLASH_KEY_EVENT;
+        case SDLK_0: return ZERO_KEY_EVENT;
+        case SDLK_1: return ONE_KEY_EVENT;
+        case SDLK_2: return TWO_KEY_EVENT;
+        case SDLK_3: return THREE_KEY_EVENT;
+        case SDLK_4: return FOUR_KEY_EVENT;
+        case SDLK_5: return FIVE_KEY_EVENT;
+        case SDLK_6: return SIX_KEY_EVENT;
+        case SDLK_7: return SEVEN_KEY_EVENT;
+        case SDLK_8: return EIGHT_KEY_EVENT;
+        case SDLK_9: return NINE_KEY_EVENT;
         default: return UNKNOWN_KEY_EVENT;
     }
 }

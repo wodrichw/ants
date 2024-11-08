@@ -1,6 +1,6 @@
 
 # Command List
-- ADD, CALL, CHK, COPY, DEC, DIG, INC, JNF, JNZ, JMP, LT, LOAD, MOVE, NOP, POP, PUSH, RT, RET, SUB
+- ADD, CALL, CHK, COPY, DEC, DIG, INC, JNF, JNZ, JMP, LT, LOAD, MOVE, NOP, POP, PUSH, RT, RET, SRT, SWF, SWN, SWP, SUB
 - Total: 17
 
 # Instruction Encoding (8 bit words)
@@ -44,3 +44,31 @@
 
 # Check Instruction (8 bits)
 - Instruction: 0b10010
+
+# Write Scent Instructions (8 bits)
+- Instruction: SWN (0b10011) - scent on // only one scent on at a time
+- Scent A: 0b000
+- Scent B: 0b001
+- Scent C: 0b010
+- Scent D: 0b011
+- Scent E: 0b100
+- Scent F: 0b101
+- Scent G: 0b110
+- Scent H: 0b111
+
+- Instruction: SWF (0b10100) - all scents off
+
+# Read Scent Instructions (16 bits)
+- SWP (0b10101) - set read scent priority
+- Scent A: 0b000
+- Scent B: 0b001
+- Scent C: 0b010
+- Scent D: 0b011
+- Scent E: 0b100
+- Scent F: 0b101
+- Scent G: 0b110
+- Scent H: 0b111
+
+- Priority: -128 to 127 (8 bits)
+
+- SRT (0b10110) - turn towards scent based on priorities

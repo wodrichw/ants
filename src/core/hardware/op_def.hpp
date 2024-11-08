@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 #include "app/globals.hpp"
-
+#include "entity/scents.hpp"
 
 using uchar = unsigned char;
 using schar = signed char;
@@ -159,4 +159,32 @@ struct CheckOp {
     bool& dir_flag2;
     uchar& is_space_empty_flags;
     bool& instr_failed_flag;
+};
+
+struct ScentOnOp {
+    ScentBehaviors& scent_behaviors;
+    ulong& delta_scents;
+    ulong scent_idx;
+    ScentOnOp(DualRegisters&, uchar);
+    void operator()();
+};
+
+struct ScentOffOp {
+    ScentBehaviors& scent_behaviors;
+    ScentOffOp(DualRegisters&);
+    void operator()();
+};
+
+struct SetScentPriorityOp {
+    ulong& priorities;
+    ulong clear_mask, priority;
+    SetScentPriorityOp(DualRegisters&, uchar scent_idx, uchar priority);
+    void operator()();
+};
+
+struct TurnByScentOp {
+    bool &dir_flag1, &dir_flag2;
+    bool &scent_dir1, &scent_dir2;
+    TurnByScentOp(DualRegisters&);
+    void operator()();
 };
