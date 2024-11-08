@@ -38,7 +38,6 @@ struct ProgramExecutor {
     ThreadPool<AsyncProgramJob>& job_pool;
 
     ProgramExecutor(ulong const& instr_clock, ulong max_instruction_per_tick, ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
-    ProgramExecutor(Unpacker& p, ulong const& instr_clock, ulong max_instruction_per_tick, ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
     ProgramExecutor(const ant_proto::ProgramExecutor& msg, ulong const& instr_clock, ulong max_instruction_per_tick, ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
     void reset();
     void execute_async();
@@ -47,7 +46,6 @@ struct ProgramExecutor {
     bool is_sync();
 
     ant_proto::ProgramExecutor get_proto();
-    friend Packer& operator<<(Packer& p, ProgramExecutor const& obj);
 };
 
 

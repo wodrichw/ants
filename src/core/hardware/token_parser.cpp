@@ -8,7 +8,7 @@ cpu_word_size TokenParser::integer(std::istringstream &ss) {
     ss >> word;
     return std::stoi(word);
 }
-uchar TokenParser::register_idx(std::istringstream &ss) {
+uchar TokenParser::letter_idx(std::istringstream &ss) {
     uchar firstChar;
     ss >> firstChar;
 
@@ -24,6 +24,7 @@ uchar TokenParser::register_idx(std::istringstream &ss) {
     SPDLOG_ERROR("Invalid register index: {}", firstChar);
     return 0b111;
 }
+
 void TokenParser::direction(std::istringstream &ss, schar &dx, schar &dy,
                             Status &status) {
     std::string word;
@@ -54,6 +55,19 @@ std::string TokenParser::get_label(std::istringstream &ss, Status &status) {
     }
     SPDLOG_DEBUG("Parsed address: {}", word);
     return word;
+}
+
+schar TokenParser::get_signed_byte(std::istringstream &ss, Status &status) {
+    std::string word;
+    ss >> word;
+    if(!ss) {
+        status.error("Expecting a signed integer argument - none given");
+        return 0;
+    }
+
+    schar number = std::stoi(word);
+    SPDLOG_DEBUG("Parsed number: {}", number);
+    return number;
 }
 
 void TokenParser::terminate(std::istringstream &ss, Status &status,

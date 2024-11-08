@@ -28,19 +28,19 @@ CommandMap::CommandMap() {
     insert(new CommandConfig("LOAD", CommandEnum::LOAD, LoadConstantParser(), LoadConstantDeparser(), LoadConstantCompiler<LoadConstantOp>()));
 
     // Copy register to register
-    insert(new CommandConfig("COPY", CommandEnum::COPY, TwoRegisterCommandParser(), TwoRegisterCommandDeparser(), TwoRegisterCommandCompiler<CopyOp>()));
+    insert(new CommandConfig("COPY", CommandEnum::COPY, TwoRegisterCommandParser(), TwoLetterCommandDeparser(), TwoRegisterCommandCompiler<CopyOp>()));
 
     // Add second register to the first
-    insert(new CommandConfig("ADD", CommandEnum::ADD, TwoRegisterCommandParser(), TwoRegisterCommandDeparser(), TwoRegisterCommandCompiler<AddOp>()));
+    insert(new CommandConfig("ADD", CommandEnum::ADD, TwoRegisterCommandParser(), TwoLetterCommandDeparser(), TwoRegisterCommandCompiler<AddOp>()));
 
     // Subtract second register from the first
-    insert(new CommandConfig("SUB", CommandEnum::SUB, TwoRegisterCommandParser(), TwoRegisterCommandDeparser(), TwoRegisterCommandCompiler<SubOp>()));
+    insert(new CommandConfig("SUB", CommandEnum::SUB, TwoRegisterCommandParser(), TwoLetterCommandDeparser(), TwoRegisterCommandCompiler<SubOp>()));
 
     // Increment register
-    insert(new CommandConfig("INC", CommandEnum::INC, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<IncOp>()));
+    insert(new CommandConfig("INC", CommandEnum::INC, OneRegisterCommandParser(), OneLetterCommandDeparser(), OneRegisterCommandCompiler<IncOp>()));
 
     // Decrement register
-    insert(new CommandConfig("DEC", CommandEnum::DEC, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<DecOp>()));
+    insert(new CommandConfig("DEC", CommandEnum::DEC, OneRegisterCommandParser(), OneLetterCommandDeparser(), OneRegisterCommandCompiler<DecOp>()));
 
     // MOVE command
     insert(new CommandConfig("MOVE", CommandEnum::MOVE, NoArgCommandParser(), NoArgCommandDeparser(), MoveAntCompiler<MoveOp>()));
@@ -64,10 +64,10 @@ CommandMap::CommandMap() {
     insert(new CommandConfig("LT", CommandEnum::LT, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<TurnLeftOp>()));
 
     // POP command
-    insert(new CommandConfig("POP", CommandEnum::POP, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<PopOp>()));
+    insert(new CommandConfig("POP", CommandEnum::POP, OneRegisterCommandParser(), OneLetterCommandDeparser(), OneRegisterCommandCompiler<PopOp>()));
 
     // PUSH command
-    insert(new CommandConfig("PUSH", CommandEnum::PUSH, OneRegisterCommandParser(), OneRegisterCommandDeparser(), OneRegisterCommandCompiler<PushOp>()));
+    insert(new CommandConfig("PUSH", CommandEnum::PUSH, OneRegisterCommandParser(), OneLetterCommandDeparser(), OneRegisterCommandCompiler<PushOp>()));
 
     // RIGHT command
     insert(new CommandConfig("RT", CommandEnum::RT, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<TurnRightOp>()));
@@ -77,6 +77,18 @@ CommandMap::CommandMap() {
 
     // CHECK command
     insert(new CommandConfig("CHK", CommandEnum::CHECK, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<CheckOp>()));
+
+    // SCENT WRITE ON command
+    insert(new CommandConfig("SWN", CommandEnum::SCENT_ON, OneScentCommandParser(), OneLetterCommandDeparser(), OneScentCommandCompiler<ScentOnOp>()));
+
+    // SCENT WRITE OFF command
+    insert(new CommandConfig("SWF", CommandEnum::SCENT_OFF, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<ScentOffOp>()));
+
+    // SET SCENT READ PRIORITY command
+    insert(new CommandConfig("SWP", CommandEnum::SET_SCENT_PRIORITY, SetScentPriorityParser(), SetScentPriorityDeparser(), SetScentPriorityCompiler<SetScentPriorityOp>()));
+         
+     // TURN BY SCENT command
+    insert(new CommandConfig("SRT", CommandEnum::TURN_SCENT, NoArgCommandParser(), NoArgCommandDeparser(), NoArgCommandCompiler<TurnByScentOp>()));
 }
 
 CommandMap::~CommandMap() {

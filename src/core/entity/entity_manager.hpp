@@ -119,7 +119,7 @@ struct EntityManager {
         SPDLOG_DEBUG("Destroying EntityManager");
         for( auto level: levels ) {
             for( auto worker: level.workers ) delete worker;
-            for( auto nursery: level.buildings ) delete nursery;
+            for( auto building: level.buildings ) delete building;
         }
 
         delete next_worker;
@@ -231,6 +231,24 @@ struct EntityManager {
                     cpu.is_dig_flag = false;
                     SPDLOG_DEBUG("Digging worker - dx: {} dy: {}", dx, dy);
                     cpu.instr_failed_flag = !map_manager.get_map(depth).dig(*worker, dx, dy);
+                }
+                if (cpu.delta_scents) {
+                    ulong& tile_scents = map_manager.get_map(depth).get_tile_scents(*worker);
+
+                    ulong updated_scents = 0;
+                    ulong offset = 0;
+                    while (cpu.delta_scents != 0) {
+                        ulong delta_scent = cpu.delta_scents & 0xFF;
+                        ulong prev_scent = tile_scents & 0xFF;
+                        ulong scent = (prev_scent + delta_scent) & 0xFF;
+                        updated_scents |= (scent << offset);
+
+                        tile_scents >>= 8;
+                        cpu.delta_scents >>= 8;
+                        offset += 8;
+                    }
+                    tile_scents = updated_scents;
+                    // SPDLOG_INFO("Tile scent: {} - x: {} y: {}", tile_scents, worker->get_data().x, worker->get_data().y);
                 }
             }
         }

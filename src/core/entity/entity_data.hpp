@@ -1,6 +1,8 @@
 #pragma once
 #include <libtcod/color.hpp>
 #include "entity.pb.h"
+
+using ulong = unsigned long;
 struct RenderPosition {
     long x = 0, y = 0;
     bool requires_update = false;
@@ -27,10 +29,15 @@ struct EntityData {
 
 enum MapEntityType { PLAYER, WORKER };
 
+struct EntityMoveUpdate {
+    long x, y, new_x, new_y;
+    ulong abs_scents[4];
+};
+
 struct MapEntity {
     virtual ~MapEntity(){};
     virtual EntityData& get_data() = 0;
-    virtual void move_callback(long x, long y, long new_x, long new_y) = 0;
+    virtual void move_callback(EntityMoveUpdate const&) = 0;
     virtual void click_callback(long x, long y) = 0;
     virtual void request_move() = 0;
     virtual void handle_empty_space(uchar bits) = 0;

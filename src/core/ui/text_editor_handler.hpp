@@ -99,7 +99,8 @@ public:
         if (!(((event.key >= 'a' && event.key <= 'z') ||
             (event.key >= '0' && event.key <= '9') ||
             event.key == ',' || event.key == ' ' ||
-            event.key == '#' || event.key == ':'))) return;
+            event.key == '#' || event.key == ':') ||
+            event.key == '-')) return;
 
         editor.insert(toupper(event.key));
     }

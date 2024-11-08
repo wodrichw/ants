@@ -303,4 +303,43 @@ void CheckOp::operator()() {
     uchar idx = (dir_flag1 << 1) | dir_flag2;
     bool is_empty = (is_space_empty_flags >> idx) & 1;
     instr_failed_flag = !is_empty;
+    SPDLOG_TRACE("Checking direction: {} -> {}", "RULD"[idx], (is_empty ? "EMPTY": "FULL"));
+}
+
+// SCENT ON /////////////////////////////////////////
+ScentOnOp::ScentOnOp(DualRegisters& cpu, uchar scent_idx)
+    : scent_behaviors(cpu.scent_behaviors), delta_scents(cpu.delta_scents),
+      scent_idx(scent_idx) {}
+
+void ScentOnOp::operator()() {
+    scent_behaviors.write_scent_behavior = IncrementScentBehavior(delta_scents, scent_idx);
+}
+
+// SCENT OFF /////////////////////////////////////////
+ScentOffOp::ScentOffOp(DualRegisters& cpu)
+    : scent_behaviors(cpu.scent_behaviors) {}
+
+void ScentOffOp::operator()() {
+    scent_behaviors.write_scent_behavior = ImmutableScentBehavior();
+}
+
+// SET SCENT PRIORITY /////////////////////////////////////////
+SetScentPriorityOp::SetScentPriorityOp(DualRegisters& cpu, uchar scent_idx, uchar priority)
+    : priorities(cpu.scent_behaviors.priorities),
+      clear_mask(~(0xFFUL << (scent_idx * 8))),
+      priority(static_cast<ulong>(priority) << (scent_idx * 8)) {}
+
+void SetScentPriorityOp::operator()() {
+    priorities = (priorities & clear_mask) | priority;
+}
+
+// TURN DIRECTION BY READING SCENT /////////////////////////////////////////
+TurnByScentOp::TurnByScentOp(DualRegisters& cpu)
+    : dir_flag1(cpu.dir_flag1), dir_flag2(cpu.dir_flag2),
+      scent_dir1(cpu.scent_behaviors.scent_dir1),
+      scent_dir2(cpu.scent_behaviors.scent_dir2) {}
+
+void TurnByScentOp::operator()() {
+    dir_flag1 = scent_dir1;
+    dir_flag2 = scent_dir2;
 }

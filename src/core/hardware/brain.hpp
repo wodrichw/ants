@@ -5,6 +5,7 @@
 #include "app/globals.hpp"
 #include "utils/serializer.hpp"
 #include "proto/hardware.pb.h"
+#include "entity/scents.hpp"
 
 using uchar = unsigned char;
 using ushort = unsigned short;
@@ -12,6 +13,9 @@ using ushort = unsigned short;
 struct DualRegisters {
     cpu_word_size registers[2] = {0,0};
     cpu_word_size ram[64] = {};
+    ulong chunk_scents_list[4] = {}; // scents of chunks: right, up, left, down
+    ulong delta_scents = 0; // delta scents of current chunk
+    ScentBehaviors scent_behaviors;
 
     ushort instr_ptr_register = 0;
     ushort base_ptr_register = 0;
@@ -39,27 +43,9 @@ struct DualRegisters {
     ushort wait_move_tick_count = 12; // 60 FPS / 5 moves per sec = 12
     ushort wait_dig_tick_count = 4; // 60 FPS / 15 digs per sec = 4
 
-    DualRegisters()=default;
-    DualRegisters(Unpacker& p) {
-        ant_proto::DualRegisters msg;
-        p >> msg;
-
-        registers[0] = msg.register0();
-        registers[1] = msg.register1();
-        instr_ptr_register = msg.instr_ptr_register();
-        base_ptr_register = msg.base_ptr_register();
-        stack_ptr_register = msg.stack_ptr_register();
-        zero_flag = msg.zero_flag();
-        dir_flag1 = msg.dir_flag1();
-        dir_flag2 = msg.dir_flag2();
-        instr_failed_flag = msg.instr_failed_flag();
-        is_move_flag = msg.is_move_flag();
-        is_dig_flag = msg.is_dig_flag();
-        // is_front_space_empty should not be unpacked - will be determined automatically.
-        SPDLOG_TRACE("Unpacking dual registers - registers: [{}, {}] - zero_flag: {}", registers[0], registers[1], zero_flag ? "ON" : "OFF");
-    }
-
+    DualRegisters() : scent_behaviors(is_space_empty_flags) {}
     DualRegisters(const ant_proto::DualRegisters& msg) :
+        scent_behaviors(is_space_empty_flags),
         instr_ptr_register(msg.instr_ptr_register()),
         base_ptr_register(msg.base_ptr_register()),
         stack_ptr_register(msg.stack_ptr_register()),
@@ -93,23 +79,5 @@ struct DualRegisters {
         msg.set_is_dig_flag(is_dig_flag);
 
         return msg;
-    }
-
-    friend Packer& operator<<(Packer& p, DualRegisters const& obj) {
-        SPDLOG_TRACE("Packing dual registers - registers: [{}, {}] - zero_flag: {}", obj.registers[0], obj.registers[1], obj.zero_flag ? "ON" : "OFF");
-        ant_proto::DualRegisters msg;
-        msg.set_register0(obj.registers[0]);
-        msg.set_register1(obj.registers[1]);
-        msg.set_instr_ptr_register(obj.instr_ptr_register);
-        msg.set_base_ptr_register(obj.base_ptr_register);
-        msg.set_stack_ptr_register(obj.stack_ptr_register);
-        msg.set_zero_flag(obj.zero_flag);
-        msg.set_dir_flag1(obj.dir_flag1);
-        msg.set_dir_flag2(obj.dir_flag2);
-        msg.set_instr_failed_flag(obj.instr_failed_flag);
-        msg.set_is_move_flag(obj.is_move_flag);
-        msg.set_is_dig_flag(obj.is_dig_flag);
-        // is_front_space_empty should not be packed - will be regenerated automatically.
-        return p << msg;
     }
 };

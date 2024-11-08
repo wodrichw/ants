@@ -59,24 +59,10 @@ void Worker::request_move() {
 
 void Worker::handle_empty_space(uchar bits) {
     cpu.is_space_empty_flags |= bits;
-    // SPDLOG_INFO("Update worker empty space flags: D:{} L:{} U:{} R:{} - bits: {}",
-    //     (cpu.is_space_empty_flags >> 3) & 1,
-    //     (cpu.is_space_empty_flags >> 2) & 1,
-    //     (cpu.is_space_empty_flags >> 1) & 1,
-    //     (cpu.is_space_empty_flags >> 0) & 1,
-    //     bits
-    // );
 }
 
 void Worker::handle_full_space(uchar bits) {
     cpu.is_space_empty_flags &= ~bits;
-    // SPDLOG_INFO("Update worker full space flags: D:{} L:{} U:{} R:{} - bits: {}",
-    //     (cpu.is_space_empty_flags >> 3) & 1,
-    //     (cpu.is_space_empty_flags >> 2) & 1,
-    //     (cpu.is_space_empty_flags >> 1) & 1,
-    //     (cpu.is_space_empty_flags >> 0) & 1,
-    //     bits
-    // );
 }
 
 ant_proto::Worker Worker::get_proto() {
@@ -104,13 +90,32 @@ void Player::click_callback(long, long) {
     toggle_color(data.col);
 }
 
-void Player::move_callback(long, long, long, long) {}
+void Player::move_callback(EntityMoveUpdate const&) {}
 
 void Worker::click_callback(long, long) {
     SPDLOG_INFO("Worker clicked - toggling color");
     toggle_color(data.col);
 }
 
-void Worker::move_callback(long, long, long, long) {}
+void Worker::move_callback(EntityMoveUpdate const& update) {
+    ScentBehaviors& scent_behaviors = cpu.scent_behaviors;
+    scent_behaviors.read_scent_behavior((ulong*)update.abs_scents);
+    scent_behaviors.write_scent_behavior();
+
+    // SPDLOG_INFO("Move callback - worker - {}", cpu.is_space_empty_flags);
+}
+
+void Worker::debug_empty_space_flags() {
+    SPDLOG_TRACE("Update worker full space flags: D:{} L:{} U:{} R:{}",
+        (cpu.is_space_empty_flags >> 3) & 1,
+        (cpu.is_space_empty_flags >> 2) & 1,
+        (cpu.is_space_empty_flags >> 1) & 1,
+        (cpu.is_space_empty_flags >> 0) & 1
+    );
+    // Debug empty space flags
+    // DLUR
+    std::string facings = "+6894-7^23|>1V<o";
+    data.ch = facings[cpu.is_space_empty_flags];
+}
 
 MapEntityType Worker::get_type() const { return WORKER; }

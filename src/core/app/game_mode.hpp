@@ -236,6 +236,19 @@ class PrimaryMode : public Mode {
             new ReloadGameHandler(is_reload_game));
 
 
+        event_system.keyboard_events.add(ZERO_KEY_EVENT, new DefaultMapTileRendererHandler(renderer));
+
+        // Available scents A-H (8 total)
+        ScentMapTileRendererHandler* scent_map_handler = new ScentMapTileRendererHandler(renderer);
+        event_system.keyboard_events.add(ONE_KEY_EVENT, scent_map_handler);
+        event_system.keyboard_events.add(TWO_KEY_EVENT, scent_map_handler);
+        event_system.keyboard_events.add(THREE_KEY_EVENT, scent_map_handler);
+        event_system.keyboard_events.add(FOUR_KEY_EVENT, scent_map_handler);
+        event_system.keyboard_events.add(FIVE_KEY_EVENT, scent_map_handler);
+        event_system.keyboard_events.add(SIX_KEY_EVENT, scent_map_handler);
+        event_system.keyboard_events.add(SEVEN_KEY_EVENT, scent_map_handler);
+        event_system.keyboard_events.add(EIGHT_KEY_EVENT, scent_map_handler);
+
         // click listeners
         event_system.mouse_events.add(
             LEFT_MOUSE_EVENT, new ClickHandler(entity_manager.map_manager, renderer));
@@ -314,10 +327,5 @@ class PrimaryMode : public Mode {
     ant_proto::HardwareManager get_proto() const {
         ant_proto::HardwareManager msg;
         return msg;
-    }
-
-    friend Packer& operator<<(Packer& p, PrimaryMode const& obj) {
-        SPDLOG_DEBUG("Packing the primary mode object");
-        return p << obj.hardware_manager;
     }
 };
