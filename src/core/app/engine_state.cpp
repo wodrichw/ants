@@ -3,7 +3,6 @@
 #include <SDL_keycode.h>
 #include <libtcod/context.h>
 #include <libtcod/context_init.h>
-#include <fstream>
 #include <libtcod.hpp>
 #include <libtcod/color.hpp>
 #include <libtcod/console.hpp>
@@ -16,6 +15,7 @@
 #include "app/globals.hpp"
 #include "ui/serializer_handler.hpp"
 #include "spdlog/spdlog.h"
+#include "ui/text_editor_handler.hpp"
 #include "utils/thread_pool.hpp"
 
 EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
@@ -123,3 +123,4 @@ Packer& operator<<(Packer& p, EngineState const& obj) {
 
     return p << msg;
 }
+

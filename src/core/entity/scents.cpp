@@ -1,4 +1,5 @@
 #include "entity/scents.hpp"
+#include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
 

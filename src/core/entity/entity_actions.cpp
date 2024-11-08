@@ -2,6 +2,7 @@
 #include "entity/entity_data.hpp"
 #include "entity/inventory.hpp"
 #include "entity/entity_actions.hpp"
+#include "spdlog/spdlog.h"
 
 void handle_dig(Map& map, MapEntity& entity, Inventory& inventory, long dx, long dy) {
     ulong dirt_quantity = 0;

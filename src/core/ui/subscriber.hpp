@@ -1,6 +1,5 @@
 #pragma once
 
-#include <unordered_set>
 #include <spdlog/spdlog.h>
 
 using ulong = unsigned long;

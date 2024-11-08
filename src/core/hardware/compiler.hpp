@@ -11,15 +11,10 @@
 class Compiler {
     public:
 
-    Compiler(CommandMap const& command_map) : command_map(command_map) {}
+    Compiler(CommandMap const& command_map);
 
-    void compile(CompileArgs& args) {
-        while(args.code_it != args.code.end()) {
-            CommandEnum instruction = static_cast<CommandEnum>(*args.code_it >> 3);
-            CommandConfig const& command = command_map.at(instruction);
-            command.compile(command, args);
-        }
-    }
+    void compile(CompileArgs& args);
 
     CommandMap const& command_map;
 };
+

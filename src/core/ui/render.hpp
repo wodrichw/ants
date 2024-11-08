@@ -9,6 +9,7 @@
 #include "entity/map_window.hpp"
 #include "ui/layoutbox.hpp"
 #include "ui/text_editor.hpp"
+#include "spdlog/spdlog.h"
 
 class Renderer {
    public:

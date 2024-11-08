@@ -2,13 +2,8 @@
 
 #include <SDL_keycode.h>
 
-#include <string>
-#include <vector>
-
-#include "spdlog/spdlog.h"
-#include "app/globals.hpp"
-#include "ui/subscriber.hpp"
 #include "app/game_state.hpp"
+#include "ui/text_editor.hpp"
 
 class NewLineHandler: public Subscriber<KeyboardEvent> {
     TextEditor& editor;
@@ -105,3 +100,4 @@ public:
         editor.insert(toupper(event.key));
     }
 };
+
