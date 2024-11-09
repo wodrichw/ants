@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine.pb.h"
 #include "hardware/program_executor.hpp"
 #include "ui/text_editor.hpp"
 #include "ui/event_system.hpp"
@@ -11,7 +12,6 @@
 
 class Renderer;
 class ProjectArugments;
-class Unpacker;
 struct KeyboardEvent;
 
 struct EngineState {
@@ -32,7 +32,7 @@ struct EngineState {
    public:
 
     EngineState(ProjectArguments&, Renderer*);
-    EngineState(Unpacker&, ProjectArguments&, Renderer*);
+    EngineState(const ant_proto::EngineState& msg, ProjectArguments&, Renderer*);
     ~EngineState();
     void update();
     void render();

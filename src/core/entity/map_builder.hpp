@@ -67,6 +67,9 @@ struct RandomMapBuilder {
             section_data.border.h);  // bsp is binary space partition tree
         // this creates the room partitions in our section_data
         int nb = 8;  // max level of recursion -- can make 2^nb rooms.
+
+        // TODO: save seeds by changing from NULL being passed into splitRecursive to 
+        // saved seed value
         bsp.splitRecursive(NULL, nb, ROOM_MAX_SIZE, ROOM_MAX_SIZE, 1.5f, 1.5f);
         BspListener listener(section_data);
         bsp.traverseInvertedLevelOrder(&listener, NULL);
@@ -189,3 +192,4 @@ class FileMapBuilder {
         }
     }
 };
+

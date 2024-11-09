@@ -5,7 +5,6 @@
 #include "entity/rect.hpp"
 #include "proto/entity.pb.h"
 #include "ui/colors.hpp"
-#include "utils/serializer.hpp"
 
 enum BuildingType { NURSERY };
 
@@ -16,11 +15,16 @@ struct Building {
 
     Building(Rect const& border, int id, tcod::ColorRGB color)
         : border(border), id(id), color(color) {}
-    Building(Unpacker& p) : border(p) {
-        ant_proto::Building msg;
-        p >> msg >> color;
 
-        id = msg.id();
+    Building(const ant_proto::Building& msg) :
+        border(msg.rect()),
+        id(msg.id()),
+        color(tcod::ColorRGB{
+                static_cast<uint8_t>(msg.col().r()),
+                static_cast<uint8_t>(msg.col().g()),
+                static_cast<uint8_t>(msg.col().b())
+            })
+    {
         SPDLOG_DEBUG("Unpacked building - id: {}", id);
     }
 
@@ -28,11 +32,15 @@ struct Building {
 
     virtual BuildingType get_type() const = 0;
 
-    friend Packer& operator<<(Packer& p, Building const& obj) {
-        SPDLOG_DEBUG("Packing building - id: {} x: {} y: {}", obj.id, obj.border.x1, obj.border.y1);
+    ant_proto::Building get_proto() const {
         ant_proto::Building msg;
-        msg.set_id(obj.id);
-        return p << obj.border << msg << obj.color;
+        msg.set_id(id);
+        *msg.mutable_rect() = border.get_proto();
+        ant_proto::Color& col_msg = *msg.mutable_col();
+        col_msg.set_r(color.r);
+        col_msg.set_g(color.g);
+        col_msg.set_b(color.b);
+        return msg;
     }
 };
 
@@ -41,10 +49,7 @@ class Nursery : public Building {
     Nursery(long x, long y, int id)
         : Building(Rect::from_top_left(x, y, 3, 3), id, color::blue) {}
 
-    Nursery(Unpacker& p) : Building(p) {}
+    Nursery(const ant_proto::Building& msg) : Building(msg) {}
     BuildingType get_type() const { return NURSERY; }
-    friend Packer& operator<<(Packer& p, Nursery const& obj) {
-        SPDLOG_DEBUG("Packing nursery");
-        return p << static_cast<Building const&>(obj);
-    }
 };
+

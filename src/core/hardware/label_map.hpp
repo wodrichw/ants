@@ -2,10 +2,7 @@
 
 #include <unordered_map>
 
-#include "utils/serializer.hpp"
 #include "proto/hardware.pb.h"
-
-#include "spdlog/spdlog.h"
 
 class LabelMap {
     std::unordered_map<std::string, ushort> label_map;
@@ -14,23 +11,9 @@ class LabelMap {
     public:
 
     LabelMap()=default;
-    LabelMap(Unpacker& p) {
-        ant_proto::Integer length_msg;
-        p >> length_msg;
-
-        int map_length = length_msg.value();
-        SPDLOG_TRACE("Unpacking the software label map - size: {}", map_length);
-        label_map.reserve(map_length);
-        address_map.reserve(map_length);
-
-        for (int i = 0; i < map_length; ++i) {
-            ant_proto::LabelRecord msg;
-            p >> msg;
-
-            ushort address = msg.address();
-            std::string label = msg.label();
-            insert(address, label);
-        }
+    LabelMap( const ::google::protobuf::RepeatedPtrField< ::ant_proto::LabelRecord> & labels_msg) {
+        for( const auto& label: labels_msg ) 
+            insert(label.address(), label.label());
     }
 
     void insert(ushort address, std::string const& label) {
@@ -61,18 +44,15 @@ class LabelMap {
         }
     }
 
-    friend Packer& operator<<(Packer& p, LabelMap const& obj) {
-        SPDLOG_TRACE("Packing label map - size: {}", obj.size());
-        ant_proto::Integer length_msg;
-        length_msg.set_value(obj.size());
-        p << length_msg;
-
-        for (auto const &[address, label]: obj.address_map) {
-            ant_proto::LabelRecord msg;
-            msg.set_address(address);
-            msg.set_label(label);
-            p << msg;
+    google::protobuf::RepeatedPtrField< ant_proto::LabelRecord> get_proto() const {
+        google::protobuf::RepeatedPtrField< ant_proto::LabelRecord> msg;
+        for (auto const &[address, label]: address_map) {
+            ant_proto::LabelRecord label_record_msg;
+            label_record_msg.set_address(address);
+            label_record_msg.set_label(label);
+            *msg.Add() = label_record_msg;
         }
-        return p;
+        return msg;
     }
 };
+

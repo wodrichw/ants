@@ -2,7 +2,6 @@
 
 #include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
-#include "utils/serializer.hpp"
 
 struct Rect {
     long x1 = 0, y1 = 0, w = 0, h = 0, x2 = 0, y2 = 0;
@@ -22,15 +21,14 @@ struct Rect {
           center_x(other.center_x),
           center_y(other.center_y) {}
 
-    Rect(Unpacker& p) {
-        ant_proto::Rect msg;
-        p >> msg;
-
-        w = msg.w();
-        h = msg.h();
-        SPDLOG_TRACE("Unpacking rectangle - x: {} y: {} w: {} h: {}", msg.x1(), msg.y1(), w, h);
+    Rect(const ant_proto::Rect& msg): 
+        w(msg.w()),
+        h(msg.h())
+    {
         set_top_left(msg.x1(), msg.y1());
+        SPDLOG_TRACE("Unpacking rectangle - x: {} y: {} w: {} h: {}", msg.x1(), msg.y1(), w, h);
     }
+
     Rect& operator=(Rect const& other) {
         x1 = other.x1;
         y1 = other.y1;
@@ -65,14 +63,13 @@ struct Rect {
         y2 = center_y + h / 2;
     }
 
-    friend Packer& operator<<(Packer& p, Rect const& obj) {
-        SPDLOG_TRACE("Completed packing rectangle - x: {} y: {} w: {} h: {}", obj.x1, obj.y1, obj.w, obj.h);
+    ant_proto::Rect get_proto() const {
         ant_proto::Rect msg;
-        msg.set_x1(obj.x1);
-        msg.set_y1(obj.y1);
-        msg.set_w(obj.w);
-        msg.set_h(obj.h);
-        return p << msg;
+        msg.set_x1(x1);
+        msg.set_y1(y1);
+        msg.set_w(w);
+        msg.set_h(h);
+        return msg;
     }
 
     static Rect from_top_left(long x1, long y1, long w, long h) {
