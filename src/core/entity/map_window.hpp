@@ -4,6 +4,7 @@
 #include <libtcod/console_types.hpp>
 #include <vector>
 
+#include "entity.pb.h"
 #include "entity/rect.hpp"
 
 class MapWindow {
@@ -11,7 +12,7 @@ class MapWindow {
     Rect border;
 
     MapWindow(Rect const&);
-    MapWindow(Unpacker&);
+    MapWindow(const ant_proto::MapWindow& msg);
     ~MapWindow();
     void set_center(long x, long y);
     bool in_fov(long x, long y) const;  // Fov = field of view
@@ -22,7 +23,7 @@ class MapWindow {
     void to_local_coords(long x, long y, long& local_x, long& local_y,
                          bool&) const;
 
-    friend Packer& operator<<(Packer&, MapWindow const&);
+    ant_proto::MapWindow get_proto() const;
 
    private:
     std::vector<Rect> rooms, corridors;

@@ -21,30 +21,22 @@ ProgramExecutor::ProgramExecutor(
 {}
 
 ProgramExecutor::ProgramExecutor(
-    Unpacker& p,
+    const ant_proto::ProgramExecutor& msg,
     ulong const& instr_clock,
     ulong max_instruction_per_tick,
     ushort& instr_ptr_register,
     ThreadPool<AsyncProgramJob>& job_pool
 ):
     instr_ptr_register(instr_ptr_register),
+    instr_trigger(msg.instr_trigger()),
+    has_executed_sync(msg.has_executed()),
     instr_clock(instr_clock),
     max_instruction_per_tick(max_instruction_per_tick),
     job_pool(job_pool)
         
-{
-    ant_proto::ProgramExecutor msg;
-    p >> msg;
-
-    instr_trigger = msg.instr_trigger();
-    has_executed_sync = msg.has_executed();
-    SPDLOG_TRACE("Completed unpacking program executor");
-}
+{ }
 
 void ProgramExecutor::reset() { has_executed_sync = false; }
-
-
-
 
 void ProgramExecutor::execute_async() {
     // SPDLOG_INFO("Handling clock pulse for program_executor - clock: {} trigger: {}", instr_clock, instr_trigger);
@@ -58,7 +50,6 @@ void ProgramExecutor::execute_async() {
 
     SPDLOG_TRACE("Submitted async job - instruction address: {}", instr_ptr_register);
 }
-
 
 void ProgramExecutor::execute() {
     instr_trigger = _ops[instr_ptr_register].num_ticks;
@@ -90,10 +81,9 @@ void AsyncProgramJob::run() {
 	}
 }
 
-Packer& operator<<(Packer& p, ProgramExecutor const& obj) {
-    SPDLOG_TRACE("Packing program executor");
+ant_proto::ProgramExecutor ProgramExecutor::get_proto() {
     ant_proto::ProgramExecutor msg;
-    msg.set_instr_trigger(obj.instr_trigger);
-    msg.set_has_executed(obj.has_executed_sync);
-    return p << msg;
+    msg.set_instr_trigger(instr_trigger);
+    msg.set_has_executed(has_executed_sync);
+    return msg;
 }

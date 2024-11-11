@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "hardware.pb.h"
 #include "hardware/label_map.hpp"
 
 using uchar = unsigned char;
@@ -11,23 +12,14 @@ struct MachineCode {
     std::vector<uchar> code;
 
     MachineCode()=default;
-    MachineCode(Unpacker& p) : labels(p) {
-        ant_proto::Integer length_msg;
-        p >> length_msg;
-        int code_length = length_msg.value();
-        code.reserve(code_length);
-
-        SPDLOG_TRACE("Unpacking machine code - length: {} bytes", code_length);
-        for(int i = 0; i < code_length;) {
-            ant_proto::Integer instr_msg;
-            p >> instr_msg;
-            uint instr = instr_msg.value();
-            SPDLOG_TRACE("Unpacking 4 instructions: {:x} - {} / {}", instr, i, code_length);
-            for(int j = 3; j >= 0 && i < code_length; --j, ++i) {
-                uchar instr_byte = (instr >> (j * 8)) & 255;
-                code.push_back(instr_byte);
-            }
-        }
+    MachineCode(const ant_proto::MachineCode& msg) : labels(msg.labels()) {
+        for( const auto& byte: msg.code() )
+            code.emplace_back(byte);
+        // for( const auto& instruction: msg.instructions() )
+        //     for( int j = 3; j >= 0; --j )
+        //         code.emplace_back((instruction >> (j * 8)) & 255);
+        // // cleanup possible empty instructions at end of code
+        // while( code.size() && static_cast<int>(code[code.size()-1]) ==  0 ) code.pop_back();
     }
 
     void clear() {
@@ -43,25 +35,24 @@ struct MachineCode {
         return code.size();
     }
 
-    friend Packer& operator<<(Packer& p, MachineCode const& obj) {
-        ant_proto::Integer length_msg;
-        int code_length = obj.code.size();
-        length_msg.set_value(code_length);
-        p << obj.labels << length_msg;
+    ant_proto::MachineCode get_proto() {
+        ant_proto::MachineCode msg;
+        *msg.mutable_labels() = labels.get_proto();
+        std::string str_code;
+        str_code.append(code.begin(), code.end());
+        *msg.mutable_code() = str_code;
+        // for( size_t i = 0; i < code.size(); ++i )
+        //     (*msg.mutable_code())[i] = code[i];
+        // for(size_t i = 0; i < code.size();) {
+        //     uint instr = 0;
+        //     for(int j = 0; j < 4; ++j, ++i) {
+        //         instr <<= 8;
+        //         instr |= (i < code.size() ? code[i] : 0);
+        //     }
+        //     msg.add_instructions(instr);
+        // }
 
-        SPDLOG_TRACE("Packing machine code - length: {} bytes", code_length);
-        for(int i = 0; i < code_length;) {
-            uint instr = 0;
-            // No need to check i against the code length for simplicity
-            for(int j = 0; j < 4; ++j, ++i) {
-                instr <<= 8;
-                instr |= (i < code_length ? obj.code[i] : 0);
-            }
-            SPDLOG_TRACE("Packing 4 instructions: {:x} - {} / {}", instr, i, code_length);
-            ant_proto::Integer instr_msg;
-            instr_msg.set_value(instr);
-            p << instr_msg;
-        }
-        return p;
+        return msg;
     }
 };
+

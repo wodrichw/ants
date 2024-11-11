@@ -2,6 +2,7 @@
 
 #include <unordered_set>
 
+#include "entity.pb.h"
 #include "hardware/brain.hpp"
 #include "hardware/program_executor.hpp"
 #include "hardware/command_config.hpp"
@@ -14,7 +15,7 @@ struct Player: public MapEntity {
     Inventory inventory;
 
     Player(EntityData const& data, ItemInfoMap const&);
-    Player(Unpacker& p, ItemInfoMap const&);
+    Player(const ant_proto::Player& msg, ItemInfoMap const&);
     EntityData& get_data();
     ~Player()=default;
     void request_move();
@@ -24,7 +25,8 @@ struct Player: public MapEntity {
     void handle_full_space(uchar bits);
     MapEntityType get_type() const;
 
-    friend Packer& operator<<(Packer& p, Player const& obj);
+
+    ant_proto::Player get_proto() const;
 };
 
 struct Worker: public MapEntity {
@@ -42,7 +44,7 @@ struct Worker: public MapEntity {
     };
 
     Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<AsyncProgramJob>&);
-    Worker(Unpacker& p, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<AsyncProgramJob>&);
+    Worker(const ant_proto::Worker& msg, ulong const& instr_clock, ItemInfoMap const&, ThreadPool<AsyncProgramJob>&);
     ~Worker()=default;
 
     EntityData& get_data();
@@ -53,8 +55,7 @@ struct Worker: public MapEntity {
     void handle_full_space(uchar bits);
     MapEntityType get_type() const;
 
-    friend Packer& operator<<(Packer& p, Worker const& obj);
-
+    ant_proto::Worker get_proto();
     private:
     void debug_empty_space_flags();
 };

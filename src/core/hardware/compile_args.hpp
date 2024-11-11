@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include "hardware/parser.hpp"
 #include "hardware/program_executor.hpp"
 #include "utils/status.hpp"
 

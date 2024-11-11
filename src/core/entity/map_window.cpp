@@ -15,22 +15,12 @@ MapWindow::MapWindow(Rect const& border)
     SPDLOG_INFO("Creating map of size {}x{}", border.w, border.h);
 }
 
-MapWindow::MapWindow(Unpacker& p) : border(p), map(new TCODMap(border.w, border.h)) {
-    ant_proto::MapWindow msg;
-    p >> msg;
-
-    ulong room_count = msg.room_count();
-    ulong corridor_count = msg.corridor_count();
-    SPDLOG_DEBUG("Unpacking map window - room count: {} - corridor count: {}", room_count, corridor_count);
-    rooms.reserve(room_count);
-    for(ulong i = 0; i < room_count; ++i) {
-        rooms.emplace_back(p);
-    }
-
-    corridors.reserve(corridor_count);
-    for(ulong i = 0; i < corridor_count; ++i) {
-        corridors.emplace_back(p);
-    }
+MapWindow::MapWindow(const ant_proto::MapWindow& msg):
+    border(msg.border()),
+    map(new TCODMap(border.w, border.h))
+{
+    for( const auto& room_msg: msg.rooms() ) rooms.emplace_back(room_msg);
+    for( const auto& corridor_msg: msg.corridors() ) corridors.emplace_back(corridor_msg);
     SPDLOG_TRACE("Completed unpacking map window");
 }
 
@@ -99,19 +89,13 @@ void MapWindow::to_local_coords(long x, long y, long& local_x, long& local_y,
                local_y < border.h;
 }
 
-Packer& operator<<(Packer& p, MapWindow const& obj) {
-    SPDLOG_DEBUG("Packing map window - room count: {} - corridor count: {}", obj.rooms.size(), obj.corridors.size());
+ant_proto::MapWindow MapWindow::get_proto() const {
     ant_proto::MapWindow msg;
-    msg.set_room_count(obj.rooms.size());
-    msg.set_corridor_count(obj.corridors.size());
-
-    p << obj.border << msg;
-    for(Rect const& room : obj.rooms) {
-        p << room;
-    }
-    for(Rect const& corridor : obj.corridors) {
-        p << corridor;
-    }
-    SPDLOG_TRACE("Completed packing map window");
-    return p;
+    msg.set_room_count(rooms.size());
+    msg.set_corridor_count(corridors.size());
+    *msg.mutable_border() = border.get_proto();
+    for( const auto& room: rooms ) *msg.add_rooms() = room.get_proto();
+    for( const auto& corridor: corridors ) *msg.add_corridors() = corridor.get_proto();
+    return msg;
 }
+
