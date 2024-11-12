@@ -7,7 +7,7 @@ Makefile
 vcpkg_installed/
 ants
 *.log
-build*
+build*/
 .vscode
 venv
 diagrams

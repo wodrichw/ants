@@ -23,19 +23,9 @@ public:
         ulong& entity_depth,
         bool move_only_on_current_depth,
         long dx, long dy
-    ):
-        map_manager(map_manager),
-        entity(entity),
-        current_depth(current_depth),
-        entity_depth(entity_depth),
-        move_only_on_current_depth(move_only_on_current_depth),
-        dx(dx), dy(dy)
-    {}
+    );
 
-    void operator()(KeyboardEvent const&) {
-        if (move_only_on_current_depth && current_depth != entity_depth) return;
-        map_manager.get_map().move_entity(entity, dx, dy);
-    }
+    void operator()(KeyboardEvent const&);
 };
 
 class ChangeLevelHandler: public Subscriber<KeyboardEvent> {
@@ -43,18 +33,9 @@ class ChangeLevelHandler: public Subscriber<KeyboardEvent> {
 public:
     EntityManager& entity_manager;
     enum Direction { UP, DOWN } dir;
-    ChangeLevelHandler(EntityManager& entity_manager, Direction dir):
-        entity_manager(entity_manager),
-        dir(dir)
-    {}
 
-    void operator()(KeyboardEvent const&) {
-        if (dir == Direction::UP) {
-            entity_manager.go_up();
-        } else {
-            entity_manager.go_down();
-        }
-    }
+    ChangeLevelHandler(EntityManager& entity_manager, Direction dir);
+    void operator()(KeyboardEvent const&);
 };
 
 class DigHandler: public Subscriber<KeyboardChordEvent> {
@@ -63,29 +44,22 @@ class DigHandler: public Subscriber<KeyboardChordEvent> {
     Inventory& inventory;
     long dx= {}, dy = {};
 public:
-    DigHandler(MapManager& map_manager, MapEntity& entity, Inventory& inventory, long dx, long dy):
-        map_manager(map_manager), entity(entity), inventory(inventory), dx(dx), dy(dy)
-    {}
+    DigHandler(MapManager& map_manager,
+        MapEntity& entity,
+        Inventory& inventory,
+        long dx,
+        long dy
+    );
 
-    void operator()(KeyboardChordEvent const&) {
-        handle_dig(map_manager.get_map(), entity, inventory, dx, dy);
-    }
+    void operator()(KeyboardChordEvent const&);
 };
 
 class ClickHandler: public Subscriber<MouseEvent> {
     MapManager& map_manager;
     Renderer& renderer;
 public:
-    ClickHandler(MapManager& map_manager, Renderer& renderer):
-        map_manager(map_manager),
-        renderer(renderer)
-    {}
-
-    void operator()(MouseEvent const& event) {
-        long x = 0, y = 0;
-        renderer.pixel_to_tile_coordinates(event.x, event.y, x, y);
-        map_manager.get_map().click(x, y);
-    }
+    ClickHandler(MapManager& map_manager, Renderer& renderer);
+    void operator()(MouseEvent const& event);
 };
 
 class CreateAntHandler: public Subscriber<KeyboardEvent> {
@@ -93,17 +67,18 @@ class CreateAntHandler: public Subscriber<KeyboardEvent> {
     HardwareManager& hardware_manager;
     SoftwareManager& software_manager;
 public:
-    CreateAntHandler(EntityManager& entity_manager, HardwareManager& hardware_manager, SoftwareManager& software_manager):
-        entity_manager(entity_manager), hardware_manager(hardware_manager), software_manager(software_manager) {}
-    void operator()(KeyboardEvent const&) {
-        entity_manager.create_ant(hardware_manager, software_manager);
-    }
+    CreateAntHandler(EntityManager& entity_manager,
+        HardwareManager& hardware_manager,
+        SoftwareManager& software_manager
+    );
+
+    void operator()(KeyboardEvent const&);
 };
 
 class ReloadGameHandler: public Subscriber<KeyboardEvent> {
     public:
-    ReloadGameHandler(bool& is_reload_game) : is_reload_game(is_reload_game) {}
-    void operator()(KeyboardEvent const&) { is_reload_game = true; }
+    ReloadGameHandler(bool& is_reload_game);
+    void operator()(KeyboardEvent const&);
     private:
     bool& is_reload_game;
 };
@@ -111,16 +86,13 @@ class ReloadGameHandler: public Subscriber<KeyboardEvent> {
 class DefaultMapTileRendererHandler: public Subscriber<KeyboardEvent> {
     Renderer& renderer;
     public:
-    DefaultMapTileRendererHandler(Renderer& renderer): renderer(renderer) {}
-    void operator()(KeyboardEvent const&) { renderer.use_default_tile_rendering(); }
+    DefaultMapTileRendererHandler(Renderer& renderer);
+    void operator()(KeyboardEvent const&);
 };
 
 class ScentMapTileRendererHandler: public Subscriber<KeyboardEvent> {
     Renderer& renderer;
     public:
-    ScentMapTileRendererHandler(Renderer& renderer): renderer(renderer) {}
-    void operator()(KeyboardEvent const& event) { 
-        ulong scent_idx = event.type - KeyboardEventType::ONE_KEY_EVENT;
-        renderer.use_scent_tile_rendering(scent_idx);
-    }
+    ScentMapTileRendererHandler(Renderer& renderer);
+    void operator()(KeyboardEvent const& event);
 };

@@ -1,27 +1,19 @@
 #pragma once
 
 #include <fstream>
-#include <iostream>
 #include <libtcod/color.hpp>
 #include <vector>
 
-#include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
 
 class Packer {
    public:
-    Packer(std::string const& path) : output(path, std::ios::binary) {
-        if(path == "") return;
-        if(!output) {
-            SPDLOG_ERROR("Failed to open file for writing: '{}'", path);
-            return;
-        }
-    }
-    ~Packer() { close(); }
+    Packer(std::string const& path);
+    ~Packer();
 
-    explicit operator bool() { return bool(output); }
+    explicit operator bool();
 
     template <typename T>
     Packer& operator<<(T const& data) {
@@ -37,34 +29,19 @@ class Packer {
 
         return *this;
     }
-
-    Packer& operator<<(tcod::ColorRGB const& col) {
-        ant_proto::Integer msg;
-        msg.set_value((col.r << 16) | (col.g << 8) | col.b);
-        (*this) << msg;
-        return *this;
-    }
+    Packer& operator<<(tcod::ColorRGB const& col);
 
    private:
-    void write_int(int value) {
-        output.write(reinterpret_cast<const char*>(&value), sizeof(value));
-    }
-
-    void close() { output.close(); }
+    void write_int(int value);
+    void close();
 
     std::ofstream output;
 };
 
 class Unpacker {
    public:
-    Unpacker(std::string const& path) : input(path, std::ios::binary) {
-        if (path == "") return;
-        if(!input) {
-            SPDLOG_ERROR("Failed to open file for reading: '{}'", path);
-            return;
-        }
-    }
-    ~Unpacker() { close(); }
+    Unpacker(std::string const& path);
+    ~Unpacker();
 
     // Deserialize method
     template <typename T>
@@ -82,27 +59,13 @@ class Unpacker {
         return *this;
     }
 
-    Unpacker& operator>>(tcod::ColorRGB& col) {
-        ant_proto::Integer msg;
-        (*this) >> msg;
+    Unpacker& operator>>(tcod::ColorRGB& col);
 
-        uint color = msg.value();
-        col.r = color >> 16;
-        col.g = (color >> 8) & 255;
-        col.b = color & 255;
-        return *this;
-    }
-
-    bool is_valid() const { return input ? true : false; }
+    bool is_valid() const;
 
    private:
-    void close() { input.close(); }
-
-    int read_int() {
-        int value;
-        input.read(reinterpret_cast<char*>(&value), sizeof(value));
-        return value;
-    }
+    void close();
+    int read_int();
 
     std::ifstream input;
     std::vector<char> buffer;
