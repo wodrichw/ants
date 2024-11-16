@@ -1,4 +1,4 @@
-#include "entity/map.hpp"
+#include "map/map.hpp"
 #include "app/globals.hpp"
 #include "spdlog/spdlog.h"
 #include "utils/math.hpp"

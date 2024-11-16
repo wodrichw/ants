@@ -18,29 +18,33 @@
 #include "ui/text_editor_handler.hpp"
 #include "utils/thread_pool.hpp"
 
-EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
-    : box_manager(globals::COLS, globals::ROWS),
-      job_pool(8),
-      entity_manager(box_manager.map_box->get_width(),
-                     box_manager.map_box->get_height(), config, job_pool),
-      software_manager(command_map),
-      primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
-      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.levels),
-      state(&primary_mode, &editor_mode) {
+EngineState::EngineState(ProjectArguments& config, Renderer* renderer):
+    box_manager(globals::COLS, globals::ROWS),
+    job_pool(8),
+    map_world(Rect(0, 0, box_manager.map_box->get_width(), box_manager.map_box->get_height())),
+    map_manager(globals::COLS*2,  globals::ROWS*2, config, map_world),
+    entity_manager(map_world, map_manager.get_first_room().center_x, map_manager.get_first_room().center_y, job_pool),
+    software_manager(command_map),
+    primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, map_manager, map_world, *renderer, is_reload_game, job_pool),
+    editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, map_world.levels),
+    state(&primary_mode, &editor_mode)
+{
     
     SPDLOG_INFO("Creating engine state");
     add_listeners(config);
     SPDLOG_INFO("Engine initialized without backup");
 }
 
-EngineState::EngineState(const ant_proto::EngineState& msg, ProjectArguments& config, Renderer* renderer)
-    : box_manager(globals::COLS, globals::ROWS),
-      job_pool(8),
-      entity_manager(msg.entity_manager(), job_pool),
-      software_manager(msg.software_manger(), command_map),
-      primary_mode(msg.hardware_manager(), *box_manager.map_box, command_map, software_manager, entity_manager, *renderer, is_reload_game, job_pool),
-      editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, entity_manager.levels),
-      state(&primary_mode, &editor_mode) {
+EngineState::EngineState(const ant_proto::EngineState& msg, ProjectArguments& config, Renderer* renderer):
+    box_manager(globals::COLS, globals::ROWS),
+    job_pool(8),
+    map_world(msg.map_world(), job_pool, config.is_walls_enabled),
+    map_manager(msg.map_manager(), map_world),
+    entity_manager(msg.entity_manager(), map_world, job_pool),
+    software_manager(msg.software_manger(), command_map),
+    primary_mode(msg.hardware_manager(), *box_manager.map_box, command_map, software_manager, entity_manager, map_manager, map_world, *renderer, is_reload_game, job_pool),
+    editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, map_world.levels),
+    state(&primary_mode, &editor_mode) {
     
     add_listeners(config);
     SPDLOG_INFO("Engine initialized with backup");
@@ -113,6 +117,9 @@ Packer& operator<<(Packer& p, EngineState const& obj) {
     *msg.mutable_entity_manager() = obj.entity_manager.get_proto();
     *msg.mutable_software_manger() = obj.software_manager.get_proto();
     *msg.mutable_hardware_manager() = obj.primary_mode.get_proto();
+    *msg.mutable_map_world() = obj.map_world.get_proto();
+    *msg.mutable_map_manager() = obj.map_manager.get_proto();
+    
 
     // UNCOMMMENT BELOW FOR DEBUGGING SERIALIZATION
     //

@@ -3,10 +3,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "entity.pb.h"
+#include "map.pb.h"
 #include "entity/building.hpp"
 #include "entity/entity_data.hpp"
-#include "entity/map_section_data.hpp"
+#include "map/section_data.hpp"
 
 using ulong = unsigned long;
 

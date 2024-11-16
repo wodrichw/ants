@@ -1,0 +1,60 @@
+syntax = "proto3";
+package ant_proto;
+
+import "entity.proto";
+import "utils.proto";
+
+message Level {
+    repeated Worker workers = 1;
+    repeated Building buildings = 2;
+    Map map = 3;
+}
+
+message MapWorld {
+    repeated Level levels = 1;
+    uint64 current_depth = 2;
+    MapWindow map_window = 3;
+    uint64 instr_action_clock = 4;
+}
+
+message MapManager {
+    bool is_walls_enabled = 1;
+    int64 max_depth = 2;
+    int64 map_section_width = 3;
+    int64 map_section_height = 4;
+    Rect border = 5;
+    Rect first_room = 6;
+}
+
+message MapWindow {
+    int64 room_count = 1;
+    int64 corridor_count = 2;
+    repeated Rect rooms = 3;
+    Rect border = 4;
+    repeated Rect corridors = 5;
+}
+
+message Map {
+    bool needs_update = 1;
+    bool chunk_update_parity = 2;
+    Chunks chunks = 3;
+}
+
+message Chunks { 
+    repeated ChunkKeyVal chunk_key_vals = 1;
+}
+
+message ChunkKeyVal {
+    uint64 key = 1;
+    Chunk val = 2;
+}
+
+message Chunk {
+    int64 x = 1;
+    int64 y = 2;
+    bool update_parity = 3;
+    int64 is_explored = 4;
+    int64 in_fov = 5;
+    int64 is_wall = 6;
+}
+

@@ -1,13 +1,12 @@
 #pragma once
 
 #include <math.h>
-
 #include <functional>
 #include <libtcod.hpp>
 
 #include "app/globals.hpp"
-#include "entity/map.hpp"
-#include "entity/map_window.hpp"
+#include "map/map.hpp"
+#include "map/window.hpp"
 #include "ui/layoutbox.hpp"
 
 // make sure the values are positive for modulus operations

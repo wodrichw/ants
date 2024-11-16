@@ -1,9 +1,8 @@
 #pragma once
 
-#include <functional>
 #include <libtcod/bsp.hpp>
 
-#include "entity/map_section_data.hpp"
+#include "map/section_data.hpp"
 
 class BspListener : public ITCODBspCallback {
    private:

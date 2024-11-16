@@ -3,11 +3,14 @@ package ant_proto;
 
 import "entity.proto";
 import "hardware.proto";
+import "map.proto";
 
 message EngineState {
     EntityManager entity_manager = 1;
     SoftwareManager software_manger = 2;
-    HardwareManager hardware_manager =3;
+    HardwareManager hardware_manager = 3;
+    MapManager map_manager = 4;
+    MapWorld map_world = 5;
 }
 
 

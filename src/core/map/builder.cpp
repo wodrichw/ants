@@ -1,6 +1,6 @@
 #include <fstream>
 
-#include "entity/map_builder.hpp"
+#include "map/builder.hpp"
 #include "spdlog/spdlog.h"
 
 BspListener::BspListener(MapSectionData &section_data) :

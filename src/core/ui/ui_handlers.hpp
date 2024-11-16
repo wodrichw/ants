@@ -1,25 +1,24 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
-#include "entity/map.hpp"
-#include "entity/map_manager.hpp"
+#include "map/map.hpp"
+#include "map/manager.hpp"
+#include "map/world.hpp"
 #include "ui/render.hpp"
 #include "ui/subscriber.hpp"
 #include "entity/entity_manager.hpp"
 #include "entity/entity_actions.hpp"
 
 class MoveHandler: public Subscriber<KeyboardEvent> {
-    MapManager& map_manager;
     MapEntity& entity;
-    const ulong& current_depth;
+    MapWorld& map_world;
     const ulong& entity_depth;
     bool move_only_on_current_depth;
     long dx = {}, dy = {};
 public:
     MoveHandler(
-        MapManager& map_manager,
         MapEntity& entity,
-        ulong& current_depth,
+        MapWorld& map_world,
         ulong& entity_depth,
         bool move_only_on_current_depth,
         long dx, long dy
@@ -31,21 +30,22 @@ public:
 class ChangeLevelHandler: public Subscriber<KeyboardEvent> {
 
 public:
-    EntityManager& entity_manager;
+    MapManager& map_manager;
     enum Direction { UP, DOWN } dir;
 
-    ChangeLevelHandler(EntityManager& entity_manager, Direction dir);
+    ChangeLevelHandler(MapManager& map_manager, Direction dir);
     void operator()(KeyboardEvent const&);
 };
 
 class DigHandler: public Subscriber<KeyboardChordEvent> {
-    MapManager& map_manager;
     MapEntity& entity;
+    MapWorld& map_world;
     Inventory& inventory;
     long dx= {}, dy = {};
 public:
-    DigHandler(MapManager& map_manager,
+    DigHandler(
         MapEntity& entity,
+        MapWorld& map_world,
         Inventory& inventory,
         long dx,
         long dy
@@ -55,10 +55,10 @@ public:
 };
 
 class ClickHandler: public Subscriber<MouseEvent> {
-    MapManager& map_manager;
+    MapWorld& map_world;
     Renderer& renderer;
 public:
-    ClickHandler(MapManager& map_manager, Renderer& renderer);
+    ClickHandler(MapWorld& map_world, Renderer& renderer);
     void operator()(MouseEvent const& event);
 };
 

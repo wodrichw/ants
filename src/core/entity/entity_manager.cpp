@@ -1,128 +1,42 @@
-#include "entity_manager.hpp"
+#include "entity/entity_manager.hpp"
+#include "map/world.hpp"
 #include "spdlog/spdlog.h"
-#include "ui/colors.hpp"
 
-EntityManager::EntityManager(int map_width, int map_height, ProjectArguments& config, ThreadPool<AsyncProgramJob>& job_pool)
-    : player(EntityData(40, 25, '@', 10, color::white), item_info_map),
-      current_depth(0),
-      player_depth(0),
-      job_pool(job_pool),
-      map_window(Rect::from_center(player.get_data().x, player.get_data().y,
-                                   map_width, map_height)),
-      map_manager(current_depth, map_width, map_height, config, map_window),
-      next_worker(create_worker_data()),
-      instr_action_clock(0)
+EntityManager::EntityManager(MapWorld& map_world, int player_start_x, int player_start_y, ThreadPool<AsyncProgramJob>& job_pool): 
+    map_world(map_world),
+    player(EntityData(40, 25, '@', 10, color::white), map_world.item_info_map),
+    player_depth(0),
+    job_pool(job_pool),
+    next_worker(create_worker_data())
 {
-    // initialize workers and buildings for ground level
-    levels.push_back({{},{}});
-
-    int center_x = map_manager.get_first_room().center_x;
-    int center_y = map_manager.get_first_room().center_y;
-    levels[current_depth].buildings.push_back(new Nursery(center_x - 1, center_y - 1, 0));
-    SPDLOG_INFO("Moving player to nursery building: ({}, {})", center_x,
-                center_y);
-    player.data.x = center_x, player.data.y = center_y;
-    map_manager.get_map().add_building(*levels[current_depth].buildings[0]);
-
-    SPDLOG_DEBUG("Adding player entity to the map");
-    map_manager.get_map().add_entity(player);
-    map_window.set_center(player.get_data().x, player.get_data().y);
+    player.data.x = player_start_x;
+    player.data.y = player_start_y;
 }
 
-EntityManager::EntityManager( ant_proto::EntityManager msg, ThreadPool<AsyncProgramJob>& job_pool) : 
-    player(msg.player(), item_info_map), job_pool(job_pool), map_window(msg.map_window()),
-    map_manager(msg.map_manager(), current_depth), next_worker(create_worker_data()) 
-{
-    instr_action_clock = msg.instr_action_clock();
-    ulong max_depth = msg.max_depth();
-    player_depth = msg.player_depth();
-
-    SPDLOG_DEBUG("Unpacking EntityManager, max_depth {}, player_depth {}", max_depth, player_depth);
-
-    SPDLOG_TRACE("Initializing workers and buildings for unpacking");
-
-    for( current_depth = 0; current_depth < static_cast<unsigned long>(msg.levels_size()); ++current_depth ) {
-        levels.push_back({{},{}});
-        const ant_proto::Level & level_msg = msg.levels(current_depth);
-
-        for( const auto& worker_msg: level_msg.workers() ) 
-            save_ant(new Worker(worker_msg, instr_action_clock, item_info_map, job_pool));
-
-        for( const auto& building_msg: level_msg.buildings() )  {
-            Building* building = nullptr;
-
-            if( building_msg.id() == NURSERY)
-                building = new Nursery(building_msg);
-            else {
-                SPDLOG_ERROR("Unknown serialized building type: {}",
-                             static_cast<uint>(building_msg.id()));
-                exit(1);
-            }
-
-            levels[current_depth].buildings.emplace_back(building);
-            map_manager.get_map().add_building(*building);
-
-        }
-
-    }
-
-    current_depth = msg.current_depth();
-
-    SPDLOG_TRACE("Unpack of EntityManager finished");
-}
+EntityManager::EntityManager( ant_proto::EntityManager msg, MapWorld& map_world, ThreadPool<AsyncProgramJob>& job_pool) : 
+    map_world(map_world),
+    player(msg.player(), map_world.item_info_map),
+    player_depth(msg.player_depth()),
+    job_pool(job_pool),
+    next_worker(create_worker_data())
+{ }
 
 EntityManager::~EntityManager() {
     SPDLOG_DEBUG("Destroying EntityManager");
-    for( auto level: levels ) {
-        for( auto worker: level.workers ) delete worker;
-        for( auto building: level.buildings ) delete building;
-    }
-
     delete next_worker;
     next_worker = nullptr;
 
     SPDLOG_TRACE("Destroyed workers and buildings");
 }
-// return true of successfully goes up
-bool EntityManager::go_up() {
-    SPDLOG_TRACE("MAP LEVEL GO UP REQUST");
-    if (current_depth == 0) return false;
-    --current_depth;
-    map_manager.go_up();
-    map_manager.get_map().update_chunks(map_window.border);
-    return true;
-}
-
-// return true of successfully goes down
-bool EntityManager::go_down() {
-    SPDLOG_TRACE("MAP LEVEL GO DOWN REQUST");
-    ++current_depth;
-    map_manager.go_down();
-    map_manager.get_map().update_chunks(map_window.border);
-
-    if (current_depth == levels.size()) {
-        levels.push_back({{},{}});
-    }
-
-    return true;
-}
-
-std::vector<Building*> EntityManager::get_current_level_buildings() {
-    return levels[current_depth].buildings;
-}
-
-std::vector<Worker*> EntityManager::get_current_level_worker_ants() {
-    return levels[current_depth].workers;
-}
 
 void EntityManager::update_fov_ant(EntityData& d) {
-    map_window.compute_fov(d.x, d.y, d.fov_radius);
-    for(long x = map_window.border.x1; x < map_window.border.x2; x++) {
-        for(long y = map_window.border.y1; y < map_window.border.y2;
+    map_world.map_window.compute_fov(d.x, d.y, d.fov_radius);
+    for(long x = map_world.map_window.border.x1; x < map_world.map_window.border.x2; x++) {
+        for(long y = map_world.map_window.border.y1; y < map_world.map_window.border.y2;
             y++) {
-            if(!map_window.in_fov(x, y)) continue;
+            if(!map_world.map_window.in_fov(x, y)) continue;
 
-            map_manager.get_map().explore(x, y);
+            map_world.current_level().map.explore(x, y);
         }
     }
 }
@@ -130,42 +44,42 @@ void EntityManager::update_fov_ant(EntityData& d) {
 void EntityManager::update_fov() {
     // SPDLOG_TRACE("Updating FOV");
     // map.reset_fov();
-    for(long x = map_window.border.x1; x < map_window.border.x2; x++) {
-        for(long y = map_window.border.y1; y < map_window.border.y2; y++) {
-            map_manager.get_map().reset_tile(x, y);
+    for(long x = map_world.map_window.border.x1; x < map_world.map_window.border.x2; x++) {
+        for(long y = map_world.map_window.border.y1; y < map_world.map_window.border.y2; y++) {
+            map_world.current_level().map.reset_tile(x, y);
         }
     }
-    for(auto ant : levels[current_depth].workers) {
+    for(auto ant : map_world.current_level().workers) {
         update_fov_ant(ant->get_data());
     }
-    if (current_depth == player_depth)
+    if (map_world.current_depth == player_depth)
         update_fov_ant(player.get_data());
     SPDLOG_TRACE("FOV updated");
 }
 
 void EntityManager::set_window_tiles() {
     SPDLOG_TRACE("Setting window tiles");
-    for(long local_x = 0; local_x < map_window.border.w; local_x++) {
-        for(long local_y = 0; local_y < map_window.border.h; local_y++) {
-            long x = local_x + map_window.border.x1,
-                 y = local_y + map_window.border.y1;
+    for(long local_x = 0; local_x < map_world.map_window.border.w; local_x++) {
+        for(long local_y = 0; local_y < map_world.map_window.border.h; local_y++) {
+            long x = local_x + map_world.map_window.border.x1,
+                 y = local_y + map_world.map_window.border.y1;
             // SPDLOG_TRACE("Setting tile at ({}, {}) - local ({}, {})", x,
             // y, local_x, local_y);
 
-            if(map_manager.get_map().is_wall(x, y)) {
-                map_window.set_wall(x, y);
+            if(map_world.current_level().map.is_wall(x, y)) {
+                map_world.map_window.set_wall(x, y);
             } else {
-                map_window.set_floor(x, y);
+                map_world.map_window.set_floor(x, y);
             }
         }
     }
 }
 
 void EntityManager::update() {
-    ++instr_action_clock;
+    ++map_world.instr_action_clock;
     // Move / dig the ants on the map
-    for (size_t depth = 0; depth < levels.size(); ++depth) {
-        for (Worker* worker: levels[depth].workers) {
+    for (auto& level: map_world.levels) {
+        for (Worker* worker: level.workers) {
             DualRegisters& cpu = worker->cpu;
 
             // Direction Truth Table
@@ -180,15 +94,15 @@ void EntityManager::update() {
             if (cpu.is_move_flag) {
                 cpu.is_move_flag = false;
                 SPDLOG_DEBUG("Moving worker - dx: {} dy: {}", dx, dy);
-                cpu.instr_failed_flag = !map_manager.get_map(depth).move_entity(*worker, dx, dy);
+                cpu.instr_failed_flag = !level.map.move_entity(*worker, dx, dy);
             }
             if (cpu.is_dig_flag) {
                 cpu.is_dig_flag = false;
                 SPDLOG_DEBUG("Digging worker - dx: {} dy: {}", dx, dy);
-                cpu.instr_failed_flag = !map_manager.get_map(depth).dig(*worker, dx, dy);
+                cpu.instr_failed_flag = !level.map.dig(*worker, dx, dy);
             }
             if (cpu.delta_scents) {
-                ulong& tile_scents = map_manager.get_map(depth).get_tile_scents(*worker);
+                ulong& tile_scents = level.map.get_tile_scents(*worker);
 
                 ulong updated_scents = 0;
                 ulong offset = 0;
@@ -208,12 +122,12 @@ void EntityManager::update() {
         }
     }
 
-    if(!map_manager.get_map().needs_update) return;
+    if(!map_world.current_level().map.needs_update) return;
     SPDLOG_TRACE("Updating EntityManager");
-    map_manager.get_map().needs_update = false;
+    map_world.current_level().map.needs_update = false;
 
-    map_window.set_center(player.get_data().x, player.get_data().y);
-    map_manager.get_map().update_chunks(map_window.border);
+    map_world.map_window.set_center(player.get_data().x, player.get_data().y);
+    map_world.current_level().map.update_chunks(map_world.map_window.border);
     set_window_tiles();
     update_fov();
 }
@@ -237,14 +151,14 @@ void EntityManager::create_ant(HardwareManager& hardware_manager,
         return;
     }
 
-    Building* b = map_manager.get_map().get_building(player);
+    Building* b = map_world.current_level().map.get_building(player);
     if(b == nullptr) {
         SPDLOG_DEBUG("No building found at player location");
         return;
     }
 
     long new_x = b->border.center_x, new_y = b->border.center_y;
-    if(!map_manager.get_map().can_place(new_x, new_y)) return;
+    if(!map_world.current_level().map.can_place(new_x, new_y)) return;
 
     SPDLOG_DEBUG("Selected building at ({}, {})", new_x, new_y);
 
@@ -260,7 +174,7 @@ void EntityManager::create_ant(HardwareManager& hardware_manager,
     }
 
     SPDLOG_DEBUG("Creating worker ant");
-    ulong ant_idx = levels[current_depth].workers.size();
+    ulong ant_idx = map_world.current_level().workers.size();
     software_manager.assign(ant_idx); // before pushing to this->workers
 
     save_ant(next_worker);
@@ -287,9 +201,9 @@ bool EntityManager::build_ant(HardwareManager& hardware_manager,
 void EntityManager::rebuild_workers(HardwareManager& hardware_manager,
         SoftwareManager& software_manager)
 {
-    SPDLOG_DEBUG("Rebuilding worker ant programs - count: {}", levels.size());
+    SPDLOG_DEBUG("Rebuilding worker ant programs - count: {}", map_world.levels.size());
     ulong ant_idx = 0;
-    for(auto& level: levels) {
+    for(auto& level: map_world.levels) {
         for (Worker* worker: level.workers) {
             build_ant(hardware_manager, *worker, software_manager[ant_idx]);
             ++ant_idx;
@@ -301,33 +215,26 @@ void EntityManager::rebuild_workers(HardwareManager& hardware_manager,
 //returns the total number of workers accross all levels
 ulong EntityManager::num_workers() {
     ulong n = 0;
-    for(const auto& level: levels) {
+    for(const auto& level: map_world.levels) {
         n += level.workers.size();
     }
     return n;
 }
 
 void EntityManager::save_ant(Worker* worker) {
-    map_manager.get_map().add_entity(*worker);
-    levels[current_depth].workers.push_back(worker);
+    map_world.current_level().map.add_entity(*worker);
+    map_world.current_level().workers.push_back(worker);
 }
 
 Worker* EntityManager::create_worker_data() {
     return new Worker(EntityData('w', 10, color::light_green),
-            instr_action_clock, item_info_map, job_pool);
+            map_world.instr_action_clock, map_world.item_info_map, job_pool);
 }
 
 ant_proto::EntityManager EntityManager::get_proto() const {
     ant_proto::EntityManager entity_msg;
-    entity_msg.set_instr_action_clock(instr_action_clock);
-    entity_msg.set_max_depth(levels.size());
-    entity_msg.set_current_depth(current_depth);
     entity_msg.set_player_depth(player_depth);
     *entity_msg.mutable_player() = player.get_proto();
-    for( const auto& level: levels ) *entity_msg.add_levels() = level.get_proto();
-    *entity_msg.mutable_map_window() = map_window.get_proto();
-    *entity_msg.mutable_map_manager() = map_manager.get_proto();
-    
 
     return entity_msg;
 }

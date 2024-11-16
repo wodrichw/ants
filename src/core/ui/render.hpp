@@ -4,9 +4,9 @@
 #include <libtcod.hpp>
 
 #include "entity/building.hpp"
-#include "entity/map.hpp"
 #include "entity/entity_data.hpp"
-#include "entity/map_window.hpp"
+#include "map/map.hpp"
+#include "map/window.hpp"
 #include "ui/layoutbox.hpp"
 #include "ui/text_editor.hpp"
 #include "spdlog/spdlog.h"
