@@ -75,7 +75,9 @@ void EmptyMapBuilder::operator()(MapSectionData &section_data) const {
     section_data.rooms.emplace_back(Rect(border));
 }
 
-FileMapBuilder::FileMapBuilder(const std::string &filename) {
+FileMapBuilder::FileMapBuilder(const std::string &filename):
+    section_data({})
+{
     SPDLOG_INFO("Creating FileMapBuilder");
     load_file(filename);
 }

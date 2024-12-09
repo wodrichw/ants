@@ -182,6 +182,7 @@ void Map::load_section(MapSectionData const& section_data) {
                 section_data.border.w, section_data.border.h);
     add_missing_chunks(section_data.border);
 
+
     long origin_x = section_data.border.x1,
          origin_y = section_data.border.y1;
     for(auto const& room : section_data.rooms) {
@@ -193,6 +194,9 @@ void Map::load_section(MapSectionData const& section_data) {
         dig(origin_x + corridor.x1, origin_y + corridor.y1,
             origin_x + corridor.x2, origin_y + corridor.y2);
     }
+
+    for(const auto& cm: chunks.get_chunk_markers(section_data.border) )
+        chunks.find(cm.id)->second->section_loaded = true;
 }
 
 void Map::dig(long x1, long y1, long x2, long y2) {
@@ -417,6 +421,20 @@ void Map::explore(long x, long y) {
     Tile& tile = get_tile(x, y);
     tile.is_explored = true;
     tile.in_fov = true;
+}
+
+
+bool Map::chunk_built(const ChunkMarker& cm) const {
+    auto c_itr = chunks.find(cm.id);
+    if( c_itr == chunks.end() ) return false;
+    return c_itr->second->section_loaded;
+}
+
+bool Map::chunk_built(long x, long y) const {
+    ulong id = chunks.get_chunk_id(x,y);
+    auto c_itr = chunks.find(id);
+    if( c_itr == chunks.end() ) return false;
+    return c_itr->second->section_loaded;
 }
 
 

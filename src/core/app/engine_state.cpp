@@ -21,9 +21,9 @@
 EngineState::EngineState(ProjectArguments& config, Renderer* renderer):
     box_manager(globals::COLS, globals::ROWS),
     job_pool(8),
-    map_world(Rect(0, 0, box_manager.map_box->get_width(), box_manager.map_box->get_height())),
+    map_world(Rect(0, 0, box_manager.map_box->get_width(), box_manager.map_box->get_height()), config.is_walls_enabled),
     map_manager(globals::COLS*2,  globals::ROWS*2, config, map_world),
-    entity_manager(map_manager, map_world, map_manager.get_first_room().center_x, map_manager.get_first_room().center_y, job_pool),
+    entity_manager(map_manager, map_world, map_world.current_level().start_info->player_x, map_world.current_level().start_info->player_y, job_pool),
     software_manager(command_map),
     primary_mode(*box_manager.map_box, command_map, software_manager, entity_manager, map_manager, map_world, *renderer, is_reload_game, job_pool),
     editor_mode(*renderer, *box_manager.text_editor_content_box, software_manager, map_world.levels),

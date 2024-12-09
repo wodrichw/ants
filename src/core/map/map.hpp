@@ -134,6 +134,8 @@ class Map {
     void reset_fov();
     void reset_tile(long x, long y);
     void explore(long x, long y);
+    bool chunk_built(const ChunkMarker& cm) const;
+    bool chunk_built(long x, long y) const;
     bool in_fov(long x, long y) const;
     bool is_explored(long x, long y) const;
     bool is_wall(long x, long y) const;

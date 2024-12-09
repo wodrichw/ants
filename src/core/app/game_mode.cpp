@@ -81,28 +81,28 @@ void PrimaryMode::initialize(SoftwareManager& software_manager) {
     // MOVE PLAYER EVENTS
     event_system.keyboard_events.add(
         LEFT_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true, -1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, -1, 0));
     event_system.keyboard_events.add(
         RIGHT_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true,  1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true,  1, 0));
     event_system.keyboard_events.add(
         UP_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true, 0, -1));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, -1));
     event_system.keyboard_events.add(
         DOWN_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true, 0, 1));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, 1));
     event_system.keyboard_events.add(
         H_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true, -1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, -1, 0));
     event_system.keyboard_events.add(
         L_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true, 1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 1, 0));
     event_system.keyboard_events.add(
         K_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true, 0, -1));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, -1));
     event_system.keyboard_events.add(
         J_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_world, entity_manager.player_depth, true, 0, 1));
+        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, 1));
 
     // ADD ANT EVENT
     event_system.keyboard_events.add(

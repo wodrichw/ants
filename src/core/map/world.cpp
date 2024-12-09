@@ -1,19 +1,20 @@
+#include <algorithm>
+#include <climits>
+#include <cstdint>
+#include <libtcod/mersenne.hpp>
+
 #include "app/globals.hpp"
 #include "map.pb.h"
 #include "entity/inventory.hpp"
 #include "entity/ant.hpp"
 #include "map/world.hpp"
-#include <algorithm>
-#include <climits>
-#include <cstdint>
-#include <libtcod/mersenne.hpp>
 #include "map/builder.hpp"
 #include "map/section_data.hpp"
 #include "map/window.hpp"
-#include "utils/algorithm.hpp"
 
-Level::Level(const Map& map):
-    map(map)
+Level::Level(const Map& map, ulong depth):
+    map(map),
+    depth(depth)
 {}
 
 
@@ -83,8 +84,8 @@ Peaceful_Cavern::Peaceful_Cavern():
 
 
 void Peaceful_Cavern::build_section(Level& l, Section_Plan& sp) {
-    MapSectionData section;
-    RandomMapBuilder(Rect(sp.x, sp.y, sp.w, sp.h))(section);
+    MapSectionData section(sp.border);
+    RandomMapBuilder(Rect(sp.border));
     l.map.load_section(section);
 }
 
@@ -100,8 +101,8 @@ Starting_Colony::Starting_Colony():
 
 
 void Starting_Colony::build_section(Level& l, Section_Plan& sp) {
-    MapSectionData section;
-    EmptyMapBuilder(Rect(sp.x,sp.y,sp.w,sp.h));
+    MapSectionData section(sp.border);
+    EmptyMapBuilder(Rect(sp.border));
     l.map.load_section(section);
     if( sp.depth_in_zone == 0 && l.depth == 0){ // we know that zone takes up entire depth
         Rect& first_room = section.rooms[0];
@@ -154,33 +155,38 @@ void Region::place_zone(chunk_assignemnts_t& chunk_assignemnts, long x, long y, 
     }
 }
 
+class shuffle_randomizer {
+    TCODRandom& r;
+public:
+    shuffle_randomizer(TCODRandom& r): r(r) {}
+    using result_type = uint;
+    static constexpr result_type min(){ return 0; }
+    static constexpr result_type max(){ return INT_MAX;}
+    result_type operator()() {
+        return r.getInt(min(), max()); 
+    }
+};
 
 void Region::do_blueprint_planning() {
     // randomly partition world into smaller columns.
     // These columns will then be sliced into
     // section plans to go into the blueprints for each level
 
-    // GENERATE columns
-    // std::vector<Rect> columns;
 
-    // TCODBsp bsp(perimeter.x1, perimeter.y1, perimeter.w, perimeter.h);
-    // int nb = 8;  // max level of recursion -- can make 2^nb rooms.
-    // bsp.splitRecursive(&randomizer, nb, globals::MIN_SECTION_LENGTH, globals::MIN_SECTION_LENGTH, 1, 1);
-    // World_BspListener listener(perimeter, columns);
-    // bsp.traverseInvertedLevelOrder(&listener, NULL);
-    
     long xy_length = globals::WORLD_LENGTH/globals::CHUNK_LENGTH;
     chunk_assignemnts_t chunk_assignemnts(xy_length, std::vector<std::vector<Zone*>>(xy_length, std::vector<Zone*>(globals::MAX_LEVEL_DEPTH, 0)));
 
     struct placed_zones_t {long chunk_x; long chunk_y; long chunk_z; Zone* zone;};
     std::vector<placed_zones_t> placed_zones;
 
-    Zone* starting_coloney = new Starting_Colony();
-    place_zone(chunk_assignemnts, 0,0,0, *starting_coloney);
-    placed_zones.emplace_back(placed_zones_t{0,0,0, starting_coloney});
+    if( is_first_region ) {
+        Zone* starting_coloney = new Starting_Colony();
+        place_zone(chunk_assignemnts, 0,0,0, *starting_coloney);
+        placed_zones.emplace_back(placed_zones_t{0,0,0, starting_coloney});
+    }
 
     std::vector<Zone* > shapes = { new Peaceful_Cavern() };
-    std::shuffle(shapes.begin(), shapes.end(), randomizer);
+    std::shuffle(shapes.begin(), shapes.end(), shuffle_randomizer(randomizer));
 
     
     uint failed_attempts = 0;
@@ -208,7 +214,7 @@ void Region::do_blueprint_planning() {
             if(placed) successful_attempt = true;
         }
         if(! successful_attempt ) failed_attempts++;
-        std::shuffle(shapes.begin(), shapes.end(), randomizer);
+        std::shuffle(shapes.begin(), shapes.end(), shuffle_randomizer(randomizer));
     }
     
 
@@ -232,15 +238,15 @@ void Region::do_blueprint_planning() {
             z < zone_placement.chunk_z + zone_placement.zone->depth;
             ++z
         ){
-            section_plans.emplace_back(Section_Plan({
-                perimeter.x1 + (zone_placement.chunk_x * globals::CHUNK_LENGTH),
-                perimeter.y1 + (zone_placement.chunk_y * globals::CHUNK_LENGTH),
-                zone_placement.zone->w * globals::CHUNK_LENGTH,
-                zone_placement.zone->h * globals::CHUNK_LENGTH,
-                z - zone_placement.chunk_z,
-                false,
-                zone_placement.zone->build_section
-            }));
+            section_plans[z].emplace_back(
+                Rect (
+                    perimeter.x1 + (zone_placement.chunk_x * globals::CHUNK_LENGTH),
+                    perimeter.y1 + (zone_placement.chunk_y * globals::CHUNK_LENGTH),
+                    zone_placement.zone->w * globals::CHUNK_LENGTH,
+                    zone_placement.zone->h * globals::CHUNK_LENGTH
+                ),
+                z - zone_placement.chunk_z
+            );
         }
     }
 }
@@ -253,7 +259,7 @@ uint32_t Region::get_seed() {
 
 Region::Region( const Rect& perimeter): 
     perimeter(perimeter),
-    is_first_region(false)
+    is_first_region(true)
 {
     // NO Seeds provided so generate them
     TCODRandom *rng = TCODRandom::getInstance();
@@ -304,15 +310,12 @@ ant_proto::Region Region::get_proto() {
 
 MapWorld::MapWorld(const Rect& border, bool is_walls_enabled): 
     levels{},
-    regions(12),
+    regions(),
     map_window(border)
 {
     // Ensure that levels are created
     for( size_t i = 0; i < globals::MAX_LEVEL_DEPTH; ++i )
-        if( levels.size() <= i ) levels.emplace_back(Level(Map(border, is_walls_enabled)));
-
-    // Build first region
-    regions.emplace(Region_Key{0,0}, Region(Rect(0,0, globals::WORLD_LENGTH, globals::WORLD_LENGTH)));
+        if( levels.size() <= i ) levels.emplace_back(Level(Map(is_walls_enabled), i));
 }
 
 

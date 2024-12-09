@@ -19,14 +19,12 @@ struct Level;
 
 
 struct Section_Plan {
-    long x;
-    long y;
-    ulong w;
-    ulong h;
+    Rect border;
     ulong depth_in_zone;
-    bool build_section = false;
-
-    std::function<void(Level&, Section_Plan&)> f;
+    Section_Plan(const Rect& border, ulong depth_in_zone) : border(border), depth_in_zone(depth_in_zone) {}
+    std::function<void(Level&, Section_Plan&)> _build_section;
+    void build_section(Level& l) { _build_section(l, *this); }
+private:
 };
 
 
@@ -60,7 +58,7 @@ struct Zone {
     std::function<void(Level&,Section_Plan&)> build_section;
     Zone(ulong w, ulong h, ulong depth, std::function<void(Level&,Section_Plan&)> build_section);
     
-    virtual ~Zone();
+    virtual ~Zone() {}
 };
 
 
@@ -87,10 +85,17 @@ struct Region {
     bool is_first_region;
     std::vector<std::vector<Section_Plan>> section_plans = {};
 
+    Region() = delete;
     Region(const Rect& perimeter);
     Region(uint32_t seed_x, uint32_t seed_y, const Rect& perimeter);
     Region(const ant_proto::Region& msg);
     ant_proto::Region get_proto();
+
+    Section_Plan& section_plan(long x, long y) {
+        ulong sp_x = (x - perimeter.x1) / globals::CHUNK_LENGTH;
+        ulong sp_y = (y - perimeter.y1) / globals::CHUNK_LENGTH;
+        return section_plans[sp_x][sp_y];
+    }
 
     uint32_t get_seed();
     bool can_place_zone(chunk_assignemnts_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
@@ -107,7 +112,6 @@ struct Region_Key {
     }
 };
 
-
 namespace std {
     template <>
     struct hash<Region_Key> {
@@ -116,14 +120,41 @@ namespace std {
                 std::hash<long>()(div_floor(k.y, globals::WORLD_LENGTH));
         }
     };
+
+    template<>
+    struct equal_to<Region_Key> {
+        bool operator()(const Region_Key& lhs, const Region_Key& rhs) const {
+            return div_floor(lhs.x, globals::WORLD_LENGTH) == div_floor(rhs.x, globals::WORLD_LENGTH) &&
+                div_floor(lhs.y, globals::WORLD_LENGTH) == div_floor(rhs.y, globals::WORLD_LENGTH);
+        }
+
+    };
 }
 
+
+struct Regions {
+    std::unordered_map<Region_Key, Region> rmap;
+    void build_section(long x, long y, Level& l) {
+        if( rmap.find({x,y}) == rmap.end() ) {
+            long snap_x = div_floor(x, globals::WORLD_LENGTH);
+            long snap_y = div_floor(y, globals::WORLD_LENGTH);
+            rmap.emplace(Region_Key{x,y}, Region(Rect(snap_x,snap_y, globals::WORLD_LENGTH, globals::WORLD_LENGTH)));
+        }
+
+        if( !l.map.chunk_built(x,y) ){
+            rmap.find({x,y})->second.section_plan(x,y).build_section(l);
+        }
+    }
+    Regions(): rmap() {
+        rmap.emplace(Region_Key{0,0}, Region(Rect(0,0, globals::WORLD_LENGTH, globals::WORLD_LENGTH)));
+    }
+};
 
 
 class MapWorld {
 public:
     std::vector<Level> levels;
-    std::unordered_map<Region_Key, Region> regions;
+    Regions regions;
     MapWindow map_window;
     ulong current_depth;
     ItemInfoMap item_info_map = {};
