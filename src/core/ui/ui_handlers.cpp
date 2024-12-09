@@ -3,12 +3,14 @@
 
 MoveHandler::MoveHandler(
     MapEntity& entity,
+    MapManager& map_manager,
     MapWorld& map_world,
     ulong& entity_depth,
     bool move_only_on_current_depth,
     long dx, long dy
 ):
     entity(entity),
+    map_manager(map_manager),
     map_world(map_world),
     entity_depth(entity_depth),
     move_only_on_current_depth(move_only_on_current_depth),
@@ -17,7 +19,7 @@ MoveHandler::MoveHandler(
 
 void MoveHandler::operator()(KeyboardEvent const&) {
     if (move_only_on_current_depth && map_world.current_depth != entity_depth) return;
-    map_world.current_level().map.move_entity(entity, dx, dy);
+    map_manager.move_entity(entity_depth, dy, dx, entity);
 }
 
 ChangeLevelHandler::ChangeLevelHandler(MapManager& map_manager, Direction dir):

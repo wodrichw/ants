@@ -11,6 +11,7 @@
 
 class MoveHandler: public Subscriber<KeyboardEvent> {
     MapEntity& entity;
+    MapManager& map_manager;
     MapWorld& map_world;
     const ulong& entity_depth;
     bool move_only_on_current_depth;
@@ -18,6 +19,7 @@ class MoveHandler: public Subscriber<KeyboardEvent> {
 public:
     MoveHandler(
         MapEntity& entity,
+        MapManager& map_manager, 
         MapWorld& map_world,
         ulong& entity_depth,
         bool move_only_on_current_depth,

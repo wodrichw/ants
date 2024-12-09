@@ -10,11 +10,25 @@ message Level {
     Map map = 3;
 }
 
+message Region {
+    uint32 seed_x = 1;
+    uint32 seed_y = 2;
+    Rect perimeter = 3;
+    bool is_first_region = 4;
+}
+
+message Region_KeyVal {
+    int64 x = 1;
+    int64 y = 2;
+    Region val = 3;
+}
+
 message MapWorld {
     repeated Level levels = 1;
     uint64 current_depth = 2;
     MapWindow map_window = 3;
     uint64 instr_action_clock = 4;
+    repeated Region_KeyVal region_keyvals = 5;
 }
 
 message MapManager {

@@ -22,6 +22,13 @@ struct RandomMapBuilder {
     void operator()(MapSectionData &section_data) const;
 };
 
+
+struct EmptyMapBuilder {
+    Rect border;
+    EmptyMapBuilder(Rect const &border);
+    void operator()(MapSectionData &section_data) const;
+};
+
 class FileMapBuilder {
     MapSectionData section_data;
     std::function<Rect(long, long, long, long)> rect_parser;
@@ -34,3 +41,4 @@ class FileMapBuilder {
     void load_file(const std::string &filename);
 };
 
+     

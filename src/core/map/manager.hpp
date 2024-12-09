@@ -27,6 +27,13 @@ public:
     );
     MapManager(const ant_proto::MapManager& msg, MapWorld& map_world);
 
+
+    bool update_current_level(const EntityData& d);
+    void update_fov(const EntityData& d);
+    void update_map_window_tiles();
+    void generate_sections(ulong depth, const std::vector<ChunkMarker>& chunks);
+    void set_window_tiles();
+    void move_entity(ulong entity_depth, long dy, long dx, MapEntity& entity);
     bool go_up();
     bool go_down();
     std::vector<Building*> get_current_level_buildings();

@@ -1,8 +1,16 @@
 #include "entity/entity_manager.hpp"
+#include "map/manager.hpp"
 #include "map/world.hpp"
 #include "spdlog/spdlog.h"
 
-EntityManager::EntityManager(MapWorld& map_world, int player_start_x, int player_start_y, ThreadPool<AsyncProgramJob>& job_pool): 
+EntityManager::EntityManager(
+    MapManager& map_manager,
+    MapWorld& map_world,
+    int player_start_x,
+    int player_start_y,
+    ThreadPool<AsyncProgramJob>& job_pool
+): 
+    map_manager(map_manager),
     map_world(map_world),
     player(EntityData(40, 25, '@', 10, color::white), map_world.item_info_map),
     player_depth(0),
@@ -13,7 +21,13 @@ EntityManager::EntityManager(MapWorld& map_world, int player_start_x, int player
     player.data.y = player_start_y;
 }
 
-EntityManager::EntityManager( ant_proto::EntityManager msg, MapWorld& map_world, ThreadPool<AsyncProgramJob>& job_pool) : 
+EntityManager::EntityManager(
+    ant_proto::EntityManager msg,
+    MapManager& map_manager,
+    MapWorld& map_world,
+    ThreadPool<AsyncProgramJob>& job_pool
+) : 
+    map_manager(map_manager),
     map_world(map_world),
     player(msg.player(), map_world.item_info_map),
     player_depth(msg.player_depth()),
@@ -29,50 +43,15 @@ EntityManager::~EntityManager() {
     SPDLOG_TRACE("Destroyed workers and buildings");
 }
 
-void EntityManager::update_fov_ant(EntityData& d) {
-    map_world.map_window.compute_fov(d.x, d.y, d.fov_radius);
-    for(long x = map_world.map_window.border.x1; x < map_world.map_window.border.x2; x++) {
-        for(long y = map_world.map_window.border.y1; y < map_world.map_window.border.y2;
-            y++) {
-            if(!map_world.map_window.in_fov(x, y)) continue;
-
-            map_world.current_level().map.explore(x, y);
-        }
-    }
-}
-
 void EntityManager::update_fov() {
-    // SPDLOG_TRACE("Updating FOV");
-    // map.reset_fov();
-    for(long x = map_world.map_window.border.x1; x < map_world.map_window.border.x2; x++) {
-        for(long y = map_world.map_window.border.y1; y < map_world.map_window.border.y2; y++) {
-            map_world.current_level().map.reset_tile(x, y);
-        }
-    }
-    for(auto ant : map_world.current_level().workers) {
-        update_fov_ant(ant->get_data());
-    }
+    SPDLOG_TRACE("Updating FOV");
+    map_manager.update_map_window_tiles();
+    for(auto ant : map_world.current_level().workers)
+        map_manager.update_fov(ant->get_data());
     if (map_world.current_depth == player_depth)
-        update_fov_ant(player.get_data());
+        map_manager.update_fov(player.get_data());
+
     SPDLOG_TRACE("FOV updated");
-}
-
-void EntityManager::set_window_tiles() {
-    SPDLOG_TRACE("Setting window tiles");
-    for(long local_x = 0; local_x < map_world.map_window.border.w; local_x++) {
-        for(long local_y = 0; local_y < map_world.map_window.border.h; local_y++) {
-            long x = local_x + map_world.map_window.border.x1,
-                 y = local_y + map_world.map_window.border.y1;
-            // SPDLOG_TRACE("Setting tile at ({}, {}) - local ({}, {})", x,
-            // y, local_x, local_y);
-
-            if(map_world.current_level().map.is_wall(x, y)) {
-                map_world.map_window.set_wall(x, y);
-            } else {
-                map_world.map_window.set_floor(x, y);
-            }
-        }
-    }
 }
 
 void EntityManager::update() {
@@ -122,13 +101,8 @@ void EntityManager::update() {
         }
     }
 
-    if(!map_world.current_level().map.needs_update) return;
+    if(!map_manager.update_current_level(player.get_data())) return;
     SPDLOG_TRACE("Updating EntityManager");
-    map_world.current_level().map.needs_update = false;
-
-    map_world.map_window.set_center(player.get_data().x, player.get_data().y);
-    map_world.current_level().map.update_chunks(map_world.map_window.border);
-    set_window_tiles();
     update_fov();
 }
 

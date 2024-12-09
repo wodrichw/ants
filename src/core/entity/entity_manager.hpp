@@ -11,6 +11,7 @@
 #include "utils/thread_pool.hpp"
 
 struct EntityManager {
+    MapManager& map_manager;
     MapWorld& map_world;
     Player player;
     ulong player_depth;
@@ -18,13 +19,22 @@ struct EntityManager {
     Worker* next_worker = nullptr;
 
 
-    EntityManager(MapWorld& map_world, int player_start_x, int player_start_y, ThreadPool<AsyncProgramJob>& job_pool);
-    EntityManager( ant_proto::EntityManager msg, MapWorld& map_world, ThreadPool<AsyncProgramJob>& job_pool);
+    EntityManager(
+        MapManager& map_manager,
+        MapWorld& map_world,
+        int player_start_x,
+        int player_start_y,
+        ThreadPool<AsyncProgramJob>& job_pool
+    );
+    EntityManager(
+        ant_proto::EntityManager msg,
+        MapManager& map_manager,
+        MapWorld& map_world,
+        ThreadPool<AsyncProgramJob>& job_pool
+    );
     ~EntityManager();
 
-    void update_fov_ant(EntityData& d);
     void update_fov();
-    void set_window_tiles();
     void update();
     void create_ant(HardwareManager& hardware_manager, SoftwareManager& software_manager);
     bool build_ant(HardwareManager& hardware_manager, Worker& worker, MachineCode const& machine_code);

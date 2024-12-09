@@ -1,6 +1,7 @@
 #include <fstream>
 
 #include "map/builder.hpp"
+#include "map/section_data.hpp"
 #include "spdlog/spdlog.h"
 
 BspListener::BspListener(MapSectionData &section_data) :
@@ -62,6 +63,16 @@ void RandomMapBuilder::operator()(MapSectionData &section_data) const {
     bsp.splitRecursive(NULL, nb, ROOM_MAX_SIZE, ROOM_MAX_SIZE, 1.5f, 1.5f);
     BspListener listener(section_data);
     bsp.traverseInvertedLevelOrder(&listener, NULL);
+}
+
+
+EmptyMapBuilder::EmptyMapBuilder(Rect const& border):
+    border(border)
+{}
+
+
+void EmptyMapBuilder::operator()(MapSectionData &section_data) const {
+    section_data.rooms.emplace_back(Rect(border));
 }
 
 FileMapBuilder::FileMapBuilder(const std::string &filename) {

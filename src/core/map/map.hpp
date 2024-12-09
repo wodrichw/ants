@@ -21,9 +21,21 @@ struct Tile {
         : is_explored(is_explored), in_fov(in_fov), is_wall(is_wall) {}
 };
 
+struct ChunkMarker {
+    long x;
+    long y;
+    ulong id;
+    bool operator==(ulong rhs_id) { return id == rhs_id; }
+    bool operator==(const ChunkMarker& rhs) { return id == rhs.id; }
+    bool operator<(ulong rhs_id) { return id < rhs_id; }
+    bool operator<(const ChunkMarker& rhs) { return id < rhs.id; }
+
+};
+
 struct Chunk {
     long x = 0, y = 0;
-     bool update_parity = true;
+    bool update_parity = true;
+    bool section_loaded = false;
     std::vector<Tile> tiles;
 
     Chunk() = default;
@@ -76,8 +88,15 @@ class Chunks {
         return chunks.find(chunk_id);
     }
 
+
+    void create_chunk(const ChunkMarker& cm);
+    std::vector<ChunkMarker> get_chunk_markers(const Rect& rect) const;
+
     void erase(ChunkMap::iterator it) { chunks.erase(it); }
+    long align(long pos) const; // takes a tile pos and aligns it to chunk
+    ulong get_chunk_id(long x, long y) const;
     Chunk& operator[](ulong chunk_id) { return *chunks[chunk_id]; }
+    Chunk& operator[](std::pair<long, long> p) { return *chunks[get_chunk_id(p.first, p.second)]; }
     Chunk const& at(ulong chunk_id) const { return *chunks.at(chunk_id); }
     void emplace(ulong chunk_id, Chunk* chunk) {
         chunks.emplace(chunk_id, chunk);
@@ -94,6 +113,7 @@ class Map {
     bool needs_update = true;
     bool chunk_update_parity = false;
 
+    Map(bool is_walls_enabled);
     Map(Rect const& border, bool is_walls_enabled);
     Map(const ant_proto::Map& msg, bool is_walls_enabled);
 
@@ -118,7 +138,6 @@ class Map {
     bool is_explored(long x, long y) const;
     bool is_wall(long x, long y) const;
     bool click(long x, long y);
-    ulong get_chunk_idx(long x, long y) const;
     ulong& get_tile_scents(MapEntity& entity);
     ulong get_tile_scents_by_coord(long x, long y) const;
     ant_proto::Map get_proto() const;
