@@ -19,10 +19,12 @@ struct Level;
 
 
 struct Section_Plan {
+    using buildf_t = std::function<void(Level&, Section_Plan&)>;
     Rect border;
     ulong depth_in_zone;
-    Section_Plan(const Rect& border, ulong depth_in_zone) : border(border), depth_in_zone(depth_in_zone) {}
-    std::function<void(Level&, Section_Plan&)> _build_section;
+    Section_Plan(const Rect& border, ulong depth_in_zone, buildf_t _build_section) :
+        border(border), depth_in_zone(depth_in_zone), _build_section(_build_section) {}
+    buildf_t _build_section;
     void build_section(Level& l) { _build_section(l, *this); }
 private:
 };
@@ -77,7 +79,7 @@ struct Starting_Colony : public Zone{
 
 
 struct Region {
-    using chunk_assignemnts_t = std::vector<std::vector<std::vector<Zone*>>>;
+    using chunk_assignments_t = std::vector<std::vector<std::vector<Zone*>>>;
     uint32_t seed_x;
     uint32_t seed_y;
     Rect perimeter;
@@ -91,15 +93,28 @@ struct Region {
     Region(const ant_proto::Region& msg);
     ant_proto::Region get_proto();
 
-    Section_Plan& section_plan(long x, long y) {
-        ulong sp_x = (x - perimeter.x1) / globals::CHUNK_LENGTH;
-        ulong sp_y = (y - perimeter.y1) / globals::CHUNK_LENGTH;
-        return section_plans[sp_x][sp_y];
+    // Section_Plan& section_plan(long x, long y) {
+    Section_Plan* section_plan( long x, long y, long z ) {
+        std::vector<Section_Plan>& level_sp = section_plans[z];
+
+        auto search_sp = std::lower_bound(level_sp.begin(), level_sp.end(), Section_Plan(Rect(x,y, 1, 1), 0, [](Level&, Section_Plan&){}),
+            [](const Section_Plan& l, const Section_Plan& r) {
+                if( l.border.x1 < r.border.x1 ) return true;
+                if( l.border.x2 > r.border.x2 ) return false;
+                if( l.border.y1 < r.border.y1 ) return true;
+                return false;
+            }
+        );
+
+        if( search_sp == level_sp.end() ) return nullptr;
+        if(! (x >= search_sp->border.x1 && x <= search_sp->border.x2) ) return nullptr;
+        if(! (y >= search_sp->border.y1 && y <= search_sp->border.y2) ) return nullptr;
+        return &*search_sp;
     }
 
     uint32_t get_seed();
-    bool can_place_zone(chunk_assignemnts_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
-    void place_zone(chunk_assignemnts_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
+    bool can_place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
+    void place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
     void do_blueprint_planning();
 };
 
@@ -142,7 +157,9 @@ struct Regions {
         }
 
         if( !l.map.chunk_built(x,y) ){
-            rmap.find({x,y})->second.section_plan(x,y).build_section(l);
+            Section_Plan* search_sp = rmap.find({x,y})->second.section_plan(x,y,l.depth);
+            if( search_sp ) search_sp->build_section(l);
+
         }
     }
     Regions(): rmap() {

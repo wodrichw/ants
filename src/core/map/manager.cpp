@@ -1,10 +1,6 @@
-#include <algorithm>
-
 #include "map/manager.hpp"
 #include "map/map.hpp"
 #include "map/world.hpp"
-
-namespace rgs = std::ranges;
 
 MapManager::MapManager(int map_section_width,
         int map_section_height,
@@ -16,7 +12,7 @@ MapManager::MapManager(int map_section_width,
     map_section_height(map_section_height),
     map_world(map_world)
 {
-
+    map_world.regions.build_section(0,0, map_world.current_level());
 }
 
 
@@ -26,8 +22,6 @@ MapManager::MapManager(const ant_proto::MapManager& msg, MapWorld& map_world):
     map_section_height(msg.map_section_height()),
     map_world(map_world)
 {
-
-    // build section
     map_world.regions.build_section(0,0, map_world.current_level());
 }
 

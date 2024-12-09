@@ -75,8 +75,8 @@ Zone::Zone(ulong w, ulong h, ulong depth, std::function<void(Level&,Section_Plan
 
 Peaceful_Cavern::Peaceful_Cavern():
     Zone(
-        globals::MIN_SECTION_LENGTH*2,
-        globals::MIN_SECTION_LENGTH*2,
+        (globals::MIN_SECTION_LENGTH*2) / globals::CHUNK_LENGTH,
+        (globals::MIN_SECTION_LENGTH*2) / globals::CHUNK_LENGTH,
         globals::MAX_LEVEL_DEPTH,
         build_section
     )
@@ -92,8 +92,8 @@ void Peaceful_Cavern::build_section(Level& l, Section_Plan& sp) {
 
 Starting_Colony::Starting_Colony():
     Zone{
-        globals::MIN_SECTION_LENGTH*2,
-        globals::MIN_SECTION_LENGTH*2,
+        (globals::MIN_SECTION_LENGTH*2) / globals::CHUNK_LENGTH,
+        (globals::MIN_SECTION_LENGTH*2) / globals::CHUNK_LENGTH,
         globals::MAX_LEVEL_DEPTH,
         build_section
     }
@@ -102,7 +102,7 @@ Starting_Colony::Starting_Colony():
 
 void Starting_Colony::build_section(Level& l, Section_Plan& sp) {
     MapSectionData section(sp.border);
-    EmptyMapBuilder(Rect(sp.border));
+    EmptyMapBuilder(Rect(sp.border))(section);
     l.map.load_section(section);
     if( sp.depth_in_zone == 0 && l.depth == 0){ // we know that zone takes up entire depth
         Rect& first_room = section.rooms[0];
@@ -133,7 +133,7 @@ public:
 };
 
 
-bool Region::can_place_zone(chunk_assignemnts_t& chunk_assignemnts, long x, long y, long z, Zone& zone) {
+bool Region::can_place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone) {
     for(ulong i = x; i < x + zone.w; ++i) {
         for(ulong j = y; j < y + zone.h; ++j) {
             for(ulong k = z; k < z + zone.depth; ++k) {
@@ -145,11 +145,11 @@ bool Region::can_place_zone(chunk_assignemnts_t& chunk_assignemnts, long x, long
 }
 
 
-void Region::place_zone(chunk_assignemnts_t& chunk_assignemnts, long x, long y, long z, Zone& zone) {
+void Region::place_zone(chunk_assignments_t& chunk_assignments, long x, long y, long z, Zone& zone) {
     for(ulong i = x; i < x + zone.w; ++i) {
         for(ulong j = y; j < y + zone.h; ++j) {
             for(ulong k = z; k < z + zone.depth; ++k) {
-                chunk_assignemnts[i][j][k] = &zone;
+                chunk_assignments[i][j][k] = &zone;
             }
         }
     }
@@ -174,14 +174,14 @@ void Region::do_blueprint_planning() {
 
 
     long xy_length = globals::WORLD_LENGTH/globals::CHUNK_LENGTH;
-    chunk_assignemnts_t chunk_assignemnts(xy_length, std::vector<std::vector<Zone*>>(xy_length, std::vector<Zone*>(globals::MAX_LEVEL_DEPTH, 0)));
+    chunk_assignments_t chunk_assignments(xy_length, std::vector<std::vector<Zone*>>(xy_length, std::vector<Zone*>(globals::MAX_LEVEL_DEPTH, 0)));
 
     struct placed_zones_t {long chunk_x; long chunk_y; long chunk_z; Zone* zone;};
     std::vector<placed_zones_t> placed_zones;
 
     if( is_first_region ) {
         Zone* starting_coloney = new Starting_Colony();
-        place_zone(chunk_assignemnts, 0,0,0, *starting_coloney);
+        place_zone(chunk_assignments, 0,0,0, *starting_coloney);
         placed_zones.emplace_back(placed_zones_t{0,0,0, starting_coloney});
     }
 
@@ -199,8 +199,8 @@ void Region::do_blueprint_planning() {
             for(long z = 0; z <= globals::MAX_LEVEL_DEPTH; ++z ) {
                 for(long x = 0; x <= xy_length - shape_width; ++x) {
                     for(long y = 0; y <= xy_length - shape_height; ++y) {
-                        if(can_place_zone( chunk_assignemnts, x, y, z, *shape ) ) {
-                            place_zone( chunk_assignemnts, x, y, z, *shape );
+                        if(can_place_zone( chunk_assignments, x, y, z, *shape ) ) {
+                            place_zone( chunk_assignments, x, y, z, *shape );
                             placed_zones.emplace_back(placed_zones_t{x,y,z,shape});
                             placed = true;
                             break;
@@ -232,6 +232,9 @@ void Region::do_blueprint_planning() {
             else return false;
     });
 
+    // ensure section_plans is adequate in size
+    while( section_plans.size() < globals::MAX_LEVEL_DEPTH ) section_plans.push_back({});
+
     for(const auto& zone_placement: placed_zones) {
         for(
             ulong z = zone_placement.chunk_z;
@@ -245,7 +248,8 @@ void Region::do_blueprint_planning() {
                     zone_placement.zone->w * globals::CHUNK_LENGTH,
                     zone_placement.zone->h * globals::CHUNK_LENGTH
                 ),
-                z - zone_placement.chunk_z
+                z - zone_placement.chunk_z,
+                zone_placement.zone->build_section
             );
         }
     }
@@ -263,8 +267,8 @@ Region::Region( const Rect& perimeter):
 {
     // NO Seeds provided so generate them
     TCODRandom *rng = TCODRandom::getInstance();
-    seed_x = rng->getInt(INT_MIN, INT_MAX);
-    seed_y = rng->getInt(INT_MIN, INT_MAX);
+    seed_x = rng->getInt(0, INT_MAX);
+    seed_y = rng->getInt(0, INT_MAX);
     randomizer = TCODRandom(get_seed());
 
     do_blueprint_planning();
