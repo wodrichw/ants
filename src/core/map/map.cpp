@@ -377,7 +377,7 @@ void Map::add_missing_chunks(Rect const& rect) {
 }
 
 
-std::vector<ChunkMarker> Map::get_chunk_markers(const Rect& rect) {
+std::vector<ChunkMarker> Map::get_chunk_markers(const Rect& rect) const {
     return chunks.get_chunk_markers(rect);
 }
 

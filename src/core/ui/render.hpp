@@ -53,6 +53,7 @@ struct MapTileRenderer {
 
 struct TcodMapTileRenderer : public MapTileRenderer {
     Map const& map;
+    bool is_debug_graphics;
     TcodMapTileRenderer(Map const& map);
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
@@ -61,6 +62,12 @@ struct ScentMapTileRenderer : public MapTileRenderer {
     Map const& map;
     ulong scent_idx;
     ScentMapTileRenderer(Map const& map, ulong scent_idx);
+    void operator()(TCOD_ConsoleTile& tile, long x, long y);
+};
+
+struct DebugMapTileRenderer : public MapTileRenderer {
+    Map const& map;
+    DebugMapTileRenderer(Map const& map);
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
 
@@ -78,6 +85,7 @@ class tcodRenderer : public Renderer {
     void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
                                    long& tile_y);
     void use_default_tile_rendering();
+    void use_debug_tile_rendering();
     void use_scent_tile_rendering(ulong);
 
    private:
