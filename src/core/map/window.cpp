@@ -1,7 +1,6 @@
 #include <libtcod.hpp>
 
 #include "map/window.hpp"
-#include "proto/entity.pb.h"
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;

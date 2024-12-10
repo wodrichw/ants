@@ -97,19 +97,33 @@ struct Region {
     Section_Plan* section_plan( long x, long y, long z ) {
         std::vector<Section_Plan>& level_sp = section_plans[z];
 
-        auto search_sp = std::lower_bound(level_sp.begin(), level_sp.end(), Section_Plan(Rect(x,y, 1, 1), 0, [](Level&, Section_Plan&){}),
-            [](const Section_Plan& l, const Section_Plan& r) {
-                if( l.border.x1 < r.border.x1 ) return true;
-                if( l.border.x2 > r.border.x2 ) return false;
-                if( l.border.y1 < r.border.y1 ) return true;
-                return false;
-            }
-        );
+        // auto search_sp = std::lower_bound(level_sp.begin(), level_sp.end(), Section_Plan(Rect(x,y, 1, 1), 0, [](Level&, Section_Plan&){}),
+        //     [](const Section_Plan& l, const Section_Plan& r) {
+        //         std::cout << "DEBUG: " << l.border.x1 << "  " << l.border.y1 << " : " << r.border.x1 << "  " << r.border.y1;
+        //         if( l.border.x1 < r.border.x1 ) { std::cout << " t" << std::endl; return true; }
+        //         if( l.border.x1 > r.border.x1 ) { std::cout << " f" << std::endl; return false; }
+        //         if( l.border.y1 < r.border.y1 ) { std::cout << " t" << std::endl; return true; }
+        //         std::cout << " f" << std::endl;
+        //         return false;
+        //     }
+        // );
+        //
+        // if( search_sp == level_sp.end() ) return nullptr;
+        // ++search_sp;  // we want the seaerch that likely contains our x,y coordinates
+        // // if( search_sp == level_sp.end() ) return nullptr;
+        //
+        // if(! (x >= search_sp->border.x1 && x <= search_sp->border.x2) ) return nullptr;
+        // if(! (y >= search_sp->border.y1 && y <= search_sp->border.y2) ) return nullptr;
+        // return &*search_sp;
 
-        if( search_sp == level_sp.end() ) return nullptr;
-        if(! (x >= search_sp->border.x1 && x <= search_sp->border.x2) ) return nullptr;
-        if(! (y >= search_sp->border.y1 && y <= search_sp->border.y2) ) return nullptr;
-        return &*search_sp;
+        // linear search for now, if a performance issue then use binary search like ^ but without the bugs
+        for( auto& scan_sp: level_sp ) {
+            if( scan_sp.border.x1 <= x && scan_sp.border.x2 >= x &&
+                scan_sp.border.y1 <= y && scan_sp.border.y2 >= y
+            )
+                return &scan_sp;
+        }
+        return nullptr;
     }
 
     uint32_t get_seed();

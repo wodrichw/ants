@@ -353,8 +353,7 @@ void Map::create_chunk(long x, long y) {
              div_floor(y, globals::CHUNK_LENGTH) * globals::CHUNK_LENGTH;
 
     SPDLOG_DEBUG("Adding chunk ({}, {}) - id: {}", x, y, chunk_id);
-    chunks.emplace(chunk_id,
-                   new Chunk(aligned_x, aligned_y, chunk_update_parity));
+    chunks.emplace(chunk_id, new Chunk(aligned_x, aligned_y, chunk_update_parity));
 }
 
 
@@ -375,6 +374,11 @@ void Map::add_missing_chunks(Rect const& rect) {
         }
     }
     SPDLOG_TRACE("Finished loading missing chunks");
+}
+
+
+std::vector<ChunkMarker> Map::get_chunk_markers(const Rect& rect) {
+    return chunks.get_chunk_markers(rect);
 }
 
 

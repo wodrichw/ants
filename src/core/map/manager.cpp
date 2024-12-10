@@ -1,4 +1,6 @@
+#include <ranges>
 #include "map/manager.hpp"
+#include "app/globals.hpp"
 #include "map/map.hpp"
 #include "map/world.hpp"
 
@@ -42,10 +44,8 @@ bool MapManager::update_current_level(const EntityData& d) {
 void MapManager::update_fov(const EntityData& d) {
     map_world.map_window.compute_fov(d.x, d.y, d.fov_radius);
     for(long x = map_world.map_window.border.x1; x < map_world.map_window.border.x2; x++) {
-        for(long y = map_world.map_window.border.y1; y < map_world.map_window.border.y2;
-            y++) {
+        for(long y = map_world.map_window.border.y1; y < map_world.map_window.border.y2; y++) {
             if(!map_world.map_window.in_fov(x, y)) continue;
-
             map_world.current_level().map.explore(x, y);
         }
     }
@@ -58,11 +58,6 @@ void MapManager::update_map_window_tiles() {
             map_world.current_level().map.reset_tile(x, y);
         }
     }
-}
-
-void MapManager::generate_sections(ulong depth, const std::vector<ChunkMarker>& chunks) {
-    for(const auto& chunk: chunks)
-        map_world.regions.build_section(chunk.x, chunk.y, map_world.levels[depth]);
 }
 
 
@@ -85,11 +80,27 @@ void MapManager::set_window_tiles() {
 }
 
 
-void MapManager::move_entity(ulong entity_depth, long dy, long dx, MapEntity& entity) {
+void MapManager::generate_sections(ulong depth, const std::vector<ChunkMarker>& chunks) {
+    Map& map = map_world[depth].map;
+    auto unbuilt_chunks = chunks 
+        | std::views::filter([&map](const ChunkMarker& cm){ return !map.chunk_built(cm); });
 
-    std::vector<ChunkMarker> added_chunks;
-    bool successful_move  = map_world[entity_depth].map.move_entity(entity, dx, dy);
-    if (successful_move) generate_sections(entity_depth, added_chunks);
+    for(const auto& chunk: unbuilt_chunks)
+        map_world.regions.build_section(chunk.x, chunk.y, map_world.levels[depth]);
+}
+
+
+void MapManager::move_entity(ulong entity_depth, long dy, long dx, MapEntity& entity) {
+    Map& map = map_world[entity_depth].map;
+    bool successful_move  = map.move_entity(entity, dx, dy);
+    if (successful_move) {
+        //inspect for freshly added chunks and generate sections if necessary
+        EntityData& ed = entity.get_data();
+        ulong cl = globals::CHUNK_LENGTH;
+        std::vector<ChunkMarker> added_chunks = map.get_chunk_markers(Rect(ed.x - cl, ed.y - cl, cl*2, cl*2));
+        added_chunks | std::views::filter([&map](const ChunkMarker& cm){ return map.chunk_built(cm); });
+        generate_sections(entity_depth, added_chunks);
+    }
 }
 
 

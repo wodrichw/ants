@@ -30,7 +30,7 @@ class Renderer {
 };
 
 class NoneRenderer : public Renderer {
-   public:
+public:
     NoneRenderer() { SPDLOG_INFO("NoneRenderer initialized"); }
     void render_map(LayoutBox const&, Map const&, MapWindow const&){};
     void render_ant(LayoutBox const&, Map&, EntityData&, MapWindow const&){};

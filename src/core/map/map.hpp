@@ -129,6 +129,7 @@ class Map {
     Building* get_building(MapEntity& entity);
     void create_chunk(long x, long y);
     void add_missing_chunks(Rect const& rect);
+    std::vector<ChunkMarker> get_chunk_markers(const Rect& rect);
     void remove_unused_chunks();
     void update_chunks(Rect const& rect);
     void reset_fov();
