@@ -23,11 +23,12 @@ Level::Level(
     const ulong &instr_clock,
     const ItemInfoMap& item_map,
     ThreadPool<AsyncProgramJob>& thread_pool,
-    bool is_walls_enabled
+    bool is_walls_enabled,
+    f_xy_t pre_chunk_generation_callback
 ):
     workers{},
     buildings{},
-    map(msg.map(), is_walls_enabled)
+    map(msg.map(), is_walls_enabled, pre_chunk_generation_callback)
 {
     for(const auto& worker_msg: msg.workers())
         workers.emplace_back(new Worker(worker_msg, instr_clock, item_map, thread_pool));
@@ -85,7 +86,7 @@ Peaceful_Cavern::Peaceful_Cavern():
 
 void Peaceful_Cavern::build_section(Level& l, Section_Plan& sp) {
     MapSectionData section(sp.border);
-    RandomMapBuilder(Rect(sp.border));
+    RandomMapBuilder(Rect(sp.border))(section);
     l.map.load_section(section);
 }
 
@@ -286,12 +287,6 @@ Region::Region(
     randomizer(get_seed()),
     is_first_region(false)
 {
-    // NO Seeds provided so generate them
-    TCODRandom *rng = TCODRandom::getInstance();
-    seed_x = rng->getInt(INT_MIN, INT_MAX);
-    seed_y = rng->getInt(INT_MIN, INT_MAX);
-    randomizer = TCODRandom(get_seed());
-
     do_blueprint_planning();
 }
 
@@ -312,6 +307,15 @@ ant_proto::Region Region::get_proto() {
 }
 
 
+struct Generate_Chunk_Callback {
+    ulong depth;
+    MapWorld& w;
+    void operator()(long x, long y) {
+        w.regions.build_section(x, y, w.levels[depth]);
+    }
+};
+
+
 MapWorld::MapWorld(const Rect& border, bool is_walls_enabled): 
     levels{},
     regions(),
@@ -319,7 +323,7 @@ MapWorld::MapWorld(const Rect& border, bool is_walls_enabled):
 {
     // Ensure that levels are created
     for( size_t i = 0; i < globals::MAX_LEVEL_DEPTH; ++i )
-        if( levels.size() <= i ) levels.emplace_back(Level(Map(is_walls_enabled), i));
+        levels.emplace_back(Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
 }
 
 
@@ -334,8 +338,10 @@ MapWorld::MapWorld(
     item_info_map(),
     instr_action_clock(msg.instr_action_clock())
 {
-    for( int i = 0; i < msg.levels().size(); ++i )
-        levels[i] = Level(msg.levels()[i], instr_action_clock, item_info_map, thread_pool, is_walls_enabled);
+    for( int i = 0; i < msg.levels().size(); ++i ) {
+        auto cb =  Generate_Chunk_Callback{static_cast<ulong>(i), *this};
+        levels[i] = Level(msg.levels()[i], instr_action_clock, item_info_map, thread_pool, is_walls_enabled, cb);
+    }
 }
 
 

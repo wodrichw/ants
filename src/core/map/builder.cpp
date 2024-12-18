@@ -42,7 +42,7 @@ bool BspListener::visitNode(TCODBsp *node, void *user_data) {
 }
 
 RandomMapBuilder::RandomMapBuilder(Rect const &border) : border(border) {
-    SPDLOG_INFO("Creating RandomMapBuilder");
+    // SPDLOG_INFO("Creating RandomMapBuilder");
 }
 
 void RandomMapBuilder::operator()(MapSectionData &section_data) const {

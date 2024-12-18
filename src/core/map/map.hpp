@@ -109,17 +109,20 @@ class Chunks {
 };
 
 class Map {
+    using f_xy_t = std::function<void(long, long)>;
+    f_xy_t generate_chunk_callback;
    public:
     bool needs_update = true;
     bool chunk_update_parity = false;
 
-    Map(bool is_walls_enabled);
-    Map(Rect const& border, bool is_walls_enabled);
-    Map(const ant_proto::Map& msg, bool is_walls_enabled);
+
+    Map(bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
+    Map(Rect const& border, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
+    Map(const ant_proto::Map& msg, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
 
     void load_section(MapSectionData const& section_data);
     void dig(long x1, long y1, long x2, long y2);
-    bool can_place(long x, long y) const;
+    bool can_place(long x, long y);
     void add_entity_wo_events(MapEntity& entity);
     void add_entity(MapEntity& entity);
     void remove_entity(MapEntity& entity);
@@ -128,7 +131,6 @@ class Map {
     void add_building(Building& building);
     Building* get_building(MapEntity& entity);
     void create_chunk(long x, long y);
-    void add_missing_chunks(Rect const& rect);
     std::vector<ChunkMarker> get_chunk_markers(const Rect& rect) const;
     void remove_unused_chunks();
     void update_chunks(Rect const& rect);
@@ -137,12 +139,12 @@ class Map {
     void explore(long x, long y);
     bool chunk_built(const ChunkMarker& cm) const;
     bool chunk_built(long x, long y) const;
-    bool in_fov(long x, long y) const;
-    bool is_explored(long x, long y) const;
-    bool is_wall(long x, long y) const;
+    bool in_fov(long x, long y);
+    bool is_explored(long x, long y);
+    bool is_wall(long x, long y);
     bool click(long x, long y);
     ulong& get_tile_scents(MapEntity& entity);
-    ulong get_tile_scents_by_coord(long x, long y) const;
+    ulong get_tile_scents_by_coord(long x, long y);
     ant_proto::Map get_proto() const;
 
    private:
@@ -150,7 +152,6 @@ class Map {
     Chunk const& get_chunk_const(long x, long y) const;
     long get_local_idx(long chunk_x, long chunk_y, long x, long y) const;
     Tile& get_tile(long x, long y);
-    Tile const& get_tile_const(long x, long y) const;
     uchar flip_direction_bits(uchar bits);
     void notify_removed_entity(long x, long y, uchar bits);
     void notify_moved_entity(MapEntity& source, long x, long y, uchar bits);

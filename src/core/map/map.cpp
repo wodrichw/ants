@@ -9,7 +9,7 @@ Chunk::Chunk(long x, long y, bool update_parity) :
     x(x),
     y(y),
     update_parity(update_parity),
-    tiles(globals::CHUNK_AREA) 
+    tiles(globals::CHUNK_AREA, Tile()) 
 {}
 
 
@@ -125,8 +125,8 @@ ulong Chunks::get_chunk_id(long x, long y) const {
 std::vector<ChunkMarker> Chunks::get_chunk_markers(const Rect& rect) const {
     std::vector<ChunkMarker> c_markers;
 
-    for(long x = rect.x1; x <= rect.x2 + globals::CHUNK_LENGTH; x += globals::CHUNK_LENGTH) {
-        for(long y = rect.y1; y <= rect.y2 + globals::CHUNK_LENGTH; y += globals::CHUNK_LENGTH) {
+    for(long x = rect.x1; x <= rect.x2; x += globals::CHUNK_LENGTH) {
+        for(long y = rect.y1; y <= rect.y2; y += globals::CHUNK_LENGTH) {
             ulong id = get_chunk_id(x, y);
             auto it = std::lower_bound(c_markers.begin(), c_markers.end(), id);
             if( it != c_markers.end() && it->id == id ) continue; // already in c_markers
@@ -149,20 +149,23 @@ ant_proto::Chunks Chunks::get_proto() const {
 }
 
 
-Map::Map(bool is_walls_enabled) :
-    is_walls_enabled(is_walls_enabled) 
+Map::Map(bool is_walls_enabled, f_xy_t pre_chunk_generation_callback) :
+    generate_chunk_callback(pre_chunk_generation_callback),
+    is_walls_enabled(is_walls_enabled)
 { }
 
 
-Map::Map(Rect const& border, bool is_walls_enabled)
-    : is_walls_enabled(is_walls_enabled) {
+Map::Map(Rect const& border, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback):
+    generate_chunk_callback(pre_chunk_generation_callback),
+    is_walls_enabled(is_walls_enabled)
+{
     SPDLOG_INFO("Creating map with border: ({}, {}) - {}x{}", border.x1,
                 border.y1, border.w, border.h);
-    add_missing_chunks(border);
 }
 
 
-Map::Map(const ant_proto::Map& msg, bool is_walls_enabled):
+Map::Map(const ant_proto::Map& msg, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback):
+    generate_chunk_callback(pre_chunk_generation_callback),
     needs_update(msg.needs_update()),
     chunk_update_parity(msg.chunk_update_parity()),
     chunks(msg.chunks()),
@@ -177,10 +180,15 @@ Map::Map(const ant_proto::Map& msg, bool is_walls_enabled):
 
 
 void Map::load_section(MapSectionData const& section_data) {
-    SPDLOG_INFO("Loading section data into map: ({}, {}) - {}x{}",
-                section_data.border.x1, section_data.border.y1,
-                section_data.border.w, section_data.border.h);
-    add_missing_chunks(section_data.border);
+    for(const auto& cm: chunks.get_chunk_markers(section_data.border) ) {
+        Chunk& c = get_chunk(cm.x, cm.y);
+        c.section_loaded = true;
+    }
+
+
+    // SPDLOG_INFO("Loading section data into map: ({}, {}) - {}x{}",
+    //             section_data.border.x1, section_data.border.y1,
+    //             section_data.border.w, section_data.border.h);
 
 
     long origin_x = section_data.border.x1,
@@ -194,9 +202,6 @@ void Map::load_section(MapSectionData const& section_data) {
         dig(origin_x + corridor.x1, origin_y + corridor.y1,
             origin_x + corridor.x2, origin_y + corridor.y2);
     }
-
-    for(const auto& cm: chunks.get_chunk_markers(section_data.border) )
-        chunks.find(cm.id)->second->section_loaded = true;
 }
 
 void Map::dig(long x1, long y1, long x2, long y2) {
@@ -224,8 +229,8 @@ void Map::dig(long x1, long y1, long x2, long y2) {
 }
 
 
-bool Map::can_place(long x, long y) const {
-    Tile const& tile = get_tile_const(x, y);
+bool Map::can_place(long x, long y) {
+    Tile const& tile = get_tile(x, y);
     if(tile.is_wall) return false;
     if(tile.entity != nullptr) {
         tile.entity->request_move();
@@ -292,9 +297,6 @@ bool Map::move_entity(MapEntity& entity, long dx, long dy) {
     data.y = new_y;
     add_entity(entity);
 
-    // This will likely need to be changed once more sophisticated map generation is put in place
-    add_missing_chunks(Rect(new_x, new_y, 1, 1));
-
     // notify that the entity was successfully moved
     notify_all_moved_entity(new_x, new_y, entity);
 
@@ -347,33 +349,14 @@ void Map::create_chunk(long x, long y) {
         return;
     }
 
-    long aligned_x =
-             div_floor(x, globals::CHUNK_LENGTH) * globals::CHUNK_LENGTH,
-         aligned_y =
-             div_floor(y, globals::CHUNK_LENGTH) * globals::CHUNK_LENGTH;
+    long aligned_x = chunks.align(x),
+         aligned_y = chunks.align(y);
 
     SPDLOG_DEBUG("Adding chunk ({}, {}) - id: {}", x, y, chunk_id);
     chunks.emplace(chunk_id, new Chunk(aligned_x, aligned_y, chunk_update_parity));
-}
 
-
-void Map::add_missing_chunks(Rect const& rect) {
-    long buffer = 1;
-    long x1 = (div_floor(rect.x1, globals::CHUNK_LENGTH) - buffer) *
-              globals::CHUNK_LENGTH,
-         y1 = (div_floor(rect.y1, globals::CHUNK_LENGTH) - buffer) *
-              globals::CHUNK_LENGTH;
-    long x2 = rect.x2 + buffer * globals::CHUNK_LENGTH,
-         y2 = rect.y2 + buffer * globals::CHUNK_LENGTH;
-
-    SPDLOG_DEBUG("Loading missing chunks: ({}, {}) - ({}, {})", x1, y1, x2,
-                 y2);
-    for(long x = x1; x <= x2; x += globals::CHUNK_LENGTH) {
-        for(long y = y1; y <= y2; y += globals::CHUNK_LENGTH) {
-            create_chunk(x, y);
-        }
-    }
-    SPDLOG_TRACE("Finished loading missing chunks");
+    // create chunk
+    generate_chunk_callback(x, y);
 }
 
 
@@ -401,8 +384,6 @@ void Map::update_chunks(Rect const& rect) {
     SPDLOG_DEBUG("Updating chunks: ({}, {}) - ({}, {})", rect.x1, rect.y1,
                  rect.x2, rect.y2);
     chunk_update_parity = !chunk_update_parity;
-    add_missing_chunks(rect);
-    // remove_unused_chunks();
     SPDLOG_TRACE("Finished updating chunks");
 }
 
@@ -442,21 +423,21 @@ bool Map::chunk_built(long x, long y) const {
 }
 
 
-bool Map::in_fov(long x, long y) const {
+bool Map::in_fov(long x, long y) {
     // SPDLOG_TRACE("Checking if tile at ({}, {}) is in fov", x, y);
 
-    return get_tile_const(x, y).in_fov;
+    return get_tile(x, y).in_fov;
 }
 
 
-bool Map::is_explored(long x, long y) const {
+bool Map::is_explored(long x, long y) {
     // SPDLOG_TRACE("Checking if tile at ({}, {}) is explored", x, y);
-    return get_tile_const(x, y).is_explored;
+    return get_tile(x, y).is_explored;
 }
 
 
-bool Map::is_wall(long x, long y) const {
-    return get_tile_const(x, y).is_wall;
+bool Map::is_wall(long x, long y) {
+    return get_tile(x, y).is_wall;
 }
 
 
@@ -474,8 +455,8 @@ ulong& Map::get_tile_scents(MapEntity& entity) {
 }
 
 
-ulong Map::get_tile_scents_by_coord(long x, long y) const {
-    return get_tile_const(x, y).scents;
+ulong Map::get_tile_scents_by_coord(long x, long y) {
+    return get_tile(x, y).scents;
 }
 
 
@@ -512,10 +493,12 @@ Tile& Map::get_tile(long x, long y) {
 }
 
 
-Tile const& Map::get_tile_const(long x, long y) const {
-    Chunk const& chunk = get_chunk_const(x, y);
-    return chunk[get_local_idx(chunk.x, chunk.y, x, y)];
-}
+// Tile const& Map::get_tile(long x, long y) {
+//     // Chunk const& chunk = get_chunk_const(x, y);
+//     // return chunk[get_local_idx(chunk.x, chunk.y, x, y)];
+//     const Chunk& chunk = get_chunk(x, y);
+//     return chunk[get_local_idx(chunk.x, chunk.y, x, y)];
+// }
 
 
 uchar Map::flip_direction_bits(uchar bits) {

@@ -74,7 +74,7 @@ tcodRenderer::tcodRenderer(bool is_debug_graphics)
 }
 
 
-void tcodRenderer::render_map(LayoutBox const &box, Map const &map,
+void tcodRenderer::render_map(LayoutBox const &box, Map &map,
                               MapWindow const &window) {
     std::unique_ptr<MapTileRenderer> tile_renderer = generate_tile_renderer(map);
 
@@ -100,7 +100,7 @@ void tcodRenderer::render_map(LayoutBox const &box, Map const &map,
 }
 
 
-DebugMapTileRenderer::DebugMapTileRenderer(Map const& map): map(map) {}
+DebugMapTileRenderer::DebugMapTileRenderer(Map& map): map(map) {}
 
 
 void DebugMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
@@ -118,7 +118,7 @@ void DebugMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
 }
 
 
-TcodMapTileRenderer::TcodMapTileRenderer(Map const& map): map(map) {} 
+TcodMapTileRenderer::TcodMapTileRenderer(Map& map): map(map) {} 
 
 
 void TcodMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
@@ -142,7 +142,7 @@ void TcodMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
 }
 
 
-ScentMapTileRenderer::ScentMapTileRenderer(Map const& map, ulong scent_idx): map(map), scent_idx(scent_idx) {
+ScentMapTileRenderer::ScentMapTileRenderer(Map& map, ulong scent_idx): map(map), scent_idx(scent_idx) {
     SPDLOG_TRACE("Created scent map tile renderer with scent_idx: {}", scent_idx);
 } 
 
@@ -332,14 +332,14 @@ const std::array<int, 4> tcodRenderer::get_rect(LayoutBox const &box, long x,
 
 void tcodRenderer::use_default_tile_rendering() {
     SPDLOG_INFO("Using default map tile renderer");
-    generate_tile_renderer = [](Map const& map) {
+    generate_tile_renderer = [](Map& map) {
         return std::make_unique<TcodMapTileRenderer>(map);
     };
 }
 
 void tcodRenderer::use_debug_tile_rendering() {
     SPDLOG_INFO("Using default map tile renderer");
-    generate_tile_renderer = [](Map const& map) {
+    generate_tile_renderer = [](Map& map) {
         return std::make_unique<DebugMapTileRenderer>(map);
     };
 }
@@ -347,7 +347,7 @@ void tcodRenderer::use_debug_tile_rendering() {
 
 void tcodRenderer::use_scent_tile_rendering(ulong scent_idx) {
     SPDLOG_INFO("Using scent map tile renderer - scent index: {}", scent_idx);
-    generate_tile_renderer = [scent_idx](Map const& map) {
+    generate_tile_renderer = [scent_idx](Map& map) {
         return std::make_unique<ScentMapTileRenderer>(map, scent_idx);
     };
 }

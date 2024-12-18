@@ -22,11 +22,11 @@ struct Section_Plan {
     using buildf_t = std::function<void(Level&, Section_Plan&)>;
     Rect border;
     ulong depth_in_zone;
+    bool in_construction;
     Section_Plan(const Rect& border, ulong depth_in_zone, buildf_t _build_section) :
-        border(border), depth_in_zone(depth_in_zone), _build_section(_build_section) {}
+        border(border), depth_in_zone(depth_in_zone), in_construction(false), _build_section(_build_section) {}
     buildf_t _build_section;
     void build_section(Level& l) { _build_section(l, *this); }
-private:
 };
 
 
@@ -37,6 +37,7 @@ struct Start_Data {
 
 
 struct Level {
+    using f_xy_t = std::function<void(long, long)>;
     std::optional<Start_Data> start_info = {}; // only filled if required for start position
     std::vector<Worker*> workers = {};
     std::vector<Building*> buildings = {};
@@ -44,7 +45,13 @@ struct Level {
     ulong depth;
 
     Level(const Map& map, ulong depth);
-    Level(const ant_proto::Level& msg, const ulong &instr_clock, const ItemInfoMap& item_map, ThreadPool<AsyncProgramJob>& thread_pool,  bool is_walls_enabled);
+    Level(const ant_proto::Level& msg,
+        const ulong &instr_clock,
+        const ItemInfoMap& item_map,
+        ThreadPool<AsyncProgramJob>& thread_pool,
+        bool is_walls_enabled,
+        f_xy_t pre_chunk_generation_callback
+    );
 
     ant_proto::Level get_proto() const;
 
@@ -69,6 +76,7 @@ struct Peaceful_Cavern : public Zone{
     ~Peaceful_Cavern() {}
     static void build_section(Level&, Section_Plan&);
 };
+
 
 struct Starting_Colony : public Zone{
     Starting_Colony();
@@ -132,6 +140,7 @@ struct Region {
     void do_blueprint_planning();
 };
 
+
 struct Region_Key {
     long x;
     long y;
@@ -140,6 +149,7 @@ struct Region_Key {
             div_floor(y, globals::WORLD_LENGTH) < div_floor(rhs.y, globals::WORLD_LENGTH);
     }
 };
+
 
 namespace std {
     template <>
@@ -162,20 +172,24 @@ namespace std {
 
 
 struct Regions {
+    long align_to_region(long pos) { return div_floor(pos, globals::WORLD_LENGTH) * globals::WORLD_LENGTH; }
     std::unordered_map<Region_Key, Region> rmap;
     void build_section(long x, long y, Level& l) {
-        if( rmap.find({x,y}) == rmap.end() ) {
-            long snap_x = div_floor(x, globals::WORLD_LENGTH);
-            long snap_y = div_floor(y, globals::WORLD_LENGTH);
-            rmap.emplace(Region_Key{x,y}, Region(Rect(snap_x,snap_y, globals::WORLD_LENGTH, globals::WORLD_LENGTH)));
+        auto find_itr = rmap.find({x,y});
+        if( find_itr == rmap.end() ) {
+            long snap_x = align_to_region(x);
+            long snap_y = align_to_region(y);
+            find_itr = rmap.emplace(Region_Key{x,y}, Region(Rect(snap_x,snap_y, globals::WORLD_LENGTH, globals::WORLD_LENGTH))).first;
         }
 
-        if( !l.map.chunk_built(x,y) ){
-            Section_Plan* search_sp = rmap.find({x,y})->second.section_plan(x,y,l.depth);
-            if( search_sp ) search_sp->build_section(l);
-
+        Section_Plan* search_sp = find_itr->second.section_plan(x,y,l.depth);
+        if( search_sp && !search_sp->in_construction ) {
+            search_sp->in_construction = true;
+            if( l.map.chunk_built(x,y) ) return;
+            search_sp->build_section(l);
         }
     }
+
     Regions(): rmap() {
         rmap.emplace(Region_Key{0,0}, Region(Rect(0,0, globals::WORLD_LENGTH, globals::WORLD_LENGTH)));
     }
