@@ -10,10 +10,13 @@
 #include "entity/entity_manager.hpp"
 #include "hardware.pb.h"
 #include "hardware/program_executor.hpp"
+#include "map/manager.hpp"
 #include "ui/event_system.hpp"
 #include "ui/render.hpp"
 #include "hardware/hardware_manager.hpp"
 #include "utils/thread_pool.hpp"
+
+struct Level;
 
 class Mode {
    public:
@@ -80,6 +83,8 @@ class PrimaryMode : public Mode {
     LayoutBox& box;
     HardwareManager hardware_manager;
     EntityManager& entity_manager;
+    MapManager& map_manager;
+    MapWorld& map_world;
     Renderer& renderer;
     bool& is_reload_game;
     const ThreadPool<AsyncProgramJob>& job_pool;
@@ -90,6 +95,8 @@ class PrimaryMode : public Mode {
             CommandMap const& command_map,
             SoftwareManager& software_manager,
             EntityManager& entity_manager,
+            MapManager& map_manager,
+            MapWorld& map_world,
             Renderer& renderer,
             bool& is_reload_game,
             const ThreadPool<AsyncProgramJob>& job_pool
@@ -101,6 +108,8 @@ class PrimaryMode : public Mode {
             CommandMap const& command_map,
             SoftwareManager& software_manager,
             EntityManager& entity_manager,
+            MapManager& map_manager,
+            MapWorld& map_world,
             Renderer& renderer,
             bool& is_reload_game,
             const ThreadPool<AsyncProgramJob>& job_pool

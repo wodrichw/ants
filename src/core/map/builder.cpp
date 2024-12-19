@@ -1,6 +1,7 @@
 #include <fstream>
 
-#include "entity/map_builder.hpp"
+#include "map/builder.hpp"
+#include "map/section_data.hpp"
 #include "spdlog/spdlog.h"
 
 BspListener::BspListener(MapSectionData &section_data) :
@@ -41,7 +42,7 @@ bool BspListener::visitNode(TCODBsp *node, void *user_data) {
 }
 
 RandomMapBuilder::RandomMapBuilder(Rect const &border) : border(border) {
-    SPDLOG_INFO("Creating RandomMapBuilder");
+    // SPDLOG_INFO("Creating RandomMapBuilder");
 }
 
 void RandomMapBuilder::operator()(MapSectionData &section_data) const {
@@ -64,7 +65,19 @@ void RandomMapBuilder::operator()(MapSectionData &section_data) const {
     bsp.traverseInvertedLevelOrder(&listener, NULL);
 }
 
-FileMapBuilder::FileMapBuilder(const std::string &filename) {
+
+EmptyMapBuilder::EmptyMapBuilder(Rect const& border):
+    border(border)
+{}
+
+
+void EmptyMapBuilder::operator()(MapSectionData &section_data) const {
+    section_data.rooms.emplace_back(Rect(border));
+}
+
+FileMapBuilder::FileMapBuilder(const std::string &filename):
+    section_data({})
+{
     SPDLOG_INFO("Creating FileMapBuilder");
     load_file(filename);
 }

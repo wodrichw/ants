@@ -4,16 +4,16 @@
 #include <libtcod.hpp>
 
 #include "entity/building.hpp"
-#include "entity/map.hpp"
 #include "entity/entity_data.hpp"
-#include "entity/map_window.hpp"
+#include "map/map.hpp"
+#include "map/window.hpp"
 #include "ui/layoutbox.hpp"
 #include "ui/text_editor.hpp"
 #include "spdlog/spdlog.h"
 
 class Renderer {
    public:
-    virtual void render_map(LayoutBox const&, Map const&, MapWindow const&) = 0;
+    virtual void render_map(LayoutBox const&, Map&, MapWindow const&) = 0;
     virtual void render_ant(LayoutBox const& box, Map& map, EntityData& a,
                             MapWindow const&) = 0;
     virtual void render_building(LayoutBox const& box, Building& b,
@@ -29,10 +29,11 @@ class Renderer {
     virtual void use_scent_tile_rendering(ulong) = 0;
 };
 
+
 class NoneRenderer : public Renderer {
-   public:
+public:
     NoneRenderer() { SPDLOG_INFO("NoneRenderer initialized"); }
-    void render_map(LayoutBox const&, Map const&, MapWindow const&){};
+    void render_map(LayoutBox const&, Map&, MapWindow const&){};
     void render_ant(LayoutBox const&, Map&, EntityData&, MapWindow const&){};
     void render_building(LayoutBox const&, Building&, MapWindow const&){};
     void render_text_editor(LayoutBox const&, TextEditor const&, size_t){};
@@ -46,28 +47,40 @@ class NoneRenderer : public Renderer {
     void use_scent_tile_rendering(ulong) {}
 };
 
+
 struct MapTileRenderer {
     virtual ~MapTileRenderer() {}
     virtual void operator()(TCOD_ConsoleTile& tile, long x, long y)=0;
 };
 
+
 struct TcodMapTileRenderer : public MapTileRenderer {
-    Map const& map;
-    TcodMapTileRenderer(Map const& map);
+    Map& map;
+    bool is_debug_graphics;
+    TcodMapTileRenderer(Map& map);
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
 
+
 struct ScentMapTileRenderer : public MapTileRenderer {
-    Map const& map;
+    Map& map;
     ulong scent_idx;
-    ScentMapTileRenderer(Map const& map, ulong scent_idx);
+    ScentMapTileRenderer(Map& map, ulong scent_idx);
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
+
+
+struct DebugMapTileRenderer : public MapTileRenderer {
+    Map& map;
+    DebugMapTileRenderer(Map& map);
+    void operator()(TCOD_ConsoleTile& tile, long x, long y);
+};
+
 
 class tcodRenderer : public Renderer {
    public:
     tcodRenderer(bool is_debug_graphics);
-    void render_map(LayoutBox const&, Map const&, MapWindow const&);
+    void render_map(LayoutBox const&, Map&, MapWindow const&);
     void render_ant(LayoutBox const& box, Map& map, EntityData& a,
                     MapWindow const&);
     void render_building(LayoutBox const& box, Building& b, MapWindow const&);
@@ -78,6 +91,7 @@ class tcodRenderer : public Renderer {
     void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
                                    long& tile_y);
     void use_default_tile_rendering();
+    void use_debug_tile_rendering();
     void use_scent_tile_rendering(ulong);
 
    private:
@@ -89,5 +103,7 @@ class tcodRenderer : public Renderer {
     bool is_debug_graphics = false;
     tcod::Context context;
     tcod::Console root_console;
-    std::function<std::unique_ptr<MapTileRenderer>(Map const&)> generate_tile_renderer;
+    std::function<std::unique_ptr<MapTileRenderer>(Map&)> generate_tile_renderer;
 };
+
+

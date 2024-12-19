@@ -1,4 +1,4 @@
-#include "entity/map_section_data.hpp"
+#include "map/section_data.hpp"
 
 MapSectionData::MapSectionData(MapSectionData const& other): border(other.border) {
     for (auto &room : other.rooms) {

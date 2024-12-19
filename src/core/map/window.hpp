@@ -4,7 +4,7 @@
 #include <libtcod/console_types.hpp>
 #include <vector>
 
-#include "entity.pb.h"
+#include "map.pb.h"
 #include "entity/rect.hpp"
 
 class MapWindow {

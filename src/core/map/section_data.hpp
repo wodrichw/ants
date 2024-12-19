@@ -13,7 +13,7 @@ struct MapSectionData {
     std::vector<Rect> rooms;
     std::vector<Rect> corridors;
 
-    MapSectionData(): border() {}
+
     MapSectionData(Rect const& border) : border(border) {}
     MapSectionData(MapSectionData const& other);
 

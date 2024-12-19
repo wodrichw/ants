@@ -1,4 +1,4 @@
-#include "entity/map.hpp"
+#include "map/map.hpp"
 #include "entity/entity_data.hpp"
 #include "entity/inventory.hpp"
 #include "entity/entity_actions.hpp"

@@ -3,10 +3,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "entity.pb.h"
+#include "map.pb.h"
 #include "entity/building.hpp"
 #include "entity/entity_data.hpp"
-#include "entity/map_section_data.hpp"
+#include "map/section_data.hpp"
 
 using ulong = unsigned long;
 
@@ -21,9 +21,21 @@ struct Tile {
         : is_explored(is_explored), in_fov(in_fov), is_wall(is_wall) {}
 };
 
+struct ChunkMarker {
+    long x;
+    long y;
+    ulong id;
+    bool operator==(ulong rhs_id) { return id == rhs_id; }
+    bool operator==(const ChunkMarker& rhs) { return id == rhs.id; }
+    bool operator<(ulong rhs_id) { return id < rhs_id; }
+    bool operator<(const ChunkMarker& rhs) { return id < rhs.id; }
+
+};
+
 struct Chunk {
     long x = 0, y = 0;
-     bool update_parity = true;
+    bool update_parity = true;
+    bool section_loaded = false;
     std::vector<Tile> tiles;
 
     Chunk() = default;
@@ -76,8 +88,15 @@ class Chunks {
         return chunks.find(chunk_id);
     }
 
+
+    void create_chunk(const ChunkMarker& cm);
+    std::vector<ChunkMarker> get_chunk_markers(const Rect& rect) const;
+
     void erase(ChunkMap::iterator it) { chunks.erase(it); }
+    long align(long pos) const; // takes a tile pos and aligns it to chunk
+    ulong get_chunk_id(long x, long y) const;
     Chunk& operator[](ulong chunk_id) { return *chunks[chunk_id]; }
+    Chunk& operator[](std::pair<long, long> p) { return *chunks[get_chunk_id(p.first, p.second)]; }
     Chunk const& at(ulong chunk_id) const { return *chunks.at(chunk_id); }
     void emplace(ulong chunk_id, Chunk* chunk) {
         chunks.emplace(chunk_id, chunk);
@@ -90,16 +109,20 @@ class Chunks {
 };
 
 class Map {
+    using f_xy_t = std::function<void(long, long)>;
+    f_xy_t generate_chunk_callback;
    public:
     bool needs_update = true;
     bool chunk_update_parity = false;
 
-    Map(Rect const& border, bool is_walls_enabled);
-    Map(const ant_proto::Map& msg, bool is_walls_enabled);
+
+    Map(bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
+    Map(Rect const& border, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
+    Map(const ant_proto::Map& msg, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
 
     void load_section(MapSectionData const& section_data);
     void dig(long x1, long y1, long x2, long y2);
-    bool can_place(long x, long y) const;
+    bool can_place(long x, long y);
     void add_entity_wo_events(MapEntity& entity);
     void add_entity(MapEntity& entity);
     void remove_entity(MapEntity& entity);
@@ -108,19 +131,20 @@ class Map {
     void add_building(Building& building);
     Building* get_building(MapEntity& entity);
     void create_chunk(long x, long y);
-    void add_missing_chunks(Rect const& rect);
+    std::vector<ChunkMarker> get_chunk_markers(const Rect& rect) const;
     void remove_unused_chunks();
     void update_chunks(Rect const& rect);
     void reset_fov();
     void reset_tile(long x, long y);
     void explore(long x, long y);
-    bool in_fov(long x, long y) const;
-    bool is_explored(long x, long y) const;
-    bool is_wall(long x, long y) const;
+    bool chunk_built(const ChunkMarker& cm) const;
+    bool chunk_built(long x, long y) const;
+    bool in_fov(long x, long y);
+    bool is_explored(long x, long y);
+    bool is_wall(long x, long y);
     bool click(long x, long y);
-    ulong get_chunk_idx(long x, long y) const;
     ulong& get_tile_scents(MapEntity& entity);
-    ulong get_tile_scents_by_coord(long x, long y) const;
+    ulong get_tile_scents_by_coord(long x, long y);
     ant_proto::Map get_proto() const;
 
    private:
@@ -128,7 +152,6 @@ class Map {
     Chunk const& get_chunk_const(long x, long y) const;
     long get_local_idx(long chunk_x, long chunk_y, long x, long y) const;
     Tile& get_tile(long x, long y);
-    Tile const& get_tile_const(long x, long y) const;
     uchar flip_direction_bits(uchar bits);
     void notify_removed_entity(long x, long y, uchar bits);
     void notify_moved_entity(MapEntity& source, long x, long y, uchar bits);
