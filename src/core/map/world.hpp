@@ -99,41 +99,9 @@ struct Region {
     Region(const Rect& perimeter);
     Region(uint32_t seed_x, uint32_t seed_y, const Rect& perimeter);
     Region(const ant_proto::Region& msg);
-    ant_proto::Region get_proto();
+    ant_proto::Region get_proto() const;
 
-    // Section_Plan& section_plan(long x, long y) {
-    Section_Plan* section_plan( long x, long y, long z ) {
-        std::vector<Section_Plan>& level_sp = section_plans[z];
-
-        // auto search_sp = std::lower_bound(level_sp.begin(), level_sp.end(), Section_Plan(Rect(x,y, 1, 1), 0, [](Level&, Section_Plan&){}),
-        //     [](const Section_Plan& l, const Section_Plan& r) {
-        //         std::cout << "DEBUG: " << l.border.x1 << "  " << l.border.y1 << " : " << r.border.x1 << "  " << r.border.y1;
-        //         if( l.border.x1 < r.border.x1 ) { std::cout << " t" << std::endl; return true; }
-        //         if( l.border.x1 > r.border.x1 ) { std::cout << " f" << std::endl; return false; }
-        //         if( l.border.y1 < r.border.y1 ) { std::cout << " t" << std::endl; return true; }
-        //         std::cout << " f" << std::endl;
-        //         return false;
-        //     }
-        // );
-        //
-        // if( search_sp == level_sp.end() ) return nullptr;
-        // ++search_sp;  // we want the seaerch that likely contains our x,y coordinates
-        // // if( search_sp == level_sp.end() ) return nullptr;
-        //
-        // if(! (x >= search_sp->border.x1 && x <= search_sp->border.x2) ) return nullptr;
-        // if(! (y >= search_sp->border.y1 && y <= search_sp->border.y2) ) return nullptr;
-        // return &*search_sp;
-
-        // linear search for now, if a performance issue then use binary search like ^ but without the bugs
-        for( auto& scan_sp: level_sp ) {
-            if( scan_sp.border.x1 <= x && scan_sp.border.x2 >= x &&
-                scan_sp.border.y1 <= y && scan_sp.border.y2 >= y
-            )
-                return &scan_sp;
-        }
-        return nullptr;
-    }
-
+    Section_Plan* section_plan( long x, long y, long z );
     uint32_t get_seed();
     bool can_place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
     void place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
@@ -172,33 +140,14 @@ namespace std {
 
 
 struct Regions {
-    long align_to_region(long pos) { return div_floor(pos, globals::WORLD_LENGTH) * globals::WORLD_LENGTH; }
     std::unordered_map<Region_Key, Region> rmap;
-    void build_section(long x, long y, Level& l) {
-        auto find_itr = rmap.find({x,y});
-        if( find_itr == rmap.end() ) {
-            long snap_x = align_to_region(x);
-            long snap_y = align_to_region(y);
-            auto new_seed_x = rmap.find({0,0})->second.seed_x + snap_x;
-            auto new_seed_y = rmap.find({0,0})->second.seed_y + snap_y;
-            find_itr = rmap.emplace(Region_Key{x,y}, Region(
-                            new_seed_x,
-                            new_seed_y,
-                            Rect(snap_x,snap_y, globals::WORLD_LENGTH, globals::WORLD_LENGTH)
-                        )).first;
-        }
 
-        Section_Plan* search_sp = find_itr->second.section_plan(x,y,l.depth);
-        if( search_sp && !search_sp->in_construction ) {
-            search_sp->in_construction = true;
-            if( l.map.chunk_built(x,y) ) return;
-            search_sp->build_section(l);
-        }
-    }
+    long align_to_region(long pos);
+    void build_section(long x, long y, Level& l);
 
-    Regions(): rmap() {
-        rmap.emplace(Region_Key{0,0}, Region(Rect(0,0, globals::WORLD_LENGTH, globals::WORLD_LENGTH)));
-    }
+    Regions();
+    Regions(const ant_proto::Regions msg);
+    ant_proto::Regions get_proto() const;
 };
 
 

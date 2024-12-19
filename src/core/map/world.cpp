@@ -133,6 +133,43 @@ public:
     }
 };
 
+Section_Plan* Region::section_plan(long x, long y, long z) {
+        std::vector<Section_Plan>& level_sp = section_plans[z];
+
+        // auto search_sp = std::lower_bound(level_sp.begin(), level_sp.end(), Section_Plan(Rect(x,y, 1, 1), 0, [](Level&, Section_Plan&){}),
+        //     [](const Section_Plan& l, const Section_Plan& r) {
+        //         std::cout << "DEBUG: " << l.border.x1 << "  " << l.border.y1 << " : " << r.border.x1 << "  " << r.border.y1;
+        //         if( l.border.x1 < r.border.x1 ) { std::cout << " t" << std::endl; return true; }
+        //         if( l.border.x1 > r.border.x1 ) { std::cout << " f" << std::endl; return false; }
+        //         if( l.border.y1 < r.border.y1 ) { std::cout << " t" << std::endl; return true; }
+        //         std::cout << " f" << std::endl;
+        //         return false;
+        //     }
+        // );
+        //
+        // if( search_sp == level_sp.end() ) return nullptr;
+        // ++search_sp;  // we want the seaerch that likely contains our x,y coordinates
+        // // if( search_sp == level_sp.end() ) return nullptr;
+        //
+        // if(! (x >= search_sp->border.x1 && x <= search_sp->border.x2) ) return nullptr;
+        // if(! (y >= search_sp->border.y1 && y <= search_sp->border.y2) ) return nullptr;
+        // return &*search_sp;
+
+        // linear search for now, if a performance issue then use binary search like ^ but without the bugs
+        for( auto& scan_sp: level_sp ) {
+            if( scan_sp.border.x1 <= x && scan_sp.border.x2 >= x &&
+                scan_sp.border.y1 <= y && scan_sp.border.y2 >= y
+            )
+                return &scan_sp;
+        }
+        return nullptr;
+    }
+
+
+uint32_t Region::get_seed() {
+    return seed_x ^ seed_y;
+}
+
 
 bool Region::can_place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone) {
     for(ulong i = x; i < x + zone.w; ++i) {
@@ -257,11 +294,6 @@ void Region::do_blueprint_planning() {
 }
 
 
-uint32_t Region::get_seed() {
-    return seed_x ^ seed_y;
-}
-
-
 Region::Region( const Rect& perimeter): 
     perimeter(perimeter),
     is_first_region(true)
@@ -299,13 +331,66 @@ Region::Region(const ant_proto::Region& msg):
 {}
 
 
-ant_proto::Region Region::get_proto() {
+long Regions::align_to_region(long pos) {
+    return div_floor(pos, globals::WORLD_LENGTH) * globals::WORLD_LENGTH;
+}
+
+
+void Regions::build_section(long x, long y, Level& l) {
+    auto find_itr = rmap.find({x,y});
+    if( find_itr == rmap.end() ) {
+        long snap_x = align_to_region(x);
+        long snap_y = align_to_region(y);
+        auto new_seed_x = rmap.find({0,0})->second.seed_x + snap_x;
+        auto new_seed_y = rmap.find({0,0})->second.seed_y + snap_y;
+        find_itr = rmap.emplace(Region_Key{x,y}, Region(
+                        new_seed_x,
+                        new_seed_y,
+                        Rect(snap_x,snap_y, globals::WORLD_LENGTH, globals::WORLD_LENGTH)
+                    )).first;
+    }
+
+    Section_Plan* search_sp = find_itr->second.section_plan(x,y,l.depth);
+    if( search_sp && !search_sp->in_construction ) {
+        search_sp->in_construction = true;
+        if( l.map.chunk_built(x,y) ) return;
+        search_sp->build_section(l);
+    }
+}
+
+
+ant_proto::Region Region::get_proto() const {
     ant_proto::Region msg;
     msg.set_seed_x(seed_x);
     msg.set_seed_y(seed_y);
     return msg;
 }
 
+
+Regions::Regions(): rmap() {
+    rmap.emplace(Region_Key{0,0}, Region(Rect(0,0, globals::WORLD_LENGTH, globals::WORLD_LENGTH)));
+}
+
+
+Regions::Regions(const ant_proto::Regions msg): rmap() {
+    for( const auto& r_itr: msg.region_keyvals() )
+        rmap.emplace(Region_Key{r_itr.x(),r_itr.y()}, Region(r_itr.val()));
+}
+
+
+ant_proto::Regions Regions::get_proto() const {
+    ant_proto::Regions msg;
+
+    for( const auto& r_itr: rmap ) {
+        ant_proto::Region_KeyVal msg_kv;
+        msg_kv.set_x(r_itr.first.x);
+        msg_kv.set_y(r_itr.first.y);
+        *msg_kv.mutable_val() = r_itr.second.get_proto();
+        *msg.add_region_keyvals() = msg_kv;
+    }
+
+    return msg;
+}
 
 struct Generate_Chunk_Callback {
     ulong depth;
@@ -333,6 +418,7 @@ MapWorld::MapWorld(
     bool is_walls_enabled
 ):
     levels{},
+    regions(msg.regions()),
     map_window(msg.map_window()),
     current_depth(msg.current_depth()),
     item_info_map(),
@@ -358,6 +444,7 @@ Level& MapWorld::operator[](ulong depth) {
 ant_proto::MapWorld MapWorld::get_proto() const {
     ant_proto::MapWorld msg;
     for(const auto& level: levels) *msg.add_levels() = level.get_proto();
+    *msg.mutable_regions() = regions.get_proto();
     msg.set_current_depth(current_depth);
     *msg.mutable_map_window() = map_window.get_proto();
 

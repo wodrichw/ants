@@ -1,6 +1,5 @@
 #include <ranges>
 #include "map/manager.hpp"
-#include "app/globals.hpp"
 #include "map/map.hpp"
 #include "map/world.hpp"
 
@@ -93,15 +92,7 @@ void MapManager::generate_sections(ulong depth, const std::vector<ChunkMarker>& 
 
 void MapManager::move_entity(ulong entity_depth, long dy, long dx, MapEntity& entity) {
     Map& map = map_world[entity_depth].map;
-    bool successful_move  = map.move_entity(entity, dx, dy);
-    // if (successful_move) {
-    //     //inspect for freshly added chunks and generate sections if necessary
-    //     EntityData& ed = entity.get_data();
-    //     ulong cl = globals::CHUNK_LENGTH;
-    //     std::vector<ChunkMarker> added_chunks = map.get_chunk_markers(Rect(ed.x - cl, ed.y - cl, cl*2, cl*2));
-    //     added_chunks | std::views::filter([&map](const ChunkMarker& cm){ return map.chunk_built(cm); });
-    //     generate_sections(entity_depth, added_chunks);
-    // }
+    map.move_entity(entity, dx, dy);
 }
 
 

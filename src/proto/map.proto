@@ -23,12 +23,16 @@ message Region_KeyVal {
     Region val = 3;
 }
 
+message Regions {
+    repeated Region_KeyVal region_keyvals = 4;
+}
+
 message MapWorld {
     repeated Level levels = 1;
     uint64 current_depth = 2;
     MapWindow map_window = 3;
     uint64 instr_action_clock = 4;
-    repeated Region_KeyVal region_keyvals = 5;
+    Regions regions = 5;
 }
 
 message MapManager {
