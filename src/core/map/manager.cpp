@@ -34,8 +34,9 @@ bool MapManager::update_current_level(const EntityData& d) {
 
     if( cur_map.needs_update == false ) return false;
     cur_map.needs_update = false;
-
+    
     map_window.set_center(d.x, d.y);
+    set_window_tiles();
     cur_map.update_chunks(map_window.border);
 
     return true;
@@ -113,20 +114,12 @@ bool MapManager::go_up() {
 
 
 bool MapManager::go_down() {
-    if (map_world.current_depth == map_world.levels.size()) {
-        /* do nothing */
-        // map_world.levels.emplace_back( Level(Map(border, is_walls_enabled), ) );
-        // Map& new_map = map_world.levels[map_world.current_depth].map;
-        // MapSectionData section;
-        // RandomMapBuilder(Rect::from_top_left(0, 0, map_section_width, map_section_height))(
-        //     section);
-        // new_map.load_section(section);
-    } else {
+    if (map_world.current_depth < map_world.levels.size() - 1) {
         ++map_world.current_depth;
+        map_world.current_level().map.update_chunks(map_world.map_window.border);
+        return true;
     }
-
-    map_world.current_level().map.update_chunks(map_world.map_window.border);
-    return true;
+    return false;
 }
 
 
