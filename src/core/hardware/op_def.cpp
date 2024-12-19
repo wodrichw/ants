@@ -1,6 +1,5 @@
 #include "hardware/op_def.hpp"
-#include "entity/map.hpp"
-#include "entity/entity_actions.hpp"
+#include "map/map.hpp"
 #include "hardware/brain.hpp"
 
 #include "spdlog/spdlog.h"

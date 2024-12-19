@@ -33,6 +33,7 @@ class ProjectArguments {
     bool const is_render = {};
     bool const is_debug_graphics = {};
     bool const is_walls_enabled = {};
+    bool const no_fov = {};
     ProjectArguments(int argc, char* argv[]);
     ProjectArguments(
         std::string const& default_map_file_path,

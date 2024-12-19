@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine.pb.h"
+#include "map/manager.hpp"
 #include "hardware/program_executor.hpp"
 #include "ui/text_editor.hpp"
 #include "ui/event_system.hpp"
@@ -10,6 +11,7 @@
 #include "app/game_mode.hpp"
 #include "app/arg_parse.hpp"
 
+
 class Renderer;
 class ProjectArugments;
 struct KeyboardEvent;
@@ -17,6 +19,8 @@ struct KeyboardEvent;
 struct EngineState {
     BoxManager box_manager;
     ThreadPool<AsyncProgramJob> job_pool;
+    MapWorld map_world;
+    MapManager map_manager;
     EntityManager entity_manager;
     EventSystem root_event_system = {};
     CommandMap command_map = {};
@@ -32,7 +36,7 @@ struct EngineState {
    public:
 
     EngineState(ProjectArguments&, Renderer*);
-    EngineState(const ant_proto::EngineState& msg, ProjectArguments&, Renderer*);
+    EngineState(const ant_proto::EngineState&, ProjectArguments&, Renderer*);
     ~EngineState();
     void update();
     void render();

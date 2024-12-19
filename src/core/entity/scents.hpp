@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entity/map.hpp"
+#include "map/map.hpp"
 
 using schar = signed char;
 
