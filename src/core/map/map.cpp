@@ -209,20 +209,9 @@ void Map::dig(long x1, long y1, long x2, long y2) {
     if(y2 < y1) std::swap(y1, y2);
     SPDLOG_TRACE("Digging from ({}, {}) to ({}, {})", x1, y1, x2, y2);
 
-    // SPDLOG_TRACE("Setting properties for tiles");
-    for(int tilex = x1 - 1; tilex <= x2 + 1; tilex++) {
-        bool is_horizontal_wall = tilex < x1 || tilex > x2;
-
-        for(int tiley = y1 - 1; tiley <= y2 + 1; tiley++) {
-            bool is_vertical_wall = tiley < y1 || tiley > y2;
-
-
-            Tile& tile = get_tile(tilex, tiley);
-            if(!tile.is_wall) continue;
-
-            tile.is_wall = is_horizontal_wall || is_vertical_wall;
-            // SPDLOG_TRACE("Setting tile at ({}, {}) - wall: {}, floor:
-            // {}", tilex, tiley, tile.is_wall);
+    for(int tx = x1; tx <= x2; ++tx) {
+        for(int ty = y1; ty <= y2; ++ty) {
+            get_tile(tx, ty).is_wall = false;
         }
     }
     SPDLOG_TRACE("Digging complete");

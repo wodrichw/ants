@@ -179,7 +179,13 @@ struct Regions {
         if( find_itr == rmap.end() ) {
             long snap_x = align_to_region(x);
             long snap_y = align_to_region(y);
-            find_itr = rmap.emplace(Region_Key{x,y}, Region(Rect(snap_x,snap_y, globals::WORLD_LENGTH, globals::WORLD_LENGTH))).first;
+            auto new_seed_x = rmap.find({0,0})->second.seed_x + snap_x;
+            auto new_seed_y = rmap.find({0,0})->second.seed_y + snap_y;
+            find_itr = rmap.emplace(Region_Key{x,y}, Region(
+                            new_seed_x,
+                            new_seed_y,
+                            Rect(snap_x,snap_y, globals::WORLD_LENGTH, globals::WORLD_LENGTH)
+                        )).first;
         }
 
         Section_Plan* search_sp = find_itr->second.section_plan(x,y,l.depth);
