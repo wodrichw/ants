@@ -1,10 +1,10 @@
 #include "hardware/brain.hpp"
 #include "spdlog/spdlog.h"
 
-DualRegisters::DualRegisters() : scent_behaviors(is_space_empty_flags) {}
+DualRegisters::DualRegisters() : 
+scent_behaviors(is_space_empty_flags) {}
 
 DualRegisters::DualRegisters(const ant_proto::DualRegisters& msg) :
-    scent_behaviors(is_space_empty_flags),
     instr_ptr_register(msg.instr_ptr_register()),
     base_ptr_register(msg.base_ptr_register()),
     stack_ptr_register(msg.stack_ptr_register()),
@@ -13,7 +13,8 @@ DualRegisters::DualRegisters(const ant_proto::DualRegisters& msg) :
     dir_flag1(msg.dir_flag1()),
     dir_flag2(msg.dir_flag2()),
     is_move_flag(msg.is_move_flag()),
-    is_dig_flag(msg.is_dig_flag())
+    is_dig_flag(msg.is_dig_flag()),
+    scent_behaviors(is_space_empty_flags)
 {
     registers[0] = msg.register0();
     registers[1] = msg.register1();

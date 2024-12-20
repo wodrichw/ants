@@ -328,7 +328,9 @@ Region::Region(const ant_proto::Region& msg):
     seed_y(msg.seed_y()),
     perimeter(msg.perimeter()),
     is_first_region(msg.is_first_region())
-{}
+{
+    do_blueprint_planning();
+}
 
 
 long Regions::align_to_region(long pos) {
@@ -426,7 +428,7 @@ MapWorld::MapWorld(
 {
     for( int i = 0; i < msg.levels().size(); ++i ) {
         auto cb =  Generate_Chunk_Callback{static_cast<ulong>(i), *this};
-        levels[i] = Level(msg.levels()[i], instr_action_clock, item_info_map, thread_pool, is_walls_enabled, cb);
+        levels.emplace_back(Level(msg.levels()[i], instr_action_clock, item_info_map, thread_pool, is_walls_enabled, cb));
     }
 }
 
