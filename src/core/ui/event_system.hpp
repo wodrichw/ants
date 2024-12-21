@@ -58,7 +58,7 @@ struct EventPublisher {
         return subscriber_map[key] = new std::vector<Subscriber<Event>*>();
     }
 
-    std::unordered_map<ulong, std::vector<Subscriber<Event>*>*> subscriber_map;
+    std::unordered_map<ulong, std::vector<Subscriber<Event>*>*> subscriber_map = {};
 };
 
 struct EventSystem {

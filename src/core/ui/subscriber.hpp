@@ -86,6 +86,15 @@ namespace std {
         }
     };
 
+
+    template <>
+    struct hash<KeyboardEventType> {
+        std::size_t operator()(KeyboardEventType const& e) const noexcept {
+            return static_cast<std::size_t>(e);
+        }
+    };
+
+
     template <>
     struct hash<CharKeyboardEvent> {
         std::size_t operator()(CharKeyboardEvent const& e) const noexcept {

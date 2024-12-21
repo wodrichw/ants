@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 
+
+using ushort = unsigned short;
+
 class SoftwareManager;
 
 struct TextEditor {

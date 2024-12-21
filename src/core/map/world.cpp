@@ -12,6 +12,9 @@
 #include "map/section_data.hpp"
 #include "map/window.hpp"
 
+using uint = unsigned int;
+using ulong = unsigned long;
+
 Level::Level(const Map& map, ulong depth):
     map(map),
     depth(depth)
@@ -166,12 +169,13 @@ Section_Plan* Region::section_plan(long x, long y, long z) {
     }
 
 
-uint32_t Region::get_seed() {
+uint32_t Region::get_seed() const {
     return seed_x ^ seed_y;
 }
 
 
 bool Region::can_place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone) {
+    if((z + zone.depth) > globals::MAX_LEVEL_DEPTH) return false;
     for(ulong i = x; i < x + zone.w; ++i) {
         for(ulong j = y; j < y + zone.h; ++j) {
             for(ulong k = z; k < z + zone.depth; ++k) {
@@ -374,7 +378,7 @@ Regions::Regions(): rmap() {
 
 Regions::Regions(const ant_proto::Regions msg): rmap() {
     for( const auto& r_itr: msg.region_keyvals() )
-        rmap.emplace(Region_Key{r_itr.x(),r_itr.y()}, Region(r_itr.val()));
+        rmap.emplace(Region_Key{(long)r_itr.x(),(long)r_itr.y()}, Region(r_itr.val()));
 }
 
 
@@ -404,10 +408,11 @@ struct Generate_Chunk_Callback {
 MapWorld::MapWorld(const Rect& border, bool is_walls_enabled): 
     levels{},
     regions(),
-    map_window(border)
+    map_window(border),
+    current_depth(0) 
 {
     // Ensure that levels are created
-    for( size_t i = 0; i < globals::MAX_LEVEL_DEPTH; ++i )
+    for( ulong i = 0; i < globals::MAX_LEVEL_DEPTH; ++i )
         levels.emplace_back(Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
 }
 

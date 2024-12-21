@@ -4,6 +4,9 @@
 #include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
 
+
+using uint = unsigned int;
+
 Packer::Packer(std::string const& path) : output(path, std::ios::binary) {
     if(path == "") return;
     if(!output) {

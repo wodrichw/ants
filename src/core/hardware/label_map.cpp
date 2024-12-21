@@ -1,5 +1,8 @@
 #include "hardware/label_map.hpp"
 
+using ushort = unsigned short;
+
+
 LabelMap::LabelMap( const ::google::protobuf::RepeatedPtrField< ::ant_proto::LabelRecord> & labels_msg) {
     for( const auto& label: labels_msg ) 
         insert(label.address(), label.label());

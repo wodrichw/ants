@@ -8,6 +8,8 @@
 
 #include "spdlog/spdlog.h"
 
+using ushort = unsigned short;
+
 Parser::Parser(CommandMap const& command_map)
     : command_map(command_map) {
     SPDLOG_TRACE("Command parser created");

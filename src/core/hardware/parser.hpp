@@ -5,6 +5,8 @@
 #include "hardware/command_config.hpp"
 #include "utils/status.hpp"
 
+using ushort = unsigned short;
+
 struct ParserArgs;
 struct ProgramExecutor;
 struct MachineCode;

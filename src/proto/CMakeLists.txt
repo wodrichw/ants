@@ -12,7 +12,8 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${proto_files})
 add_library(ProtoSources ${PROTO_SRCS} ${PROTO_HDRS})
 
 # Link the Protobuf library
-target_link_libraries(ProtoSources ${PROTOBUF_LIBRARIES})
+# target_link_libraries(ProtoSources ${PROTOBUF_LIBRARIES})
+target_link_libraries(ProtoSources protobuf::libprotoc protobuf::libprotobuf protobuf::libprotobuf-lite)
 
 # Include the directory that the .pb.h files are generated into
 target_include_directories(ProtoSources PUBLIC ${CMAKE_CURRENT_BINARY_DIR})

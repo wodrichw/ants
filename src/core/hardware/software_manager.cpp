@@ -1,6 +1,9 @@
 #include "hardware/software_manager.hpp"
 #include "spdlog/spdlog.h"
 
+
+using ulong = unsigned long;
+
 SoftwareManager::SoftwareManager(const ant_proto::SoftwareManager& msg, CommandMap const& command_map):
     parser(command_map),
     current_code(new MachineCode(msg.current_code())),

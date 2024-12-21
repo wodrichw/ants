@@ -2,7 +2,6 @@
 #include <algorithm> 
 #include <cctype>
 #include <locale>
-
 #include "utils/string.hpp"
 
 // trim from start (in place)
@@ -26,8 +25,8 @@ inline void trim(std::string &s) {
 }
 
 inline long trimmed_size(const std::string &s) {
-    size_t start = s.find_first_not_of(" \t\n\r");
-    size_t end = s.find_last_not_of(" \t\n\r");
+    long start = s.find_first_not_of(" \t\n\r");
+    long end = s.find_last_not_of(" \t\n\r");
     
     if (start == std::string::npos || end == std::string::npos) {
         return 0; // String consists entirely of whitespace

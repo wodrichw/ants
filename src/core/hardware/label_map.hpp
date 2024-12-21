@@ -4,6 +4,8 @@
 
 #include "proto/hardware.pb.h"
 
+using ushort = unsigned short;
+
 class LabelMap {
     std::unordered_map<std::string, ushort> label_map;
     std::unordered_map<ushort, std::string> address_map;

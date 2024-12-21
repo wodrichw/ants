@@ -102,7 +102,7 @@ struct Region {
     ant_proto::Region get_proto() const;
 
     Section_Plan* section_plan( long x, long y, long z );
-    uint32_t get_seed();
+    uint32_t get_seed() const;
     bool can_place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
     void place_zone(chunk_assignments_t& chunk_assignemnts, long x, long y, long z, Zone& zone);
     void do_blueprint_planning();

@@ -4,6 +4,9 @@
 #include "hardware/software_manager.hpp"
 #include "spdlog/spdlog.h"
 
+
+using ushort = unsigned short;
+
 TextEditor::TextEditor(SoftwareManager& software_manager)
     : software_manager(software_manager) {
     reset();
