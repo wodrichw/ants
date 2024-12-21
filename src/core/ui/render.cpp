@@ -118,7 +118,10 @@ void DebugMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
 }
 
 
-TcodMapTileRenderer::TcodMapTileRenderer(Map& map): map(map) {} 
+TcodMapTileRenderer::TcodMapTileRenderer(Map& map):
+    map(map),
+    is_debug_graphics(false)
+{} 
 
 
 void TcodMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
