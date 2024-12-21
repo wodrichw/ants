@@ -22,9 +22,7 @@ MapManager::MapManager(const ant_proto::MapManager& msg, MapWorld& map_world):
     map_section_width(msg.map_section_width()),
     map_section_height(msg.map_section_height()),
     map_world(map_world)
-{
-    map_world.regions.build_section(0,0, map_world.current_level());
-}
+{ }
 
 
 bool MapManager::update_current_level(const EntityData& d) {
@@ -122,4 +120,3 @@ ant_proto::MapManager MapManager::get_proto()  const {
 
     return msg;
 }
-
