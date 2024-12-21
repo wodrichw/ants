@@ -1,16 +1,19 @@
 #pragma once
 
 #include <string>
+#include "ui/subscriber.hpp"
 
-#include "ui/event_system.hpp"
-#include "utils/serializer.hpp"
+class EngineState;
 
-class Engine;
-
-class AutoSaveTriggerHandler: public Subscriber<KeyboardEvent> {
+class AutoSaveTriggerHandler : public Subscriber<KeyboardEvent> {
     EngineState const& engine;
     std::string const save_path;
-public:
-    AutoSaveTriggerHandler(EngineState&, std::string const);
+
+   public:
+    AutoSaveTriggerHandler(const AutoSaveTriggerHandler &) = default;
+    AutoSaveTriggerHandler(AutoSaveTriggerHandler &&) = default;
+    AutoSaveTriggerHandler &operator=(const AutoSaveTriggerHandler &) = delete;
+    AutoSaveTriggerHandler &operator=(AutoSaveTriggerHandler &&) = delete;
+    AutoSaveTriggerHandler(EngineState &, std::string const);
     void operator()(KeyboardEvent const&);
 };

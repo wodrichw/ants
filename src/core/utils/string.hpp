@@ -11,9 +11,9 @@ inline void rtrim(std::string &s);
 // trim from both ends (in place)
 inline void trim(std::string &s);
 
-inline long trimmed_size(std::string const& s);
+inline long trimmed_size(std::string const &s);
 
-inline bool trimmed_empty(std::string const& s);
+inline bool trimmed_empty(std::string const &s);
 
 // trim from start (copying)
 inline std::string ltrim_copy(std::string s);

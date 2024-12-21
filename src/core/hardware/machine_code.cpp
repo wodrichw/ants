@@ -1,9 +1,10 @@
 #include "hardware/machine_code.hpp"
+
 #include "hardware/label_map.hpp"
 
-MachineCode::MachineCode(const ant_proto::MachineCode& msg) : labels(msg.labels()) {
-    for( const auto& byte: msg.code() )
-        code.emplace_back(byte);
+MachineCode::MachineCode(const ant_proto::MachineCode& msg)
+    : labels(msg.labels()) {
+    for(const auto& byte : msg.code()) code.emplace_back(byte);
 }
 
 void MachineCode::clear() {
@@ -15,9 +16,7 @@ bool MachineCode::is_empty() const {
     return code.size() == 0 && labels.size() == 0;
 }
 
-size_t MachineCode::size() const {
-    return code.size();
-}
+size_t MachineCode::size() const { return code.size(); }
 
 ant_proto::MachineCode MachineCode::get_proto() {
     ant_proto::MachineCode msg;
@@ -27,4 +26,3 @@ ant_proto::MachineCode MachineCode::get_proto() {
     *msg.mutable_code() = str_code;
     return msg;
 }
-

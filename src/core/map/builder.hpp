@@ -7,8 +7,8 @@
 class BspListener : public ITCODBspCallback {
    private:
     MapSectionData &section_data;  // a section_data to dig
-    int room_num = 0;                  // room number
-    int lastx = 0, lasty = 0;              // center of the last room
+    int room_num = 0;              // room number
+    int lastx = 0, lasty = 0;      // center of the last room
 
    public:
     BspListener(MapSectionData &section_data);
@@ -21,7 +21,6 @@ struct RandomMapBuilder {
     RandomMapBuilder(Rect const &border);
     void operator()(MapSectionData &section_data) const;
 };
-
 
 struct EmptyMapBuilder {
     Rect border;
@@ -40,5 +39,3 @@ class FileMapBuilder {
    private:
     void load_file(const std::string &filename);
 };
-
-     

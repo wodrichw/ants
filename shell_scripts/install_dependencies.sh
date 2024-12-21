@@ -25,3 +25,5 @@ git submodule update
 [ -d build ] || mkdir build
 (cd build; rm -rf * ; cmake -DOPT=1 .. && make; )
 
+mv .githooks/pre-commit .git/hooks/
+

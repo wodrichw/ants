@@ -1,5 +1,6 @@
 #pragma once
 #include <libtcod/color.hpp>
+
 #include "entity.pb.h"
 
 using ulong = unsigned long;
@@ -35,7 +36,7 @@ struct EntityMoveUpdate {
 };
 
 struct MapEntity {
-    virtual ~MapEntity(){};
+    virtual ~MapEntity() {};
     virtual EntityData& get_data() = 0;
     virtual void move_callback(EntityMoveUpdate const&) = 0;
     virtual void click_callback(long x, long y) = 0;

@@ -1,24 +1,19 @@
 #include "map/map.hpp"
+
 #include "app/globals.hpp"
 #include "spdlog/spdlog.h"
 #include "utils/math.hpp"
 
 using ulong = unsigned long;
 
-Chunk::Chunk(long x, long y, bool update_parity) :
-    x(x),
-    y(y),
-    update_parity(update_parity),
-    tiles(globals::CHUNK_AREA, Tile()) 
-{}
+Chunk::Chunk(long x, long y, bool update_parity)
+    : x(x),
+      y(y),
+      update_parity(update_parity),
+      tiles(globals::CHUNK_AREA, Tile()) {}
 
-
-Chunk::Chunk(const ant_proto::Chunk& msg):
-    x(msg.x()),
-    y(msg.y()),
-    update_parity(msg.update_parity()),
-    tiles()
-{
+Chunk::Chunk(const ant_proto::Chunk& msg)
+    : x(msg.x()), y(msg.y()), update_parity(msg.update_parity()), tiles() {
     tiles.reserve(globals::CHUNK_AREA);
     ulong is_explored = msg.is_explored(), in_fov = msg.in_fov(),
           is_wall = msg.is_wall();
@@ -28,7 +23,6 @@ Chunk::Chunk(const ant_proto::Chunk& msg):
     }
 }
 
-
 Tile& Chunk::operator[](long idx) {
     if(idx < 0 || idx >= globals::CHUNK_AREA)
         SPDLOG_ERROR("Invalid tile idx: {}", idx);
@@ -36,11 +30,7 @@ Tile& Chunk::operator[](long idx) {
     return tiles[idx];
 }
 
-
-Tile const& Chunk::operator[](long idx) const {
-    return tiles[idx];
-}
-
+Tile const& Chunk::operator[](long idx) const { return tiles[idx]; }
 
 ant_proto::Chunk Chunk::get_proto() {
     ant_proto::Chunk msg;
@@ -55,7 +45,9 @@ ant_proto::Chunk Chunk::get_proto() {
         in_fov |= ((tile.in_fov & 1UL) << i);
         is_wall |= ((tile.is_wall & 1UL) << i);
     }
-    // SPDLOG_TRACE("Packing chunk - x: {} y: {} update: {} explored: {:x} fov: {:x} walls: {:x}", obj.x, obj.y, obj.update_parity, is_explored, in_fov, is_wall);
+    // SPDLOG_TRACE("Packing chunk - x: {} y: {} update: {} explored: {:x} fov:
+    // {:x} walls: {:x}", obj.x, obj.y, obj.update_parity, is_explored, in_fov,
+    // is_wall);
 
     msg.set_is_explored(is_explored);
     msg.set_in_fov(in_fov);
@@ -63,7 +55,6 @@ ant_proto::Chunk Chunk::get_proto() {
 
     return msg;
 }
-
 
 Chunks::tile_iterator& Chunks::tile_iterator::operator++() {
     ++tile_idx;
@@ -75,52 +66,41 @@ Chunks::tile_iterator& Chunks::tile_iterator::operator++() {
     return *this;
 }
 
-
-Tile& Chunks::tile_iterator::operator*() {
-    return get_tiles()[tile_idx];
-}
-
+Tile& Chunks::tile_iterator::operator*() { return get_tiles()[tile_idx]; }
 
 bool Chunks::tile_iterator::operator!=(Chunks::tile_iterator const& other) {
     return map_it != other.map_it || (tile_idx != other.tile_idx);
 }
 
-
 Chunks::tile_iterator::TileVector& Chunks::tile_iterator::get_tiles() {
     return map_it->second->tiles;
 }
 
-
 Chunks::Chunks(const ant_proto::Chunks& msg) {
-    for(const auto& chunk_key_val: msg.chunk_key_vals()) {
+    for(const auto& chunk_key_val : msg.chunk_key_vals()) {
         SPDLOG_TRACE("unpacking chunk {}", chunk_key_val.key());
         Chunk* chunk = new Chunk(chunk_key_val.val());
         emplace(chunk_key_val.key(), chunk);
     }
 }
 
-
 long Chunks::align(long pos) const {
-     return div_floor(pos, globals::CHUNK_LENGTH) * globals::CHUNK_LENGTH;
+    return div_floor(pos, globals::CHUNK_LENGTH) * globals::CHUNK_LENGTH;
 }
-
 
 ulong Chunks::get_chunk_id(long x, long y) const {
     long chunk_x = div_floor(x, globals::CHUNK_LENGTH);
     long chunk_y = div_floor(y, globals::CHUNK_LENGTH);
     long chunk_depth = std::max(std::abs(chunk_x), std::abs(chunk_y));
 
-    long offset =
-        chunk_y == -chunk_depth || chunk_x == -chunk_depth ? 0 : 1;
+    long offset = chunk_y == -chunk_depth || chunk_x == -chunk_depth ? 0 : 1;
     long depth_sqrt_idx = 2 * (chunk_depth - offset) + 1;
     long depth_idx = depth_sqrt_idx * depth_sqrt_idx + offset - 1;
-    long chunk_idx =
-        depth_idx +
-        (offset * 2 - 1) * (2 * chunk_depth - chunk_x + chunk_y - offset);
+    long chunk_idx = depth_idx + (offset * 2 - 1) * (2 * chunk_depth - chunk_x +
+                                                     chunk_y - offset);
     // SPDLOG_TRACE("Chunk index for tile ({}, {}) is {}", x, y, chunk_idx);
     return chunk_idx;
 }
-
 
 std::vector<ChunkMarker> Chunks::get_chunk_markers(const Rect& rect) const {
     std::vector<ChunkMarker> c_markers;
@@ -129,17 +109,17 @@ std::vector<ChunkMarker> Chunks::get_chunk_markers(const Rect& rect) const {
         for(long y = rect.y1; y <= rect.y2; y += globals::CHUNK_LENGTH) {
             ulong id = get_chunk_id(x, y);
             auto it = std::lower_bound(c_markers.begin(), c_markers.end(), id);
-            if( it != c_markers.end() && it->id == id ) continue; // already in c_markers
+            if(it != c_markers.end() && it->id == id)
+                continue;  // already in c_markers
             c_markers.insert(it, {align(x), align(y), id});
         }
     }
     return c_markers;
 }
 
-
 ant_proto::Chunks Chunks::get_proto() const {
     ant_proto::Chunks msg;
-    for( const auto& chunk: chunks ) {
+    for(const auto& chunk : chunks) {
         ant_proto::ChunkKeyVal kv_msg;
         kv_msg.set_key(chunk.first);
         *kv_msg.mutable_val() = chunk.second->get_proto();
@@ -148,51 +128,42 @@ ant_proto::Chunks Chunks::get_proto() const {
     return msg;
 }
 
+Map::Map(bool is_walls_enabled, f_xy_t pre_chunk_generation_callback)
+    : generate_chunk_callback(pre_chunk_generation_callback),
+      is_walls_enabled(is_walls_enabled) {}
 
-Map::Map(bool is_walls_enabled, f_xy_t pre_chunk_generation_callback) :
-    generate_chunk_callback(pre_chunk_generation_callback),
-    is_walls_enabled(is_walls_enabled)
-{ }
-
-
-Map::Map(Rect const& border, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback):
-    generate_chunk_callback(pre_chunk_generation_callback),
-    is_walls_enabled(is_walls_enabled)
-{
+Map::Map(Rect const& border, bool is_walls_enabled,
+         f_xy_t pre_chunk_generation_callback)
+    : generate_chunk_callback(pre_chunk_generation_callback),
+      is_walls_enabled(is_walls_enabled) {
     SPDLOG_INFO("Creating map with border: ({}, {}) - {}x{}", border.x1,
                 border.y1, border.w, border.h);
 }
 
-
-Map::Map(const ant_proto::Map& msg, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback):
-    generate_chunk_callback(pre_chunk_generation_callback),
-    needs_update(msg.needs_update()),
-    chunk_update_parity(msg.chunk_update_parity()),
-    chunks(msg.chunks()),
-    is_walls_enabled(is_walls_enabled)
-{
-    SPDLOG_DEBUG("Unpacking map - needs update: {} chunk update: {} is walls: {}",
-        needs_update ? "YES" : "NO",
-        chunk_update_parity ? "ON" : "OFF",
-        is_walls_enabled ? "ENABLED" : "DISABLED"
-    );
+Map::Map(const ant_proto::Map& msg, bool is_walls_enabled,
+         f_xy_t pre_chunk_generation_callback)
+    : generate_chunk_callback(pre_chunk_generation_callback),
+      needs_update(msg.needs_update()),
+      chunk_update_parity(msg.chunk_update_parity()),
+      chunks(msg.chunks()),
+      is_walls_enabled(is_walls_enabled) {
+    SPDLOG_DEBUG(
+        "Unpacking map - needs update: {} chunk update: {} is walls: {}",
+        needs_update ? "YES" : "NO", chunk_update_parity ? "ON" : "OFF",
+        is_walls_enabled ? "ENABLED" : "DISABLED");
 }
 
-
 void Map::load_section(MapSectionData const& section_data) {
-    for(const auto& cm: chunks.get_chunk_markers(section_data.border) ) {
+    for(const auto& cm : chunks.get_chunk_markers(section_data.border)) {
         Chunk& c = get_chunk(cm.x, cm.y);
         c.section_loaded = true;
     }
-
 
     // SPDLOG_INFO("Loading section data into map: ({}, {}) - {}x{}",
     //             section_data.border.x1, section_data.border.y1,
     //             section_data.border.w, section_data.border.h);
 
-
-    long origin_x = section_data.border.x1,
-         origin_y = section_data.border.y1;
+    long origin_x = section_data.border.x1, origin_y = section_data.border.y1;
     for(auto const& room : section_data.rooms) {
         dig(origin_x + room.x1, origin_y + room.y1, origin_x + room.x2,
             origin_y + room.y2);
@@ -217,7 +188,6 @@ void Map::dig(long x1, long y1, long x2, long y2) {
     SPDLOG_TRACE("Digging complete");
 }
 
-
 bool Map::can_place(long x, long y) {
     Tile const& tile = get_tile(x, y);
     if(tile.is_wall) return false;
@@ -228,28 +198,24 @@ bool Map::can_place(long x, long y) {
     return true;
 }
 
-
 void Map::add_entity_wo_events(MapEntity& entity) {
     EntityData& data = entity.get_data();
     set_entity(data.x, data.y, &entity);
 }
 
-
 void Map::add_entity(MapEntity& entity) {
     add_entity_wo_events(entity);
-    
+
     // notify that the entity was successfully moved
     auto entity_data = entity.get_data();
     notify_all_moved_entity(entity_data.x, entity_data.y, entity);
 }
-
 
 void Map::remove_entity(MapEntity& entity) {
     SPDLOG_TRACE("Removing entity");
     EntityData& data = entity.get_data();
     set_entity(data.x, data.y, nullptr);
 }
-
 
 bool Map::move_entity(MapEntity& entity, long dx, long dy) {
     SPDLOG_DEBUG("Moving entity by - dx: {} dy: {}", dx, dy);
@@ -264,8 +230,11 @@ bool Map::move_entity(MapEntity& entity, long dx, long dy) {
     ulong left_scents = get_tile(new_x - 1, new_y).scents;
     ulong down_scents = get_tile(new_x, new_y + 1).scents;
 
-    entity.move_callback({ x, y, new_x, new_y,
-        {right_scents, up_scents, left_scents, down_scents}});
+    entity.move_callback({x,
+                          y,
+                          new_x,
+                          new_y,
+                          {right_scents, up_scents, left_scents, down_scents}});
 
     SPDLOG_TRACE("Moving entity - new x: {} new y: {}", new_x, new_y);
 
@@ -293,7 +262,6 @@ bool Map::move_entity(MapEntity& entity, long dx, long dy) {
     return true;
 }
 
-
 bool Map::dig(MapEntity& entity, long dx, long dy) {
     SPDLOG_DEBUG("Entity is digging - dx: {} dy: {}", dx, dy);
     EntityData& data = entity.get_data();
@@ -303,16 +271,15 @@ bool Map::dig(MapEntity& entity, long dx, long dy) {
     SPDLOG_TRACE("Entity digging - new x: {} new y: {}", new_x, new_y);
 
     Tile& tile = get_tile(new_x, new_y);
-    if (!tile.is_wall) {
+    if(!tile.is_wall) {
         SPDLOG_TRACE("Failed to dig at non-wall position");
         return false;
-    }        
+    }
 
     tile.is_wall = false;
     SPDLOG_TRACE("Entity successfully dug at - x: {} y: {}", new_x, new_y);
     return true;
 }
-
 
 void Map::add_building(Building& building) {
     for(long x = building.border.x1; x <= building.border.x2; ++x) {
@@ -322,12 +289,10 @@ void Map::add_building(Building& building) {
     }
 }
 
-
 Building* Map::get_building(MapEntity& entity) {
     EntityData& data = entity.get_data();
     return get_tile(data.x, data.y).building;
 }
-
 
 void Map::create_chunk(long x, long y) {
     ulong const chunk_id = chunks.get_chunk_id(x, y);
@@ -338,21 +303,19 @@ void Map::create_chunk(long x, long y) {
         return;
     }
 
-    long aligned_x = chunks.align(x),
-         aligned_y = chunks.align(y);
+    long aligned_x = chunks.align(x), aligned_y = chunks.align(y);
 
     SPDLOG_DEBUG("Adding chunk ({}, {}) - id: {}", x, y, chunk_id);
-    chunks.emplace(chunk_id, new Chunk(aligned_x, aligned_y, chunk_update_parity));
+    chunks.emplace(chunk_id,
+                   new Chunk(aligned_x, aligned_y, chunk_update_parity));
 
     // create chunk
     generate_chunk_callback(x, y);
 }
 
-
 std::vector<ChunkMarker> Map::get_chunk_markers(const Rect& rect) const {
     return chunks.get_chunk_markers(rect);
 }
-
 
 void Map::remove_unused_chunks() {
     SPDLOG_TRACE("Removing unused chunks");
@@ -368,14 +331,12 @@ void Map::remove_unused_chunks() {
     SPDLOG_TRACE("Finished removing unused chunks");
 }
 
-
 void Map::update_chunks(Rect const& rect) {
     SPDLOG_DEBUG("Updating chunks: ({}, {}) - ({}, {})", rect.x1, rect.y1,
                  rect.x2, rect.y2);
     chunk_update_parity = !chunk_update_parity;
     SPDLOG_TRACE("Finished updating chunks");
 }
-
 
 void Map::reset_fov() {
     for(auto it = chunks.begin_tile(); it != chunks.end_tile(); ++it) {
@@ -384,12 +345,10 @@ void Map::reset_fov() {
     }
 }
 
-
 void Map::reset_tile(long x, long y) {
     Tile& tile = get_tile(x, y);
     tile.in_fov = false;
 }
-
 
 void Map::explore(long x, long y) {
     Tile& tile = get_tile(x, y);
@@ -397,20 +356,18 @@ void Map::explore(long x, long y) {
     tile.in_fov = true;
 }
 
-
 bool Map::chunk_built(const ChunkMarker& cm) const {
     auto c_itr = chunks.find(cm.id);
-    if( c_itr == chunks.end() ) return false;
+    if(c_itr == chunks.end()) return false;
     return c_itr->second->section_loaded;
 }
 
 bool Map::chunk_built(long x, long y) const {
-    ulong id = chunks.get_chunk_id(x,y);
+    ulong id = chunks.get_chunk_id(x, y);
     auto c_itr = chunks.find(id);
-    if( c_itr == chunks.end() ) return false;
+    if(c_itr == chunks.end()) return false;
     return c_itr->second->section_loaded;
 }
-
 
 bool Map::in_fov(long x, long y) {
     // SPDLOG_TRACE("Checking if tile at ({}, {}) is in fov", x, y);
@@ -418,17 +375,12 @@ bool Map::in_fov(long x, long y) {
     return get_tile(x, y).in_fov;
 }
 
-
 bool Map::is_explored(long x, long y) {
     // SPDLOG_TRACE("Checking if tile at ({}, {}) is explored", x, y);
     return get_tile(x, y).is_explored;
 }
 
-
-bool Map::is_wall(long x, long y) {
-    return get_tile(x, y).is_wall;
-}
-
+bool Map::is_wall(long x, long y) { return get_tile(x, y).is_wall; }
 
 bool Map::click(long x, long y) {
     MapEntity* entity = get_tile(x, y).entity;
@@ -437,17 +389,14 @@ bool Map::click(long x, long y) {
     return true;
 }
 
-
 ulong& Map::get_tile_scents(MapEntity& entity) {
     EntityData& data = entity.get_data();
     return get_tile(data.x, data.y).scents;
 }
 
-
 ulong Map::get_tile_scents_by_coord(long x, long y) {
     return get_tile(x, y).scents;
 }
-
 
 ant_proto::Map Map::get_proto() const {
     ant_proto::Map msg;
@@ -457,17 +406,14 @@ ant_proto::Map Map::get_proto() const {
     return msg;
 }
 
-
 Chunk& Map::get_chunk(long x, long y) {
     create_chunk(x, y);
     return chunks[{x, y}];
 }
 
-
 Chunk const& Map::get_chunk_const(long x, long y) const {
     return chunks.at(chunks.get_chunk_id(x, y));
 }
-
 
 long Map::get_local_idx(long chunk_x, long chunk_y, long x, long y) const {
     long local_idx = (x - chunk_x) + (y - chunk_y) * globals::CHUNK_LENGTH;
@@ -475,12 +421,10 @@ long Map::get_local_idx(long chunk_x, long chunk_y, long x, long y) const {
     return local_idx;
 }
 
-
 Tile& Map::get_tile(long x, long y) {
     Chunk& chunk = get_chunk(x, y);
     return chunk[get_local_idx(chunk.x, chunk.y, x, y)];
 }
-
 
 // Tile const& Map::get_tile(long x, long y) {
 //     // Chunk const& chunk = get_chunk_const(x, y);
@@ -489,33 +433,29 @@ Tile& Map::get_tile(long x, long y) {
 //     return chunk[get_local_idx(chunk.x, chunk.y, x, y)];
 // }
 
-
 uchar Map::flip_direction_bits(uchar bits) {
-    //DLUR -> URDL
+    // DLUR -> URDL
     return ((bits >> 2) | (bits << 2)) & 0b1111;
 }
 
-
 void Map::notify_removed_entity(long x, long y, uchar bits) {
     MapEntity* entity = get_tile(x, y).entity;
-    if (entity == nullptr)  return;
+    if(entity == nullptr) return;
     entity->handle_empty_space(bits);
 }
 
-
 void Map::notify_moved_entity(MapEntity& source, long x, long y, uchar bits) {
     uchar source_bits = flip_direction_bits(bits);
-    if (can_place(x, y)) {
+    if(can_place(x, y)) {
         source.handle_empty_space(source_bits);
         return;
     }
     source.handle_full_space(source_bits);
 
     MapEntity* entity = get_tile(x, y).entity;
-    if (entity == nullptr) return;
+    if(entity == nullptr) return;
     entity->handle_full_space(bits);
 }
-
 
 void Map::set_entity(long x, long y, MapEntity* entity) {
     SPDLOG_DEBUG("Setting entity at ({}, {})", x, y);
@@ -523,19 +463,16 @@ void Map::set_entity(long x, long y, MapEntity* entity) {
     needs_update = true;
 }
 
-
 void Map::notify_all_removed_entity(long x, long y) {
-    notify_removed_entity(x - 1, y, 0b0001); // right
-    notify_removed_entity(x, y + 1, 0b0010); // up
-    notify_removed_entity(x + 1, y, 0b0100); // left
-    notify_removed_entity(x, y - 1, 0b1000); // down
+    notify_removed_entity(x - 1, y, 0b0001);  // right
+    notify_removed_entity(x, y + 1, 0b0010);  // up
+    notify_removed_entity(x + 1, y, 0b0100);  // left
+    notify_removed_entity(x, y - 1, 0b1000);  // down
 }
-
 
 void Map::notify_all_moved_entity(long x, long y, MapEntity& entity) {
-    notify_moved_entity(entity, x - 1, y, 0b0001); // right
-    notify_moved_entity(entity, x, y + 1, 0b0010); // up
-    notify_moved_entity(entity, x + 1, y, 0b0100); // left
+    notify_moved_entity(entity, x - 1, y, 0b0001);  // right
+    notify_moved_entity(entity, x, y + 1, 0b0010);  // up
+    notify_moved_entity(entity, x + 1, y, 0b0100);  // left
     notify_moved_entity(entity, x, y - 1, 0b1000);  // down
 }
-

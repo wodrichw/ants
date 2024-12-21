@@ -1,6 +1,7 @@
+#include "map/window.hpp"
+
 #include <libtcod.hpp>
 
-#include "map/window.hpp"
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
@@ -13,12 +14,11 @@ MapWindow::MapWindow(Rect const& border)
     SPDLOG_INFO("Creating map of size {}x{}", border.w, border.h);
 }
 
-MapWindow::MapWindow(const ant_proto::MapWindow& msg):
-    border(msg.border()),
-    map(new TCODMap(border.w, border.h))
-{
-    for( const auto& room_msg: msg.rooms() ) rooms.emplace_back(room_msg);
-    for( const auto& corridor_msg: msg.corridors() ) corridors.emplace_back(corridor_msg);
+MapWindow::MapWindow(const ant_proto::MapWindow& msg)
+    : border(msg.border()), map(new TCODMap(border.w, border.h)) {
+    for(const auto& room_msg : msg.rooms()) rooms.emplace_back(room_msg);
+    for(const auto& corridor_msg : msg.corridors())
+        corridors.emplace_back(corridor_msg);
     SPDLOG_TRACE("Completed unpacking map window");
 }
 
@@ -47,8 +47,9 @@ void MapWindow::compute_fov(long x, long y, long radius) {
     to_local_coords(x, y, local_x, local_y, is_valid);
     if(!is_valid) return;
 
-    // SPDLOG_TRACE("Computing FOV from ({}, {}) with radius {}", local_x, local_y,
-                //  radius);
+    // SPDLOG_TRACE("Computing FOV from ({}, {}) with radius {}", local_x,
+    // local_y,
+    //  radius);
     map->computeFov(local_x, local_y, radius);
     // SPDLOG_TRACE("FOV computed");
 }
@@ -92,8 +93,8 @@ ant_proto::MapWindow MapWindow::get_proto() const {
     msg.set_room_count(rooms.size());
     msg.set_corridor_count(corridors.size());
     *msg.mutable_border() = border.get_proto();
-    for( const auto& room: rooms ) *msg.add_rooms() = room.get_proto();
-    for( const auto& corridor: corridors ) *msg.add_corridors() = corridor.get_proto();
+    for(const auto& room : rooms) *msg.add_rooms() = room.get_proto();
+    for(const auto& corridor : corridors)
+        *msg.add_corridors() = corridor.get_proto();
     return msg;
 }
-

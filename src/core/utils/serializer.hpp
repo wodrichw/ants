@@ -70,4 +70,3 @@ class Unpacker {
     std::ifstream input;
     std::vector<char> buffer;
 };
-

@@ -1,39 +1,32 @@
 #include "entity/entity_manager.hpp"
+
 #include "map/manager.hpp"
 #include "map/world.hpp"
 #include "spdlog/spdlog.h"
 
-EntityManager::EntityManager(
-    MapManager& map_manager,
-    MapWorld& map_world,
-    int player_start_x,
-    int player_start_y,
-    ThreadPool<AsyncProgramJob>& job_pool
-): 
-    map_manager(map_manager),
-    map_world(map_world),
-    player(EntityData(40, 25, '@', 10, color::white), map_world.item_info_map),
-    player_depth(0),
-    job_pool(job_pool),
-    next_worker(create_worker_data())
-{
+EntityManager::EntityManager(MapManager& map_manager, MapWorld& map_world,
+                             int player_start_x, int player_start_y,
+                             ThreadPool<AsyncProgramJob>& job_pool)
+    : map_manager(map_manager),
+      map_world(map_world),
+      player(EntityData(40, 25, '@', 10, color::white),
+             map_world.item_info_map),
+      player_depth(0),
+      job_pool(job_pool),
+      next_worker(create_worker_data()) {
     player.data.x = player_start_x;
     player.data.y = player_start_y;
 }
 
-EntityManager::EntityManager(
-    ant_proto::EntityManager msg,
-    MapManager& map_manager,
-    MapWorld& map_world,
-    ThreadPool<AsyncProgramJob>& job_pool
-) : 
-    map_manager(map_manager),
-    map_world(map_world),
-    player(msg.player(), map_world.item_info_map),
-    player_depth(msg.player_depth()),
-    job_pool(job_pool),
-    next_worker(create_worker_data())
-{ }
+EntityManager::EntityManager(ant_proto::EntityManager msg,
+                             MapManager& map_manager, MapWorld& map_world,
+                             ThreadPool<AsyncProgramJob>& job_pool)
+    : map_manager(map_manager),
+      map_world(map_world),
+      player(msg.player(), map_world.item_info_map),
+      player_depth(msg.player_depth()),
+      job_pool(job_pool),
+      next_worker(create_worker_data()) {}
 
 EntityManager::~EntityManager() {
     SPDLOG_DEBUG("Destroying EntityManager");
@@ -48,7 +41,7 @@ void EntityManager::update_fov() {
     map_manager.update_map_window_tiles();
     for(auto ant : map_world.current_level().workers)
         map_manager.update_fov(ant->get_data());
-    if (map_world.current_depth == player_depth)
+    if(map_world.current_depth == player_depth)
         map_manager.update_fov(player.get_data());
 
     SPDLOG_TRACE("FOV updated");
@@ -57,8 +50,8 @@ void EntityManager::update_fov() {
 void EntityManager::update() {
     ++map_world.instr_action_clock;
     // Move / dig the ants on the map
-    for (auto& level: map_world.levels) {
-        for (Worker* worker: level.workers) {
+    for(auto& level : map_world.levels) {
+        for(Worker* worker : level.workers) {
             DualRegisters& cpu = worker->cpu;
 
             // Direction Truth Table
@@ -70,22 +63,22 @@ void EntityManager::update() {
 
             long dx = (1 - cpu.dir_flag2) * (-2 * cpu.dir_flag1 + 1);
             long dy = cpu.dir_flag2 * (2 * cpu.dir_flag1 - 1);
-            if (cpu.is_move_flag) {
+            if(cpu.is_move_flag) {
                 cpu.is_move_flag = false;
                 SPDLOG_DEBUG("Moving worker - dx: {} dy: {}", dx, dy);
                 cpu.instr_failed_flag = !level.map.move_entity(*worker, dx, dy);
             }
-            if (cpu.is_dig_flag) {
+            if(cpu.is_dig_flag) {
                 cpu.is_dig_flag = false;
                 SPDLOG_DEBUG("Digging worker - dx: {} dy: {}", dx, dy);
                 cpu.instr_failed_flag = !level.map.dig(*worker, dx, dy);
             }
-            if (cpu.delta_scents) {
+            if(cpu.delta_scents) {
                 ulong& tile_scents = level.map.get_tile_scents(*worker);
 
                 ulong updated_scents = 0;
                 ulong offset = 0;
-                while (cpu.delta_scents != 0) {
+                while(cpu.delta_scents != 0) {
                     ulong delta_scent = cpu.delta_scents & 0xFF;
                     ulong prev_scent = tile_scents & 0xFF;
                     ulong scent = (prev_scent + delta_scent) & 0xFF;
@@ -96,7 +89,8 @@ void EntityManager::update() {
                     offset += 8;
                 }
                 tile_scents = updated_scents;
-                // SPDLOG_INFO("Tile scent: {} - x: {} y: {}", tile_scents, worker->get_data().x, worker->get_data().y);
+                // SPDLOG_INFO("Tile scent: {} - x: {} y: {}", tile_scents,
+                // worker->get_data().x, worker->get_data().y);
             }
         }
     }
@@ -107,7 +101,7 @@ void EntityManager::update() {
 }
 
 void EntityManager::create_ant(HardwareManager& hardware_manager,
-                SoftwareManager& software_manager) {
+                               SoftwareManager& software_manager) {
     // if(key_sym == SDLK_a && player->bldgId.has_value()) {
     // Make worker
     // TODO: make an intelligent location picker for workers
@@ -143,25 +137,25 @@ void EntityManager::create_ant(HardwareManager& hardware_manager,
 
     MachineCode const& code = software_manager.get();
 
-    if (!build_ant(hardware_manager, *next_worker, code)) {
+    if(!build_ant(hardware_manager, *next_worker, code)) {
         return;
     }
 
     SPDLOG_DEBUG("Creating worker ant");
     ulong ant_idx = map_world.current_level().workers.size();
-    software_manager.assign(ant_idx); // before pushing to this->workers
+    software_manager.assign(ant_idx);  // before pushing to this->workers
 
     save_ant(next_worker);
     next_worker = create_worker_data();
 }
 
-bool EntityManager::build_ant(HardwareManager& hardware_manager,
-        Worker& worker,
-        MachineCode const& machine_code)
-{
-    SPDLOG_TRACE("Building ant program - x: {} y: {} - machine_code: {} bytes", worker.get_data().x, worker.get_data().y, machine_code.size());
+bool EntityManager::build_ant(HardwareManager& hardware_manager, Worker& worker,
+                              MachineCode const& machine_code) {
+    SPDLOG_TRACE("Building ant program - x: {} y: {} - machine_code: {} bytes",
+                 worker.get_data().x, worker.get_data().y, machine_code.size());
 
-    CompileArgs compile_args(machine_code.code, worker.cpu, worker.program_executor._ops);
+    CompileArgs compile_args(machine_code.code, worker.cpu,
+                             worker.program_executor._ops);
     hardware_manager.compile(compile_args);
     if(compile_args.status.p_err) {
         SPDLOG_ERROR("Failed to compile the program for the ant");
@@ -173,12 +167,12 @@ bool EntityManager::build_ant(HardwareManager& hardware_manager,
 }
 
 void EntityManager::rebuild_workers(HardwareManager& hardware_manager,
-        SoftwareManager& software_manager)
-{
-    SPDLOG_DEBUG("Rebuilding worker ant programs - count: {}", map_world.levels.size());
+                                    SoftwareManager& software_manager) {
+    SPDLOG_DEBUG("Rebuilding worker ant programs - count: {}",
+                 map_world.levels.size());
     ulong ant_idx = 0;
-    for(auto& level: map_world.levels) {
-        for (Worker* worker: level.workers) {
+    for(auto& level : map_world.levels) {
+        for(Worker* worker : level.workers) {
             build_ant(hardware_manager, *worker, software_manager[ant_idx]);
             ++ant_idx;
         }
@@ -186,10 +180,10 @@ void EntityManager::rebuild_workers(HardwareManager& hardware_manager,
     SPDLOG_TRACE("Completed rebuilding worker ant programs");
 }
 
-//returns the total number of workers accross all levels
+// returns the total number of workers accross all levels
 ulong EntityManager::num_workers() {
     ulong n = 0;
-    for(const auto& level: map_world.levels) {
+    for(const auto& level : map_world.levels) {
         n += level.workers.size();
     }
     return n;
@@ -202,7 +196,8 @@ void EntityManager::save_ant(Worker* worker) {
 
 Worker* EntityManager::create_worker_data() {
     return new Worker(EntityData('w', 10, color::light_green),
-            map_world.instr_action_clock, map_world.item_info_map, job_pool);
+                      map_world.instr_action_clock, map_world.item_info_map,
+                      job_pool);
 }
 
 ant_proto::EntityManager EntityManager::get_proto() const {
@@ -212,4 +207,3 @@ ant_proto::EntityManager EntityManager::get_proto() const {
 
     return entity_msg;
 }
-

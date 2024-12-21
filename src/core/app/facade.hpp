@@ -5,8 +5,7 @@
 using ulong = unsigned long;
 
 class AntGameFacade {
-
-    public:
+   public:
     AntGameFacade();
     AntGameFacade(int argc, char* argv[]);
     AntGameFacade(ProjectArguments& config);
@@ -14,8 +13,7 @@ class AntGameFacade {
     bool update();
     void engine_update();
 
-    private:
-
+   private:
     Engine engine = {};
     ulong clock_timeout = {};
 };

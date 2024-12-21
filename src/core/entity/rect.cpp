@@ -1,6 +1,6 @@
-#include "spdlog/spdlog.h"
 #include "entity/rect.hpp"
 
+#include "spdlog/spdlog.h"
 
 Rect::Rect(long x1, long y1, long w, long h) : w(w), h(h) {
     SPDLOG_TRACE("New Room Rect: ({}, {}) -> {}x{}", x1, y1, w, h);
@@ -17,12 +17,10 @@ Rect::Rect(Rect const& other)
       center_x(other.center_x),
       center_y(other.center_y) {}
 
-Rect::Rect(const ant_proto::Rect& msg): 
-    w(msg.w()),
-    h(msg.h())
-{
+Rect::Rect(const ant_proto::Rect& msg) : w(msg.w()), h(msg.h()) {
     set_top_left(msg.x1(), msg.y1());
-    SPDLOG_TRACE("Unpacking rectangle - x: {} y: {} w: {} h: {}", msg.x1(), msg.y1(), w, h);
+    SPDLOG_TRACE("Unpacking rectangle - x: {} y: {} w: {} h: {}", msg.x1(),
+                 msg.y1(), w, h);
 }
 
 Rect& Rect::operator=(Rect const& other) {
@@ -69,8 +67,7 @@ ant_proto::Rect Rect::get_proto() const {
 }
 
 Rect Rect::from_top_left(long x1, long y1, long w, long h) {
-    SPDLOG_TRACE("Creating room from top left: {}, {}, {}, {}", x1, y1, w,
-                 h);
+    SPDLOG_TRACE("Creating room from top left: {}, {}, {}, {}", x1, y1, w, h);
     return Rect(x1, y1, w, h);
 }
 
@@ -81,8 +78,6 @@ Rect Rect::from_center(long center_x, long center_y, long w, long h) {
 }
 
 Rect Rect::from_corners(long x1, long y1, long x2, long y2) {
-    SPDLOG_TRACE("Creating room from corners: {}, {}, {}, {}", x1, y1, x2,
-                 y2);
+    SPDLOG_TRACE("Creating room from corners: {}, {}, {}, {}", x1, y1, x2, y2);
     return Rect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
 }
-

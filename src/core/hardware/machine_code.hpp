@@ -11,7 +11,7 @@ struct MachineCode {
     LabelMap labels;
     std::vector<uchar> code;
 
-    MachineCode()=default;
+    MachineCode() = default;
     MachineCode(const ant_proto::MachineCode& msg);
 
     void clear();
@@ -19,4 +19,3 @@ struct MachineCode {
     size_t size() const;
     ant_proto::MachineCode get_proto();
 };
-

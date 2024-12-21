@@ -1,21 +1,20 @@
 #include "hardware/software_manager.hpp"
+
 #include "spdlog/spdlog.h"
 
-SoftwareManager::SoftwareManager(const ant_proto::SoftwareManager& msg, CommandMap const& command_map):
-    parser(command_map),
-    current_code(new MachineCode(msg.current_code())),
-    assigned_current(msg.assigned_current())
-{
-    for( const auto& ant_machine_code: msg.ant_machine_codes() )
+SoftwareManager::SoftwareManager(const ant_proto::SoftwareManager& msg,
+                                 CommandMap const& command_map)
+    : parser(command_map),
+      current_code(new MachineCode(msg.current_code())),
+      assigned_current(msg.assigned_current()) {
+    for(const auto& ant_machine_code : msg.ant_machine_codes())
         code_list.emplace_back(new MachineCode(ant_machine_code));
 
-    for( const auto& ant_code_record: msg.ant_code_records() )
-        ant_mapping[ant_code_record.ant_idx()] = ant_code_record.code_idx(); 
+    for(const auto& ant_code_record : msg.ant_code_records())
+        ant_mapping[ant_code_record.ant_idx()] = ant_code_record.code_idx();
 }
 
-bool SoftwareManager::has_code() const {
-    return !current_code->is_empty();
-}
+bool SoftwareManager::has_code() const { return !current_code->is_empty(); }
 
 void SoftwareManager::add_lines(std::vector<std::string> const& lines) {
     SPDLOG_DEBUG("Getting the instruction strings from the machine code");
@@ -37,19 +36,17 @@ void SoftwareManager::get_lines(std::vector<std::string>& lines) {
     lines.push_back("");
 
     if(status.p_err) {
-        SPDLOG_ERROR(
-            "Failed to deparse program - clearing string lines...");
+        SPDLOG_ERROR("Failed to deparse program - clearing string lines...");
         lines.clear();
     }
 }
 
-MachineCode& SoftwareManager::get() {
-    return *current_code;
-}
+MachineCode& SoftwareManager::get() { return *current_code; }
 
 MachineCode& SoftwareManager::operator[](ulong ant_idx) {
     ulong code_idx = ant_mapping[ant_idx];
-    return code_idx >= code_list.size() ? *current_code : *(code_list[code_idx]); 
+    return code_idx >= code_list.size() ? *current_code
+                                        : *(code_list[code_idx]);
 }
 
 void SoftwareManager::assign(ulong ant_idx) {
@@ -73,10 +70,10 @@ ant_proto::SoftwareManager SoftwareManager::get_proto() const {
     *msg.mutable_current_code() = current_code->get_proto();
 
     const volatile std::string current_code_str = msg.current_code().code();
-    for (const auto& code : code_list)
+    for(const auto& code : code_list)
         *msg.add_ant_machine_codes() = code->get_proto();
 
-    for (auto const& [ant_idx, code_idx] : ant_mapping) {
+    for(auto const& [ant_idx, code_idx] : ant_mapping) {
         ant_proto::AntCodeRecord ant_code_record_msg;
         ant_code_record_msg.set_ant_idx(ant_idx);
         ant_code_record_msg.set_code_idx(code_idx);
@@ -103,4 +100,3 @@ void SoftwareManager::clear_current() {
     assigned_current = false;
     SPDLOG_TRACE("Succesfully reset the current code context");
 }
-

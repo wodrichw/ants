@@ -3,9 +3,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "map.pb.h"
 #include "entity/building.hpp"
 #include "entity/entity_data.hpp"
+#include "map.pb.h"
 #include "map/section_data.hpp"
 
 using ulong = unsigned long;
@@ -29,7 +29,6 @@ struct ChunkMarker {
     bool operator==(const ChunkMarker& rhs) { return id == rhs.id; }
     bool operator<(ulong rhs_id) { return id < rhs_id; }
     bool operator<(const ChunkMarker& rhs) { return id < rhs.id; }
-
 };
 
 struct Chunk {
@@ -88,15 +87,16 @@ class Chunks {
         return chunks.find(chunk_id);
     }
 
-
     void create_chunk(const ChunkMarker& cm);
     std::vector<ChunkMarker> get_chunk_markers(const Rect& rect) const;
 
     void erase(ChunkMap::iterator it) { chunks.erase(it); }
-    long align(long pos) const; // takes a tile pos and aligns it to chunk
+    long align(long pos) const;  // takes a tile pos and aligns it to chunk
     ulong get_chunk_id(long x, long y) const;
     Chunk& operator[](ulong chunk_id) { return *chunks[chunk_id]; }
-    Chunk& operator[](std::pair<long, long> p) { return *chunks[get_chunk_id(p.first, p.second)]; }
+    Chunk& operator[](std::pair<long, long> p) {
+        return *chunks[get_chunk_id(p.first, p.second)];
+    }
     Chunk const& at(ulong chunk_id) const { return *chunks.at(chunk_id); }
     void emplace(ulong chunk_id, Chunk* chunk) {
         chunks.emplace(chunk_id, chunk);
@@ -111,14 +111,16 @@ class Chunks {
 class Map {
     using f_xy_t = std::function<void(long, long)>;
     f_xy_t generate_chunk_callback;
+
    public:
     bool needs_update = true;
     bool chunk_update_parity = false;
 
-
     Map(bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
-    Map(Rect const& border, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
-    Map(const ant_proto::Map& msg, bool is_walls_enabled, f_xy_t pre_chunk_generation_callback);
+    Map(Rect const& border, bool is_walls_enabled,
+        f_xy_t pre_chunk_generation_callback);
+    Map(const ant_proto::Map& msg, bool is_walls_enabled,
+        f_xy_t pre_chunk_generation_callback);
 
     void load_section(MapSectionData const& section_data);
     void dig(long x1, long y1, long x2, long y2);
@@ -162,4 +164,3 @@ class Map {
     Chunks chunks;
     bool is_walls_enabled;
 };
-

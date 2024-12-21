@@ -9,11 +9,11 @@
 
 #include "entity/entity_manager.hpp"
 #include "hardware.pb.h"
+#include "hardware/hardware_manager.hpp"
 #include "hardware/program_executor.hpp"
 #include "map/manager.hpp"
 #include "ui/event_system.hpp"
 #include "ui/render.hpp"
-#include "hardware/hardware_manager.hpp"
 #include "utils/thread_pool.hpp"
 
 struct Level;
@@ -44,7 +44,9 @@ class EditorMode : public Mode {
     std::vector<Level> const& levels;
 
    public:
-    EditorMode(Renderer& renderer, LayoutBox& box, SoftwareManager& software_manager, std::vector<Level> const& levels);
+    EditorMode(Renderer& renderer, LayoutBox& box,
+               SoftwareManager& software_manager,
+               std::vector<Level> const& levels);
 
     bool is_editor() override { return true; }
     bool is_primary() override { return false; }
@@ -67,8 +69,8 @@ class EditorMode : public Mode {
         return event_system.keyboard_events;
     }
 
-    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>& get_keyboard_chord_publisher()
-        override {
+    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>&
+    get_keyboard_chord_publisher() override {
         return event_system.keyboard_chord_events;
     }
 
@@ -90,30 +92,18 @@ class PrimaryMode : public Mode {
     const ThreadPool<AsyncProgramJob>& job_pool;
 
    public:
-    PrimaryMode(
-            LayoutBox& box,
-            CommandMap const& command_map,
-            SoftwareManager& software_manager,
-            EntityManager& entity_manager,
-            MapManager& map_manager,
-            MapWorld& map_world,
-            Renderer& renderer,
-            bool& is_reload_game,
-            const ThreadPool<AsyncProgramJob>& job_pool
-    );
+    PrimaryMode(LayoutBox& box, CommandMap const& command_map,
+                SoftwareManager& software_manager,
+                EntityManager& entity_manager, MapManager& map_manager,
+                MapWorld& map_world, Renderer& renderer, bool& is_reload_game,
+                const ThreadPool<AsyncProgramJob>& job_pool);
 
-    PrimaryMode(
-            const ant_proto::HardwareManager msg,
-            LayoutBox& box,
-            CommandMap const& command_map,
-            SoftwareManager& software_manager,
-            EntityManager& entity_manager,
-            MapManager& map_manager,
-            MapWorld& map_world,
-            Renderer& renderer,
-            bool& is_reload_game,
-            const ThreadPool<AsyncProgramJob>& job_pool
-     );
+    PrimaryMode(const ant_proto::HardwareManager msg, LayoutBox& box,
+                CommandMap const& command_map,
+                SoftwareManager& software_manager,
+                EntityManager& entity_manager, MapManager& map_manager,
+                MapWorld& map_world, Renderer& renderer, bool& is_reload_game,
+                const ThreadPool<AsyncProgramJob>& job_pool);
 
     void initialize(SoftwareManager& software_manager);
     bool is_editor() override { return false; }
@@ -132,8 +122,8 @@ class PrimaryMode : public Mode {
         return event_system.keyboard_events;
     }
 
-    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>& get_keyboard_chord_publisher()
-        override {
+    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>&
+    get_keyboard_chord_publisher() override {
         return event_system.keyboard_chord_events;
     }
 
@@ -147,4 +137,3 @@ class PrimaryMode : public Mode {
         return msg;
     }
 };
-

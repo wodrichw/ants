@@ -4,10 +4,10 @@ struct CommandConfig;
 
 // We apologize to all future developers for what you are about to see.
 // - Kevin 01/18/2024
-#define DEFINE_PARSER(T)                   \
-    struct T {                             \
-        void operator()(CommandConfig const&, ParseArgs&); \
-    } \
+#define DEFINE_PARSER(T)                                     \
+    struct T {                                               \
+        void operator()(CommandConfig const &, ParseArgs &); \
+    }
 
 DEFINE_PARSER(NoArgCommandParser);
 DEFINE_PARSER(LoadConstantParser);
@@ -22,10 +22,10 @@ DEFINE_PARSER(ReturnParser);
 DEFINE_PARSER(OneScentCommandParser);
 DEFINE_PARSER(SetScentPriorityParser);
 
-#define DEFINE_DEPARSER(T)                   \
-    struct T {                             \
-        void operator()(CommandConfig const&, DeparseArgs &args); \
-    } \
+#define DEFINE_DEPARSER(T)                                         \
+    struct T {                                                     \
+        void operator()(CommandConfig const &, DeparseArgs &args); \
+    }
 
 DEFINE_DEPARSER(NoArgCommandDeparser);
 DEFINE_DEPARSER(LoadConstantDeparser);

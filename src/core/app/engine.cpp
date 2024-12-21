@@ -1,9 +1,10 @@
 #include "app/engine.hpp"
-#include "app/engine_state.hpp"
+
 #include "app/arg_parse.hpp"
+#include "app/engine_state.hpp"
 #include "engine.pb.h"
-#include "ui/render.hpp"
 #include "spdlog/spdlog.h"
+#include "ui/render.hpp"
 
 Engine::Engine()
     : config(0, nullptr), renderer(create_renderer()), state(create_state()) {
@@ -44,14 +45,15 @@ void Engine::initialize() {
 }
 
 Renderer* Engine::create_renderer() const {
-    return config.is_render ? static_cast<Renderer*>(new tcodRenderer(
-        config.is_debug_graphics)) : static_cast<Renderer*>(new NoneRenderer());
+    return config.is_render ? static_cast<Renderer*>(
+                                  new tcodRenderer(config.is_debug_graphics))
+                            : static_cast<Renderer*>(new NoneRenderer());
 }
 
 EngineState* Engine::create_state() {
     Unpacker unpacker(config.save_path);
-    
-    if( unpacker.is_valid() ) {
+
+    if(unpacker.is_valid()) {
         ant_proto::EngineState msg;
         unpacker >> msg;
         return new EngineState(msg, config, renderer);
@@ -61,8 +63,7 @@ EngineState* Engine::create_state() {
 }
 
 void Engine::update() {
-
-    if (state->is_reload_game) {
+    if(state->is_reload_game) {
         delete state;
         state = create_state();
     }

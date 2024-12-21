@@ -1,16 +1,15 @@
 #pragma once
 
-#include "engine.pb.h"
-#include "map/manager.hpp"
-#include "hardware/program_executor.hpp"
-#include "ui/text_editor.hpp"
-#include "ui/event_system.hpp"
-#include "hardware/software_manager.hpp"
-#include "entity/entity_manager.hpp"
-#include "app/game_state.hpp"
-#include "app/game_mode.hpp"
 #include "app/arg_parse.hpp"
-
+#include "app/game_mode.hpp"
+#include "app/game_state.hpp"
+#include "engine.pb.h"
+#include "entity/entity_manager.hpp"
+#include "hardware/program_executor.hpp"
+#include "hardware/software_manager.hpp"
+#include "map/manager.hpp"
+#include "ui/event_system.hpp"
+#include "ui/text_editor.hpp"
 
 class Renderer;
 class ProjectArugments;
@@ -34,7 +33,6 @@ struct EngineState {
     bool is_reload_game = false;
 
    public:
-
     EngineState(ProjectArguments&, Renderer*);
     EngineState(const ant_proto::EngineState&, ProjectArguments&, Renderer*);
     ~EngineState();
