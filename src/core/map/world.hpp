@@ -13,7 +13,7 @@
 #include "utils/math.hpp"
 #include "utils/thread_pool.hpp"
 
-class Worker;
+struct Worker;
 struct Building;
 class ItemInfoMap;
 struct Level;
@@ -210,7 +210,7 @@ class MapWorld {
     std::vector<Level> levels;
     Regions regions;
     MapWindow map_window;
-    ulong current_depth;
+    ulong current_depth = 0;
     ItemInfoMap item_info_map = {};
     ulong instr_action_clock = 0;
 

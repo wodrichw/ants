@@ -9,7 +9,7 @@
 #include "map/map.hpp"
 #include "map/world.hpp"
 
-class Worker;
+struct Worker;
 struct Building;
 
 class MapManager {

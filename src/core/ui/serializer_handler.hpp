@@ -3,7 +3,7 @@
 #include <string>
 #include "ui/subscriber.hpp"
 
-class EngineState;
+struct EngineState;
 
 class AutoSaveTriggerHandler : public Subscriber<KeyboardEvent> {
     EngineState const& engine;

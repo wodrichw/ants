@@ -7,6 +7,8 @@
 #include "hardware/machine_code.hpp"
 #include "hardware/parser.hpp"
 
+using ulong = unsigned long;
+
 class SoftwareManager {
     Parser parser;
 

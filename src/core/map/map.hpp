@@ -25,10 +25,10 @@ struct ChunkMarker {
     long x;
     long y;
     ulong id;
-    bool operator==(ulong rhs_id) { return id == rhs_id; }
-    bool operator==(const ChunkMarker& rhs) { return id == rhs.id; }
-    bool operator<(ulong rhs_id) { return id < rhs_id; }
-    bool operator<(const ChunkMarker& rhs) { return id < rhs.id; }
+    bool operator==(ulong rhs_id) const { return id == rhs_id; }
+    bool operator==(const ChunkMarker& rhs) const { return id == rhs.id; }
+    bool operator<(ulong rhs_id) const { return id < rhs_id; }
+    bool operator<(const ChunkMarker& rhs) const { return id < rhs.id; }
 };
 
 struct Chunk {
