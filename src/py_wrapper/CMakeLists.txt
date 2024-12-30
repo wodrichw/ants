@@ -1,5 +1,6 @@
 message(STATUS "Compiling Python wrapper")
 
+# be sure to choose the correct version of python
 find_package(Python3 3.13 REQUIRED COMPONENTS Interpreter Development)
 set(PYBIND11_FINDPYTHON)
 find_package(pybind11 CONFIG REQUIRED)
