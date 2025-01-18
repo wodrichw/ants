@@ -103,6 +103,13 @@ namespace std {
     };
 
     template <>
+    struct hash<CharKeyboardEventType> {
+        std::size_t operator()(CharKeyboardEventType const& e) const noexcept {
+            return static_cast<std::size_t>(e);
+        }
+    };
+
+    template <>
     struct hash<KeyboardChordEventType> {
         std::size_t operator()(KeyboardChordEventType const& e) const noexcept {
             ulong constexpr HASH_MULT = 196613UL;
