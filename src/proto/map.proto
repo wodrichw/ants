@@ -8,6 +8,7 @@ message Level {
     repeated Worker workers = 1;
     repeated Building buildings = 2;
     Map map = 3;
+    uint64 depth = 4;
 }
 
 message Region {

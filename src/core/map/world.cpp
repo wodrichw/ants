@@ -31,7 +31,8 @@ Level::Level(
 ):
     workers{},
     buildings{},
-    map(msg.map(), is_walls_enabled, pre_chunk_generation_callback)
+    map(msg.map(), is_walls_enabled, pre_chunk_generation_callback),
+    depth(msg.depth())
 {
     for(const auto& worker_msg: msg.workers())
         workers.emplace_back(new Worker(worker_msg, instr_clock, item_map, thread_pool));
@@ -42,6 +43,7 @@ Level::Level(
 
 ant_proto::Level Level::get_proto() const {
     ant_proto::Level msg;
+    msg.set_depth(depth);
     for( const auto worker: workers ) *msg.add_workers() = worker->get_proto();
     for( const auto building: buildings ) *msg.add_buildings() = building->get_proto();
     *msg.mutable_map() = map.get_proto();
