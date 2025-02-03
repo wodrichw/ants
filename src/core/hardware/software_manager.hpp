@@ -7,6 +7,8 @@
 #include "hardware/machine_code.hpp"
 #include "hardware/parser.hpp"
 
+using ulong = unsigned long;
+
 class SoftwareManager {
     Parser parser;
 
@@ -16,8 +18,9 @@ class SoftwareManager {
     bool assigned_current = false;
 
    public:
-    SoftwareManager(CommandMap const& command_map) : parser(command_map){};
-    SoftwareManager(const ant_proto::SoftwareManager& msg, CommandMap const& command_map);
+    SoftwareManager(CommandMap const& command_map) : parser(command_map) {};
+    SoftwareManager(const ant_proto::SoftwareManager& msg,
+                    CommandMap const& command_map);
     virtual ~SoftwareManager();
     ant_proto::SoftwareManager get_proto() const;
 

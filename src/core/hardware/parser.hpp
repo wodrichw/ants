@@ -11,16 +11,15 @@ struct MachineCode;
 class LabelMap;
 
 class Parser {
-    public:
-
+   public:
     Parser(CommandMap const&);
     void parse(std::vector<std::string> const&, MachineCode&, Status&);
     void deparse(MachineCode const&, std::vector<std::string>&, Status&);
 
-    private:
-
+   private:
     bool handle_label(LabelMap&, std::string const&, ushort, Status&);
-    void preprocess(std::vector<std::string> const&, LabelMap&, std::vector<std::string>&, Status&);
+    void preprocess(std::vector<std::string> const&, LabelMap&,
+                    std::vector<std::string>&, Status&);
 
     CommandMap const& command_map;
- };
+};

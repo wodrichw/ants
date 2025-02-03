@@ -1,4 +1,5 @@
 #include "entity/scents.hpp"
+
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
@@ -13,7 +14,8 @@ void update_scent_and_sum(long& total, ulong& scents, long priority) {
 }
 
 void DecrementScent::operator()(ulong& delta_scent) {
-    delta_scent = (delta_scent + 0xFF) & 0xFF; // equivalent to --scent since this will truncated
+    delta_scent = (delta_scent + 0xFF) &
+                  0xFF;  // equivalent to --scent since this will truncated
     // return true;
 }
 
@@ -21,12 +23,16 @@ void IncrementScent::operator()(ulong& delta_scent) {
     delta_scent = (delta_scent + 1) & 0xFF;
 }
 
-ScentReader::ScentReader(bool& scent_dir1, bool& dir_flag2, uchar const& is_space_empty_flag, ulong const& priorities)
-      : scent_dir1(scent_dir1), scent_dir2(dir_flag2),
-        is_space_empty_flag(is_space_empty_flag), base_priorities(priorities) {}
+ScentReader::ScentReader(bool& scent_dir1, bool& dir_flag2,
+                         uchar const& is_space_empty_flag,
+                         ulong const& priorities)
+    : scent_dir1(scent_dir1),
+      scent_dir2(dir_flag2),
+      is_space_empty_flag(is_space_empty_flag),
+      base_priorities(priorities) {}
 
 void ScentReader::operator()(ulong abs_scents[4]) {
-    if (base_priorities == 0) return;
+    if(base_priorities == 0) return;
 
     // abs_scents - chunk directions: right, up, left, down
     ulong right_scents = abs_scents[0];
@@ -37,9 +43,10 @@ void ScentReader::operator()(ulong abs_scents[4]) {
     // Horizontal - positive values push to the left
     // Vertical - positive values push forward
     long left_scent = 0, right_scent = 0, up_scent = 0, down_scent = 0;
-    for (ulong priorities = base_priorities; priorities != 0; priorities >>= 8) {
+    for(ulong priorities = base_priorities; priorities != 0; priorities >>= 8) {
         // Get and shift priorities
-        long priority = static_cast<long>(static_cast<schar>(priorities & 0xFF));
+        long priority =
+            static_cast<long>(static_cast<schar>(priorities & 0xFF));
 
         // Get and shift left / right scents
         update_scent_and_sum(left_scent, left_scents, priority);
@@ -51,18 +58,20 @@ void ScentReader::operator()(ulong abs_scents[4]) {
     }
 
     bool can_move_right = is_space_empty_flag & 1;
-    bool can_move_up = (is_space_empty_flag >> 1 ) & 1;
-    bool can_move_left = (is_space_empty_flag >> 2 ) & 1;
-    bool can_move_down = (is_space_empty_flag >> 3 ) & 1;
+    bool can_move_up = (is_space_empty_flag >> 1) & 1;
+    bool can_move_left = (is_space_empty_flag >> 2) & 1;
+    bool can_move_down = (is_space_empty_flag >> 3) & 1;
 
-    long min_scent = std::min({left_scent, right_scent, up_scent, down_scent}) - 1;
+    long min_scent =
+        std::min({left_scent, right_scent, up_scent, down_scent}) - 1;
 
     left_scent = can_move_left ? (-min_scent + left_scent) : 0;
     right_scent = can_move_right ? (-min_scent + right_scent) : 0;
 
     up_scent = can_move_up ? (-min_scent + up_scent) : 0;
     down_scent = can_move_down ? (-min_scent + down_scent) : 0;
-    // SPDLOG_DEBUG("Scent reader - left: {} right {} up: {} down: {} min: {}", left_scent, right_scent, up_scent, down_scent, min_scent);
+    // SPDLOG_DEBUG("Scent reader - left: {} right {} up: {} down: {} min: {}",
+    // left_scent, right_scent, up_scent, down_scent, min_scent);
 
     long total_scent = left_scent + right_scent + up_scent + down_scent + 1;
 
@@ -70,21 +79,21 @@ void ScentReader::operator()(ulong abs_scents[4]) {
     long accumulated_value = 0;
 
     accumulated_value += right_scent;
-    if (rand_dir < accumulated_value) {
+    if(rand_dir < accumulated_value) {
         // turn right;
         SPDLOG_TRACE("Scent turn right");
         scent_dir1 = false, scent_dir2 = false;
         return;
     }
     accumulated_value += up_scent;
-    if (rand_dir < accumulated_value) {
+    if(rand_dir < accumulated_value) {
         // turn up;
         SPDLOG_TRACE("Scent turn up");
         scent_dir1 = false, scent_dir2 = true;
         return;
     }
     accumulated_value += left_scent;
-    if (rand_dir < accumulated_value) {
+    if(rand_dir < accumulated_value) {
         // turn left;
         SPDLOG_TRACE("Scent turn left");
         scent_dir1 = true, scent_dir2 = false;
@@ -95,5 +104,6 @@ void ScentReader::operator()(ulong abs_scents[4]) {
     scent_dir1 = true, scent_dir2 = true;
 }
 
-ScentBehaviors::ScentBehaviors(uchar const& is_space_empty_flag):
-    read_scent_behavior(scent_dir1, scent_dir2, is_space_empty_flag, priorities) {}
+ScentBehaviors::ScentBehaviors(uchar const& is_space_empty_flag)
+    : read_scent_behavior(scent_dir1, scent_dir2, is_space_empty_flag,
+                          priorities) {}

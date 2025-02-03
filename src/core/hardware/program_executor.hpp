@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "hardware.pb.h"
-#include "utils/thread_pool.hpp"
 #include "hardware/op_def.hpp"
+#include "utils/thread_pool.hpp"
 
 using ulong = unsigned long;
 using ushort = unsigned short;
@@ -16,13 +16,13 @@ struct ProgramExecutor;
 
 struct Op {
     unsigned short num_ticks;
-    std::function< void() > fn;
-    void operator()() { fn() ; };
+    std::function<void()> fn;
+    void operator()() { fn(); };
 };
 
 struct AsyncProgramJob {
     ProgramExecutor& pe;
-    AsyncProgramJob( ProgramExecutor& pe ): pe(pe) {}
+    AsyncProgramJob(ProgramExecutor& pe) : pe(pe) {}
     void run();
 };
 
@@ -37,8 +37,11 @@ struct ProgramExecutor {
     ulong max_instruction_per_tick = 0;
     ThreadPool<AsyncProgramJob>& job_pool;
 
-    ProgramExecutor(ulong const& instr_clock, ulong max_instruction_per_tick, ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
-    ProgramExecutor(const ant_proto::ProgramExecutor& msg, ulong const& instr_clock, ulong max_instruction_per_tick, ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
+    ProgramExecutor(ulong const& instr_clock, ulong max_instruction_per_tick,
+                    ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
+    ProgramExecutor(const ant_proto::ProgramExecutor& msg,
+                    ulong const& instr_clock, ulong max_instruction_per_tick,
+                    ushort& instr_ptr_register, ThreadPool<AsyncProgramJob>&);
     void reset();
     void execute_async();
     void execute();
@@ -47,5 +50,3 @@ struct ProgramExecutor {
 
     ant_proto::ProgramExecutor get_proto();
 };
-
-

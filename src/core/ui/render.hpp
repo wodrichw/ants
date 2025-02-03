@@ -7,9 +7,9 @@
 #include "entity/entity_data.hpp"
 #include "map/map.hpp"
 #include "map/window.hpp"
+#include "spdlog/spdlog.h"
 #include "ui/layoutbox.hpp"
 #include "ui/text_editor.hpp"
-#include "spdlog/spdlog.h"
 
 class Renderer {
    public:
@@ -29,16 +29,15 @@ class Renderer {
     virtual void use_scent_tile_rendering(ulong) = 0;
 };
 
-
 class NoneRenderer : public Renderer {
-public:
+   public:
     NoneRenderer() { SPDLOG_INFO("NoneRenderer initialized"); }
-    void render_map(LayoutBox const&, Map&, MapWindow const&){};
-    void render_ant(LayoutBox const&, Map&, EntityData&, MapWindow const&){};
-    void render_building(LayoutBox const&, Building&, MapWindow const&){};
-    void render_text_editor(LayoutBox const&, TextEditor const&, size_t){};
-    void render_help_boxes(LayoutBox const&){};
-    void present(){};
+    void render_map(LayoutBox const&, Map&, MapWindow const&) {};
+    void render_ant(LayoutBox const&, Map&, EntityData&, MapWindow const&) {};
+    void render_building(LayoutBox const&, Building&, MapWindow const&) {};
+    void render_text_editor(LayoutBox const&, TextEditor const&, size_t) {};
+    void render_help_boxes(LayoutBox const&) {};
+    void present() {};
     void pixel_to_tile_coordinates(int, int, long& tile_x, long& tile_y) {
         tile_x = 0;
         tile_y = 0;
@@ -47,12 +46,10 @@ public:
     void use_scent_tile_rendering(ulong) {}
 };
 
-
 struct MapTileRenderer {
     virtual ~MapTileRenderer() {}
-    virtual void operator()(TCOD_ConsoleTile& tile, long x, long y)=0;
+    virtual void operator()(TCOD_ConsoleTile& tile, long x, long y) = 0;
 };
-
 
 struct TcodMapTileRenderer : public MapTileRenderer {
     Map& map;
@@ -61,7 +58,6 @@ struct TcodMapTileRenderer : public MapTileRenderer {
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
 
-
 struct ScentMapTileRenderer : public MapTileRenderer {
     Map& map;
     ulong scent_idx;
@@ -69,13 +65,11 @@ struct ScentMapTileRenderer : public MapTileRenderer {
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
 
-
 struct DebugMapTileRenderer : public MapTileRenderer {
     Map& map;
     DebugMapTileRenderer(Map& map);
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
-
 
 class tcodRenderer : public Renderer {
    public:
@@ -103,7 +97,6 @@ class tcodRenderer : public Renderer {
     bool is_debug_graphics = false;
     tcod::Context context;
     tcod::Console root_console;
-    std::function<std::unique_ptr<MapTileRenderer>(Map&)> generate_tile_renderer;
+    std::function<std::unique_ptr<MapTileRenderer>(Map&)>
+        generate_tile_renderer;
 };
-
-

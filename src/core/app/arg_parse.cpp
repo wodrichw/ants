@@ -66,15 +66,14 @@ bool ArgumentParser::getBool(const std::string& key, bool default_value) const {
 // ProjectArguments
 // ============================================================================
 
-ProjectArguments::ProjectArguments(int argc, char* argv[]):
-    parser(argc, argv),
-    default_map_file_path(parser.getString("map_path")),
-    save_path(parser.getString("save_path")),
-    is_render(!parser.getBool("no_render", false)),
-    is_debug_graphics(parser.getBool("debug_graphics", false)),
-    is_walls_enabled(!parser.getBool("disable_walls", false)),
-    no_fov(!parser.getBool("no_fov", false))
-{
+ProjectArguments::ProjectArguments(int argc, char* argv[])
+    : parser(argc, argv),
+      default_map_file_path(parser.getString("map_path")),
+      save_path(parser.getString("save_path")),
+      is_render(!parser.getBool("no_render", false)),
+      is_debug_graphics(parser.getBool("debug_graphics", false)),
+      is_walls_enabled(!parser.getBool("disable_walls", false)),
+      no_fov(!parser.getBool("no_fov", false)) {
     if(parser.hasKey("help")) {
         help();
         exit(0);
@@ -82,29 +81,31 @@ ProjectArguments::ProjectArguments(int argc, char* argv[]):
     setup_logging();
 }
 
-ProjectArguments::ProjectArguments(
-    std::string const& default_map_file_path,
-    std::string const& save_path,
-    bool is_render, bool is_debug_graphics, bool is_walls_enabled
-):
-    default_map_file_path(default_map_file_path), save_path(save_path),
-    is_render(is_render), is_debug_graphics(is_debug_graphics),
-    is_walls_enabled(is_walls_enabled)
-{
+ProjectArguments::ProjectArguments(std::string const& default_map_file_path,
+                                   std::string const& save_path, bool is_render,
+                                   bool is_debug_graphics,
+                                   bool is_walls_enabled)
+    : default_map_file_path(default_map_file_path),
+      save_path(save_path),
+      is_render(is_render),
+      is_debug_graphics(is_debug_graphics),
+      is_walls_enabled(is_walls_enabled) {
     setup_logging();
 }
-
 
 void ProjectArguments::help() const {
     std::cout << "Usage: ants [options]\n";
     std::cout << "Options:\n";
     std::cout << "  --map_path <path>    Path to the map file\n";
     std::cout << "  --save_path <path>   Path to the file for auto-save\n";
-    std::cout << "  --no_render          Does not render any graphics for the game\n";
+    std::cout
+        << "  --no_render          Does not render any graphics for the game\n";
     std::cout << "  --debug_graphics     Add debug graphics to the GUI\n";
     std::cout << "  --no_fov             Everything is in fov\n";
-    std::cout << "  --disable_walls      The player and ants can traverse walls\n";
-    std::cout << "  --log_level <level>  Set the runtime log level - options: trace, "
+    std::cout
+        << "  --disable_walls      The player and ants can traverse walls\n";
+    std::cout
+        << "  --log_level <level>  Set the runtime log level - options: trace, "
            "debug, info, warn, error, critical, and off. default: info. Note "
            "that this does not override the compile time log level.\n";
 }

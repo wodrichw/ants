@@ -9,4 +9,3 @@ void Compiler::compile(CompileArgs& args) {
         command.compile(command, args);
     }
 }
-

@@ -22,7 +22,8 @@ struct Box {
         // SPDLOG_TRACE("Populated char {} at ({}, {})", ch, x_idx, y_idx);
     }
 
-    void populate(const std::vector<std::string> &text, ushort offset_x=0, ushort offset_y=0) {
+    void populate(const std::vector<std::string> &text, ushort offset_x = 0,
+                  ushort offset_y = 0) {
         // SPDLOG_TRACE("Populating box with {} lines", text.size());
 
         // render corners
@@ -45,13 +46,15 @@ struct Box {
             bool is_line_filled = text_line_idx < text.size();
             for(ushort j = 1; j < w - 1; ++j) {
                 ushort char_idx = offset_x + j - 1;
-                populate_char(j, i, is_line_filled && char_idx < text[text_line_idx].size() ?
-                    text[text_line_idx][char_idx] : ' ');
+                populate_char(
+                    j, i,
+                    is_line_filled && char_idx < text[text_line_idx].size()
+                        ? text[text_line_idx][char_idx]
+                        : ' ');
             }
         }
     }
 };
-
 
 tcodRenderer::tcodRenderer(bool is_debug_graphics)
     : is_debug_graphics(is_debug_graphics) {
@@ -67,16 +70,16 @@ tcodRenderer::tcodRenderer(bool is_debug_graphics)
     root_console = context.new_console(globals::COLS, globals::ROWS);
     SPDLOG_TRACE("Created root console - completed creating tcod renderer");
 
-    if( is_debug_graphics )
+    if(is_debug_graphics)
         use_debug_tile_rendering();
     else
         use_default_tile_rendering();
 }
 
-
 void tcodRenderer::render_map(LayoutBox const &box, Map &map,
                               MapWindow const &window) {
-    std::unique_ptr<MapTileRenderer> tile_renderer = generate_tile_renderer(map);
+    std::unique_ptr<MapTileRenderer> tile_renderer =
+        generate_tile_renderer(map);
 
     // SPDLOG_TRACE("Rendering map with border ({}, {}) - {}x{}",
     for(long local_x = 0; local_x < window.border.w; ++local_x) {
@@ -99,11 +102,9 @@ void tcodRenderer::render_map(LayoutBox const &box, Map &map,
         is_debug_graphics);
 }
 
+DebugMapTileRenderer::DebugMapTileRenderer(Map &map) : map(map) {}
 
-DebugMapTileRenderer::DebugMapTileRenderer(Map& map): map(map) {}
-
-
-void DebugMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
+void DebugMapTileRenderer::operator()(TCOD_ConsoleTile &tile, long x, long y) {
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA lightWall = color::indian_red;
     TCOD_ColorRGBA lightGround = color::grey;
@@ -111,17 +112,13 @@ void DebugMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
     if(map.in_fov(x, y)) {
         tile.bg = map.is_wall(x, y) ? lightWall : lightGround;
     } else {
-        tile.bg = map.is_wall(x, y)
-                    ? darkWall
-                    : lightGround;
+        tile.bg = map.is_wall(x, y) ? darkWall : lightGround;
     }
 }
 
+TcodMapTileRenderer::TcodMapTileRenderer(Map &map) : map(map) {}
 
-TcodMapTileRenderer::TcodMapTileRenderer(Map& map): map(map) {} 
-
-
-void TcodMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
+void TcodMapTileRenderer::operator()(TCOD_ConsoleTile &tile, long x, long y) {
     // SPDLOG_TRACE("Rendering map");
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA darkGround = color::dark_grey;
@@ -129,25 +126,24 @@ void TcodMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
     TCOD_ColorRGBA lightGround = color::grey;
 
     // handle debug case
-    if( is_debug_graphics ) {
+    if(is_debug_graphics) {
         return;
     }
     if(map.in_fov(x, y)) {
         tile.bg = map.is_wall(x, y) ? lightWall : lightGround;
     } else {
-        tile.bg = map.is_wall(x, y) || !map.is_explored(x, y)
-                    ? darkWall
-                    : darkGround;
+        tile.bg =
+            map.is_wall(x, y) || !map.is_explored(x, y) ? darkWall : darkGround;
     }
 }
 
+ScentMapTileRenderer::ScentMapTileRenderer(Map &map, ulong scent_idx)
+    : map(map), scent_idx(scent_idx) {
+    SPDLOG_TRACE("Created scent map tile renderer with scent_idx: {}",
+                 scent_idx);
+}
 
-ScentMapTileRenderer::ScentMapTileRenderer(Map& map, ulong scent_idx): map(map), scent_idx(scent_idx) {
-    SPDLOG_TRACE("Created scent map tile renderer with scent_idx: {}", scent_idx);
-} 
-
-
-void ScentMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
+void ScentMapTileRenderer::operator()(TCOD_ConsoleTile &tile, long x, long y) {
     // SPDLOG_TRACE("Rendering map");
     TCOD_ColorRGBA darkWall = color::light_black;
     TCOD_ColorRGBA darkGround = color::dark_grey;
@@ -160,22 +156,20 @@ void ScentMapTileRenderer::operator()(TCOD_ConsoleTile& tile, long x, long y) {
     if(map.in_fov(x, y)) {
         tile.bg = map.is_wall(x, y) ? lightWall : scent_color;
     } else {
-        tile.bg = map.is_wall(x, y) || !map.is_explored(x, y)
-                    ? darkWall
-                    : darkGround;
+        tile.bg =
+            map.is_wall(x, y) || !map.is_explored(x, y) ? darkWall : darkGround;
     }
 }
 
-
 void tcodRenderer::render_ant(LayoutBox const &box, Map &map, EntityData &a,
-                              MapWindow const &window) 
-{
+                              MapWindow const &window) {
     // SPDLOG_TRACE("Rendering ant at ({}, {})", a.x, a.y);
     long x, y;
     bool is_valid;
     window.to_local_coords(a.x, a.y, x, y, is_valid);
     if(!is_valid) {
-        // SPDLOG_ERROR("Invalid coordinates ({}, {}) when rendering ant", a.x, a.y);
+        // SPDLOG_ERROR("Invalid coordinates ({}, {}) when rendering ant", a.x,
+        // a.y);
         return;
     }
 
@@ -210,10 +204,8 @@ void tcodRenderer::render_ant(LayoutBox const &box, Map &map, EntityData &a,
     // SPDLOG_TRACE("EntityData rendered");
 }
 
-
 void tcodRenderer::render_building(LayoutBox const &box, Building &b,
-                                   MapWindow const &window) 
-{
+                                   MapWindow const &window) {
     // SPDLOG_TRACE("Rendering building at ({}, {})", b.x, b.y);
     for(long xi = b.border.x1; xi <= b.border.x2; ++xi) {
         for(long yi = b.border.y1; yi <= b.border.y2; ++yi) {
@@ -229,11 +221,9 @@ void tcodRenderer::render_building(LayoutBox const &box, Building &b,
     // SPDLOG_TRACE("Building rendered");
 }
 
-
 void tcodRenderer::render_text_editor(LayoutBox const &box,
                                       TextEditor const &editor,
-                                      size_t ant_count)
-{
+                                      size_t ant_count) {
     // SPDLOG_TRACE("Rendering text editor");
     std::vector<std::string> asciiGrid(globals::TEXTBOXHEIGHT + 2);
     for(int i = 0; i < globals::TEXTBOXHEIGHT + 2; ++i) {
@@ -252,7 +242,8 @@ void tcodRenderer::render_text_editor(LayoutBox const &box,
                (globals::REGBOXHEIGHT * 2) + 2, globals::REGBOXWIDTH + 2,
                globals::REGBOXHEIGHT + 2);
 
-    mainBox.populate(editor.lines, editor.get_offset_x(), editor.get_offset_y());
+    mainBox.populate(editor.lines, editor.get_offset_x(),
+                     editor.get_offset_y());
     accBox.populate({"ACC:0   "});
     bacBox.populate({"BAC:1   "});
 
@@ -272,17 +263,16 @@ void tcodRenderer::render_text_editor(LayoutBox const &box,
 
     tcod::print_rect(
         root_console,
-        get_rect(box, editor.get_cursor_x() + 1 - editor.get_offset_x(), editor.get_cursor_y() + 1 - editor.get_offset_y(), 1, 1), " ",
-        color::white, color::light_green, TCOD_LEFT, TCOD_BKGND_SET);
+        get_rect(box, editor.get_cursor_x() + 1 - editor.get_offset_x(),
+                 editor.get_cursor_y() + 1 - editor.get_offset_y(), 1, 1),
+        " ", color::white, color::light_green, TCOD_LEFT, TCOD_BKGND_SET);
     // SPDLOG_TRACE("Text editor rendered");
 }
-
 
 // TODO: display potential key presses that could be helpful.
 // For instance, when standing in a nursery, display keys to produce new
 // workers. This could be replaced with something else in the future.
 void tcodRenderer::render_help_boxes(LayoutBox const &) {}
-
 
 void tcodRenderer::present() {
     // SPDLOG_TRACE("Presenting tcod context");
@@ -290,16 +280,13 @@ void tcodRenderer::present() {
     // SPDLOG_TRACE("Presented tcod context");
 }
 
-
 void tcodRenderer::pixel_to_tile_coordinates(int pixel_x, int pixel_y,
-                                             long &tile_x, long &tile_y)
-{
+                                             long &tile_x, long &tile_y) {
     std::array<int, 2> tile =
         context.pixel_to_tile_coordinates(std::array<int, 2>{pixel_x, pixel_y});
     tile_x = tile[0];
     tile_y = tile[1];
 }
-
 
 TCOD_ConsoleTile &tcodRenderer::clear_tile(LayoutBox const &box, long x,
                                            long y) {
@@ -308,7 +295,6 @@ TCOD_ConsoleTile &tcodRenderer::clear_tile(LayoutBox const &box, long x,
     tile.ch = ' ';
     return tile;
 }
-
 
 TCOD_ConsoleTile &tcodRenderer::get_tile(LayoutBox const &box, long x, long y) {
     // SPDLOG_TRACE("Getting tile at ({}, {})", x, y);
@@ -319,7 +305,6 @@ TCOD_ConsoleTile &tcodRenderer::get_tile(LayoutBox const &box, long x, long y) {
     return root_console.at(abs_x, abs_y);
 }
 
-
 const std::array<int, 4> tcodRenderer::get_rect(LayoutBox const &box, long x,
                                                 long y, int w, int h) {
     // SPDLOG_TRACE("Getting rect at ({}, {}) with dimensions {}x{}", x, y, w,
@@ -329,25 +314,23 @@ const std::array<int, 4> tcodRenderer::get_rect(LayoutBox const &box, long x,
     return {(int)abs_x, (int)abs_y, w, h};
 }
 
-
 void tcodRenderer::use_default_tile_rendering() {
     SPDLOG_INFO("Using default map tile renderer");
-    generate_tile_renderer = [](Map& map) {
+    generate_tile_renderer = [](Map &map) {
         return std::make_unique<TcodMapTileRenderer>(map);
     };
 }
 
 void tcodRenderer::use_debug_tile_rendering() {
     SPDLOG_INFO("Using default map tile renderer");
-    generate_tile_renderer = [](Map& map) {
+    generate_tile_renderer = [](Map &map) {
         return std::make_unique<DebugMapTileRenderer>(map);
     };
 }
 
-
 void tcodRenderer::use_scent_tile_rendering(ulong scent_idx) {
     SPDLOG_INFO("Using scent map tile renderer - scent index: {}", scent_idx);
-    generate_tile_renderer = [scent_idx](Map& map) {
+    generate_tile_renderer = [scent_idx](Map &map) {
         return std::make_unique<ScentMapTileRenderer>(map, scent_idx);
     };
 }

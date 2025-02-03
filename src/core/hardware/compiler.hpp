@@ -9,12 +9,10 @@
 // there is no significant reason to keep them separate if there is a reason
 // to do so.
 class Compiler {
-    public:
-
+   public:
     Compiler(CommandMap const& command_map);
 
     void compile(CompileArgs& args);
 
     CommandMap const& command_map;
 };
-

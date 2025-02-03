@@ -1,16 +1,18 @@
-cmake_minimum_required (VERSION 3.13...3.21)
+cmake_minimum_required(VERSION 3.13)
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 # Set the default toolchain to use a Vcpkg submodule.
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/lib/vcpkg/scripts/buildsystems/vcpkg.cmake")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-set (STD 23)
+set (STD 20)
 set(CMAKE_CXX_STANDARD ${STD}) 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project (ants C CXX)
 add_executable(ants src/main.cpp)
-set_target_properties(ants PROPERTIES CXX_STANDARD ${STD})
+set_target_properties(ants PROPERTIES CXX_STANDARD ${STD} CXX_STANDARD_REQUIRED
+    ON)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake OPTIONAL RESULT_VARIABLE CONAN_FILE)
 if(CONAN_FILE)

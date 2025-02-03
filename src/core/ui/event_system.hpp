@@ -64,21 +64,24 @@ struct EventPublisher {
 struct EventSystem {
     EventPublisher<MouseEventType, MouseEvent> mouse_events;
     EventPublisher<KeyboardEventType, KeyboardEvent> keyboard_events;
-    EventPublisher<KeyboardChordEventType, KeyboardChordEvent> keyboard_chord_events;
-    EventPublisher<CharKeyboardEventType, CharKeyboardEvent> char_keyboard_events;
+    EventPublisher<KeyboardChordEventType, KeyboardChordEvent>
+        keyboard_chord_events;
+    EventPublisher<CharKeyboardEventType, CharKeyboardEvent>
+        char_keyboard_events;
 };
 
 void handle_quit_event();
 
 MouseEventType get_mouse_type(char button);
-void set_mouse_type(SDL_MouseButtonEvent const& event,
-                     MouseEvent& mouse_event);
+void set_mouse_type(SDL_MouseButtonEvent const& event, MouseEvent& mouse_event);
 
 KeyboardEventType get_keyboard_type(SDL_Keycode event);
 void set_keyboard_type(SDL_Keysym const& event, KeyboardEvent& keyboard_event);
-void set_keyboard_chord_type(SDL_Keysym const& event, KeyboardChordEvent& keyboard_event);
-void unset_keyboard_chord_type(SDL_Keysym const& event, KeyboardChordEvent& keyboard_event);
+void set_keyboard_chord_type(SDL_Keysym const& event,
+                             KeyboardChordEvent& keyboard_event);
+void unset_keyboard_chord_type(SDL_Keysym const& event,
+                               KeyboardChordEvent& keyboard_event);
 
 SDL_Keycode get_keyboard_key(SDL_Keysym const& event);
 void set_char_keyboard_type(SDL_Keysym const& event,
-                             CharKeyboardEvent& char_keyboard_event);
+                            CharKeyboardEvent& char_keyboard_event);

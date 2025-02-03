@@ -11,7 +11,6 @@ class Engine {
     EngineState* state = {};
 
    public:
-
     Engine();
     Engine(int argc, char* argv[]);
     Engine(ProjectArguments& config);

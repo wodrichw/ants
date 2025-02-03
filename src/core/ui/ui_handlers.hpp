@@ -1,37 +1,33 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
-#include "map/map.hpp"
+
+#include "entity/entity_actions.hpp"
+#include "entity/entity_manager.hpp"
 #include "map/manager.hpp"
+#include "map/map.hpp"
 #include "map/world.hpp"
 #include "ui/render.hpp"
 #include "ui/subscriber.hpp"
-#include "entity/entity_manager.hpp"
-#include "entity/entity_actions.hpp"
 
-class MoveHandler: public Subscriber<KeyboardEvent> {
+class MoveHandler : public Subscriber<KeyboardEvent> {
     MapEntity& entity;
     MapManager& map_manager;
     MapWorld& map_world;
     const ulong& entity_depth;
     bool move_only_on_current_depth;
     long dx = {}, dy = {};
-public:
-    MoveHandler(
-        MapEntity& entity,
-        MapManager& map_manager, 
-        MapWorld& map_world,
-        ulong& entity_depth,
-        bool move_only_on_current_depth,
-        long dx, long dy
-    );
+
+   public:
+    MoveHandler(MapEntity& entity, MapManager& map_manager, MapWorld& map_world,
+                ulong& entity_depth, bool move_only_on_current_depth, long dx,
+                long dy);
 
     void operator()(KeyboardEvent const&);
 };
 
-class ChangeLevelHandler: public Subscriber<KeyboardEvent> {
-
-public:
+class ChangeLevelHandler : public Subscriber<KeyboardEvent> {
+   public:
     MapManager& map_manager;
     enum Direction { UP, DOWN } dir;
 
@@ -39,62 +35,62 @@ public:
     void operator()(KeyboardEvent const&);
 };
 
-class DigHandler: public Subscriber<KeyboardChordEvent> {
+class DigHandler : public Subscriber<KeyboardChordEvent> {
     MapEntity& entity;
     MapWorld& map_world;
     Inventory& inventory;
-    long dx= {}, dy = {};
-public:
-    DigHandler(
-        MapEntity& entity,
-        MapWorld& map_world,
-        Inventory& inventory,
-        long dx,
-        long dy
-    );
+    long dx = {}, dy = {};
+
+   public:
+    DigHandler(MapEntity& entity, MapWorld& map_world, Inventory& inventory,
+               long dx, long dy);
 
     void operator()(KeyboardChordEvent const&);
 };
 
-class ClickHandler: public Subscriber<MouseEvent> {
+class ClickHandler : public Subscriber<MouseEvent> {
     MapWorld& map_world;
     Renderer& renderer;
-public:
+
+   public:
     ClickHandler(MapWorld& map_world, Renderer& renderer);
     void operator()(MouseEvent const& event);
 };
 
-class CreateAntHandler: public Subscriber<KeyboardEvent> {
+class CreateAntHandler : public Subscriber<KeyboardEvent> {
     EntityManager& entity_manager;
     HardwareManager& hardware_manager;
     SoftwareManager& software_manager;
-public:
+
+   public:
     CreateAntHandler(EntityManager& entity_manager,
-        HardwareManager& hardware_manager,
-        SoftwareManager& software_manager
-    );
+                     HardwareManager& hardware_manager,
+                     SoftwareManager& software_manager);
 
     void operator()(KeyboardEvent const&);
 };
 
-class ReloadGameHandler: public Subscriber<KeyboardEvent> {
-    public:
+class ReloadGameHandler : public Subscriber<KeyboardEvent> {
+   public:
     ReloadGameHandler(bool& is_reload_game);
     void operator()(KeyboardEvent const&);
-    private:
+
+   private:
     bool& is_reload_game;
 };
 
-class DefaultMapTileRendererHandler: public Subscriber<KeyboardEvent> {
+class DefaultMapTileRendererHandler : public Subscriber<KeyboardEvent> {
     Renderer& renderer;
-    public:
+
+   public:
     DefaultMapTileRendererHandler(Renderer& renderer);
     void operator()(KeyboardEvent const&);
 };
 
-class ScentMapTileRendererHandler: public Subscriber<KeyboardEvent> {
+class ScentMapTileRendererHandler : public Subscriber<KeyboardEvent> {
     Renderer& renderer;
-    public:
+
+   public:
     ScentMapTileRendererHandler(Renderer& renderer);
     void operator()(KeyboardEvent const& event);
 };

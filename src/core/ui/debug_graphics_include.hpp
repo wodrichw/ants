@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.h>
+
 #include <functional>
 #include <libtcod.hpp>
 
@@ -26,7 +27,8 @@ inline void debug_tile(const Map& map, TCOD_ConsoleTile& tile, long x, long y) {
     long true_x = x - x_mod;
     long true_y = y - y_mod;
 
-    std::vector<ChunkMarker> cm = map.get_chunk_markers(Rect(true_x, true_y, 1, 1));
+    std::vector<ChunkMarker> cm =
+        map.get_chunk_markers(Rect(true_x, true_y, 1, 1));
     ulong chunk_id = cm[0].id;
 
     if(x_mod == 0) {
@@ -60,8 +62,7 @@ inline void debug_tile(const Map& map, TCOD_ConsoleTile& tile, long x, long y) {
 inline void debug_chunks(
     LayoutBox const& box, Map const& map, MapWindow const& window,
     std::function<TCOD_ConsoleTile&(LayoutBox const&, long, long)> get_tile,
-    bool is_debug_graphics) 
-{
+    bool is_debug_graphics) {
     if(!is_debug_graphics) return;
     for(long local_x = 0; local_x < window.border.w; ++local_x) {
         for(long local_y = 0; local_y < window.border.h; ++local_y) {

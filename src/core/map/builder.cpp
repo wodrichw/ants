@@ -1,12 +1,12 @@
+#include "map/builder.hpp"
+
 #include <fstream>
 
-#include "map/builder.hpp"
 #include "map/section_data.hpp"
 #include "spdlog/spdlog.h"
 
-BspListener::BspListener(MapSectionData &section_data) :
-    section_data(section_data), room_num(0)
-{
+BspListener::BspListener(MapSectionData &section_data)
+    : section_data(section_data), room_num(0) {
     SPDLOG_TRACE("BspListener created");
 }
 
@@ -26,8 +26,8 @@ bool BspListener::visitNode(TCODBsp *node, void *user_data) {
     section_data.rooms.push_back(Rect::from_top_left(x, y, w, h));
 
     if(room_num != 0) {
-        SPDLOG_DEBUG("Digging corridor from ({}, {}) to ({}, {})", lastx,
-                     lasty, x + w / 2, lasty);
+        SPDLOG_DEBUG("Digging corridor from ({}, {}) to ({}, {})", lastx, lasty,
+                     x + w / 2, lasty);
         // dig a corridor from last room
         section_data.corridors.push_back(
             Rect::from_corners(lastx, lasty, x + w / 2, lasty));
@@ -52,39 +52,31 @@ void RandomMapBuilder::operator()(MapSectionData &section_data) const {
         section_data.border.w, section_data.border.h, ROOM_MAX_SIZE, 1.5f);
     section_data.border = border;
 
-    TCODBsp bsp(
-        0, 0, section_data.border.w,
-        section_data.border.h);  // bsp is binary space partition tree
+    TCODBsp bsp(0, 0, section_data.border.w,
+                section_data.border.h);  // bsp is binary space partition tree
     // this creates the room partitions in our section_data
     int nb = 8;  // max level of recursion -- can make 2^nb rooms.
 
-    // TODO: save seeds by changing from NULL being passed into splitRecursive to 
-    // saved seed value
+    // TODO: save seeds by changing from NULL being passed into splitRecursive
+    // to saved seed value
     bsp.splitRecursive(NULL, nb, ROOM_MAX_SIZE, ROOM_MAX_SIZE, 1.5f, 1.5f);
     BspListener listener(section_data);
     bsp.traverseInvertedLevelOrder(&listener, NULL);
 }
 
-
-EmptyMapBuilder::EmptyMapBuilder(Rect const& border):
-    border(border)
-{}
-
+EmptyMapBuilder::EmptyMapBuilder(Rect const &border) : border(border) {}
 
 void EmptyMapBuilder::operator()(MapSectionData &section_data) const {
     section_data.rooms.emplace_back(Rect(border));
 }
 
-FileMapBuilder::FileMapBuilder(const std::string &filename):
-    section_data({})
-{
+FileMapBuilder::FileMapBuilder(const std::string &filename) : section_data({}) {
     SPDLOG_INFO("Creating FileMapBuilder");
     load_file(filename);
 }
 
 void FileMapBuilder::operator()(MapSectionData &section_data) const {
-    SPDLOG_DEBUG(
-        "Copying section_data from FileMapBuilder to section_data");
+    SPDLOG_DEBUG("Copying section_data from FileMapBuilder to section_data");
     section_data = this->section_data;
 }
 
@@ -150,14 +142,13 @@ void FileMapBuilder::load_file(const std::string &filename) {
                 "Digging corridor between room {} and {} (L-shaped) - {}, "
                 "{} -> {}, {}",
                 room_idx1, room_idx2, r1.x1, r1.y1, r2.x1, r2.y1);
-            corridors.push_back(Rect::from_corners(
-                r1.center_x, r1.center_y, r2.center_x, r1.center_y));
-            corridors.push_back(Rect::from_corners(
-                r2.center_x, r1.center_y, r2.center_x, r2.center_y));
+            corridors.push_back(Rect::from_corners(r1.center_x, r1.center_y,
+                                                   r2.center_x, r1.center_y));
+            corridors.push_back(Rect::from_corners(r2.center_x, r1.center_y,
+                                                   r2.center_x, r2.center_y));
         } else if(vertical_gap) {
             // no overlap - vertical gap
-            long min_x = std::max(r1.x1, r2.x1),
-                 max_x = std::min(r1.x2, r2.x2);
+            long min_x = std::max(r1.x1, r2.x1), max_x = std::min(r1.x2, r2.x2);
             long center_x = (min_x + max_x) / 2;
             SPDLOG_TRACE(
                 "Digging corridor between room {} and {} (vertical) - {}, "
@@ -168,8 +159,7 @@ void FileMapBuilder::load_file(const std::string &filename) {
                                                    center_x, r2.center_y));
         } else if(horizontal_gap) {
             // no overlap - horizontal gap
-            long min_y = std::max(r1.y1, r2.y1),
-                 max_y = std::min(r1.y2, r2.y2);
+            long min_y = std::max(r1.y1, r2.y1), max_y = std::min(r1.y2, r2.y2);
             long center_y = (min_y + max_y) / 2;
             SPDLOG_TRACE(
                 "Digging corridor between room {} and {} (horizontal) - "
@@ -186,4 +176,3 @@ void FileMapBuilder::load_file(const std::string &filename) {
         }
     }
 }
-
