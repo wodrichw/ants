@@ -23,4 +23,3 @@ struct Rect {
     static Rect from_center(long center_x, long center_y, long w, long h);
     static Rect from_corners(long x1, long y1, long x2, long y2);
 };
-

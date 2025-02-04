@@ -1,6 +1,7 @@
+#include "utils/serializer.hpp"
+
 #include <iostream>
 
-#include "utils/serializer.hpp"
 #include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
 
@@ -15,14 +16,9 @@ Packer::Packer(std::string const& path) : output(path, std::ios::binary) {
     }
 }
 
-Packer::~Packer() {
-   close();
-}
+Packer::~Packer() { close(); }
 
-Packer::operator bool() {
-    return bool(output);
-}
-
+Packer::operator bool() { return bool(output); }
 
 Packer& Packer::operator<<(tcod::ColorRGB const& col) {
     ant_proto::Integer msg;
@@ -35,21 +31,17 @@ void Packer::write_int(int value) {
     output.write(reinterpret_cast<const char*>(&value), sizeof(value));
 }
 
-void Packer::close() {
-    output.close();
-}
+void Packer::close() { output.close(); }
 
 Unpacker::Unpacker(std::string const& path) : input(path, std::ios::binary) {
-    if (path == "") return;
+    if(path == "") return;
     if(!input) {
         SPDLOG_ERROR("Failed to open file for reading: '{}'", path);
         return;
     }
 }
 
-Unpacker::~Unpacker() {
-    close();
-}
+Unpacker::~Unpacker() { close(); }
 
 Unpacker& Unpacker::operator>>(tcod::ColorRGB& col) {
     ant_proto::Integer msg;
@@ -62,17 +54,12 @@ Unpacker& Unpacker::operator>>(tcod::ColorRGB& col) {
     return *this;
 }
 
-bool Unpacker::is_valid() const {
-    return input ? true : false;
-}
+bool Unpacker::is_valid() const { return input ? true : false; }
 
-void Unpacker::close() {
-    input.close();
-}
+void Unpacker::close() { input.close(); }
 
 int Unpacker::read_int() {
     int value;
     input.read(reinterpret_cast<char*>(&value), sizeof(value));
     return value;
 }
-

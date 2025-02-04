@@ -1,20 +1,19 @@
 #include "hardware/op_def.hpp"
-#include "map/map.hpp"
-#include "hardware/brain.hpp"
 
+#include "hardware/brain.hpp"
+#include "map/map.hpp"
 #include "spdlog/spdlog.h"
 
 // NOP //////////////////////////////////////////
 NoOP::NoOP(DualRegisters&) {}
-void NoOP::operator()() {
-    SPDLOG_TRACE("NOP operation executed");
-}
+void NoOP::operator()() { SPDLOG_TRACE("NOP operation executed"); }
 
 // LOAD CONSTANT TO REGISTER ////////////////////
-LoadConstantOp::LoadConstantOp(DualRegisters& cpu, cpu_word_size& reg, cpu_word_size const value)
+LoadConstantOp::LoadConstantOp(DualRegisters& cpu, cpu_word_size& reg,
+                               cpu_word_size const value)
     : reg(reg), zero_flag(cpu.zero_flag), value(value) {
-        SPDLOG_DEBUG("LoadConstantOp created");
-    }
+    SPDLOG_DEBUG("LoadConstantOp created");
+}
 void LoadConstantOp::operator()() {
     SPDLOG_DEBUG("Executing LoadConstantOp");
     SPDLOG_TRACE("Writing value {} to register", value);
@@ -23,32 +22,29 @@ void LoadConstantOp::operator()() {
 }
 
 // MOVE /////////////////////////////////////////
-MoveOp::MoveOp(DualRegisters& cpu)
-    : is_move_flag(cpu.is_move_flag) {
-        SPDLOG_DEBUG("MoveOp created");
-    }
+MoveOp::MoveOp(DualRegisters& cpu) : is_move_flag(cpu.is_move_flag) {
+    SPDLOG_DEBUG("MoveOp created");
+}
 void MoveOp::operator()() {
     SPDLOG_DEBUG("Executing MoveOp");
     is_move_flag = true;
 }
 
 // DIG /////////////////////////////////////////
-DigOp::DigOp(DualRegisters& cpu)
-    : is_dig_flag(cpu.is_dig_flag) {
-        SPDLOG_DEBUG("DigOp created");
-    }
+DigOp::DigOp(DualRegisters& cpu) : is_dig_flag(cpu.is_dig_flag) {
+    SPDLOG_DEBUG("DigOp created");
+}
 void DigOp::operator()() {
     SPDLOG_DEBUG("Executing DigOp");
     is_dig_flag = true;
 }
 
 // COPY REGISTER TO REGISTER ////////////////////
-CopyOp::CopyOp(DualRegisters& cpu, cpu_word_size& reg_src, cpu_word_size& reg_dst)
-    : reg_src(reg_src),
-      reg_dst(reg_dst),
-      zero_flag(cpu.zero_flag) {
-        SPDLOG_DEBUG("CopyOp created");
-      }
+CopyOp::CopyOp(DualRegisters& cpu, cpu_word_size& reg_src,
+               cpu_word_size& reg_dst)
+    : reg_src(reg_src), reg_dst(reg_dst), zero_flag(cpu.zero_flag) {
+    SPDLOG_DEBUG("CopyOp created");
+}
 void CopyOp::operator()() {
     SPDLOG_DEBUG("Executing CopyOp");
     reg_dst = reg_src;
@@ -58,11 +54,9 @@ void CopyOp::operator()() {
 
 // ADD REGISTER TO REGISTER ////////////////////
 AddOp::AddOp(DualRegisters& cpu, cpu_word_size& reg_src, cpu_word_size& reg_dst)
-    : reg_src(reg_src),
-      reg_dst(reg_dst),
-      zero_flag(cpu.zero_flag) {
-        SPDLOG_TRACE("AddOp created");
-      }
+    : reg_src(reg_src), reg_dst(reg_dst), zero_flag(cpu.zero_flag) {
+    SPDLOG_TRACE("AddOp created");
+}
 void AddOp::operator()() {
     SPDLOG_DEBUG("Executing AddOp");
     reg_dst += reg_src;
@@ -72,11 +66,9 @@ void AddOp::operator()() {
 
 // SUB REGISTER TO REGISTER ////////////////////
 SubOp::SubOp(DualRegisters& cpu, cpu_word_size& reg_src, cpu_word_size& reg_dst)
-    : reg_src(reg_src),
-      reg_dst(reg_dst),
-      zero_flag(cpu.zero_flag) {
-        SPDLOG_DEBUG("SubOp created");
-      }
+    : reg_src(reg_src), reg_dst(reg_dst), zero_flag(cpu.zero_flag) {
+    SPDLOG_DEBUG("SubOp created");
+}
 void SubOp::operator()() {
     SPDLOG_DEBUG("Executing SubOp");
     reg_dst -= reg_src;
@@ -87,32 +79,34 @@ void SubOp::operator()() {
 // INC REGISTER ////////////////////////////////
 IncOp::IncOp(DualRegisters& cpu, cpu_word_size& reg)
     : reg(reg), zero_flag(cpu.zero_flag) {
-        SPDLOG_DEBUG("IncOp created");
-    }
+    SPDLOG_DEBUG("IncOp created");
+}
 void IncOp::operator()() {
     SPDLOG_DEBUG("Executing IncOp");
     ++reg;
     zero_flag = reg == 0;
-    SPDLOG_TRACE("Incremented register - result: {} - zero flag: {}", reg, zero_flag);
+    SPDLOG_TRACE("Incremented register - result: {} - zero flag: {}", reg,
+                 zero_flag);
 }
 
 // DEC REGISTER ////////////////////////////////
 DecOp::DecOp(DualRegisters& cpu, cpu_word_size& reg)
     : reg(reg), zero_flag(cpu.zero_flag) {
-        SPDLOG_DEBUG("DecOp created");
-    }
+    SPDLOG_DEBUG("DecOp created");
+}
 void DecOp::operator()() {
     SPDLOG_DEBUG("Executing DecOp");
     --reg;
     zero_flag = reg == 0;
-    SPDLOG_TRACE("Decremented register - result: {} - zero flag: {}", reg, zero_flag);
+    SPDLOG_TRACE("Decremented register - result: {} - zero flag: {}", reg,
+                 zero_flag);
 }
 
 // JMP /////////////////////////////////////////
 JmpOp::JmpOp(DualRegisters& cpu, ushort address)
-    : instr_ptr_register(cpu.instr_ptr_register), address(address-1) {
-        SPDLOG_DEBUG("JmpOp created - jumping to: {}", address);
-    }
+    : instr_ptr_register(cpu.instr_ptr_register), address(address - 1) {
+    SPDLOG_DEBUG("JmpOp created - jumping to: {}", address);
+}
 
 void JmpOp::operator()() {
     SPDLOG_DEBUG("Executing JmpOp");
@@ -122,14 +116,15 @@ void JmpOp::operator()() {
 
 // JNZ /////////////////////////////////////////
 JnzOp::JnzOp(DualRegisters& cpu, ushort address)
-    : instr_ptr_register(cpu.instr_ptr_register), address(address - 1),
+    : instr_ptr_register(cpu.instr_ptr_register),
+      address(address - 1),
       zero_flag(cpu.zero_flag) {
-        SPDLOG_DEBUG("JnzOp created - jumping to: {}", address);
-    }
+    SPDLOG_DEBUG("JnzOp created - jumping to: {}", address);
+}
 
 void JnzOp::operator()() {
     SPDLOG_DEBUG("Executing JnzOp");
-    if(zero_flag){
+    if(zero_flag) {
         SPDLOG_TRACE("Zero flag is set, not jumping");
         return;
     }
@@ -139,18 +134,20 @@ void JnzOp::operator()() {
 
 // JNF /////////////////////////////////////////
 JnfOp::JnfOp(DualRegisters& cpu, ushort address)
-    : instr_ptr_register(cpu.instr_ptr_register), address(address - 1),
+    : instr_ptr_register(cpu.instr_ptr_register),
+      address(address - 1),
       instr_failed_flag(cpu.instr_failed_flag) {
-        SPDLOG_DEBUG("JnfOp created - jumping to: {}", address);
-    }
+    SPDLOG_DEBUG("JnfOp created - jumping to: {}", address);
+}
 
 void JnfOp::operator()() {
     SPDLOG_DEBUG("Executing JnfOp");
-    if(instr_failed_flag){
+    if(instr_failed_flag) {
         SPDLOG_TRACE("Instruction failed flag is set, not jumping");
         return;
     }
-    SPDLOG_TRACE("Instruction failed flag off - jumping to address {}", address);
+    SPDLOG_TRACE("Instruction failed flag off - jumping to address {}",
+                 address);
     instr_ptr_register = address;
 }
 
@@ -161,8 +158,8 @@ CallOp::CallOp(DualRegisters& cpu, ushort address)
       base_ptr_register(cpu.base_ptr_register),
       stack_ptr_register(cpu.stack_ptr_register),
       address(address - 1) {
-        SPDLOG_DEBUG("Call operation created - jumping to: {}", address);
-    }
+    SPDLOG_DEBUG("Call operation created - jumping to: {}", address);
+}
 
 void CallOp::operator()() {
     SPDLOG_TRACE("Executing call operation - jumping to address {}", address);
@@ -187,10 +184,9 @@ void CallOp::operator()() {
 
 // TURN LEFT /////////////////////////////////////////
 TurnLeftOp::TurnLeftOp(DualRegisters& cpu)
-    : dir_flag1(cpu.dir_flag1),
-      dir_flag2(cpu.dir_flag2) {
-        SPDLOG_DEBUG("Turn left operation created");
-    }
+    : dir_flag1(cpu.dir_flag1), dir_flag2(cpu.dir_flag2) {
+    SPDLOG_DEBUG("Turn left operation created");
+}
 
 void TurnLeftOp::operator()() {
     SPDLOG_TRACE("Executing turn left operation");
@@ -213,10 +209,9 @@ void TurnLeftOp::operator()() {
 
 // TURN RIGHT /////////////////////////////////////////
 TurnRightOp::TurnRightOp(DualRegisters& cpu)
-    : dir_flag1(cpu.dir_flag1),
-      dir_flag2(cpu.dir_flag2) {
-        SPDLOG_DEBUG("Turn right operation created");
-    }
+    : dir_flag1(cpu.dir_flag1), dir_flag2(cpu.dir_flag2) {
+    SPDLOG_DEBUG("Turn right operation created");
+}
 
 void TurnRightOp::operator()() {
     SPDLOG_TRACE("Executing turn right operation");
@@ -240,8 +235,8 @@ void TurnRightOp::operator()() {
 // POP REGISTER TO RAM ////////////////////////////////
 PopOp::PopOp(DualRegisters& cpu, cpu_word_size& reg)
     : ram(cpu.ram), reg(reg), stack_ptr_register(cpu.stack_ptr_register) {
-        SPDLOG_DEBUG("Pop operation created");
-    }
+    SPDLOG_DEBUG("Pop operation created");
+}
 void PopOp::operator()() {
     SPDLOG_DEBUG("Executing pop");
     reg = ram[--stack_ptr_register];
@@ -250,8 +245,8 @@ void PopOp::operator()() {
 // POP REGISTER TO RAM ////////////////////////////////
 PushOp::PushOp(DualRegisters& cpu, cpu_word_size& reg)
     : ram(cpu.ram), reg(reg), stack_ptr_register(cpu.stack_ptr_register) {
-        SPDLOG_DEBUG("Push operation created");
-    }
+    SPDLOG_DEBUG("Push operation created");
+}
 void PushOp::operator()() {
     SPDLOG_DEBUG("Executing push");
     ram[stack_ptr_register] = reg;
@@ -264,8 +259,8 @@ ReturnOp::ReturnOp(DualRegisters& cpu)
       instr_ptr_register(cpu.instr_ptr_register),
       base_ptr_register(cpu.base_ptr_register),
       stack_ptr_register(cpu.stack_ptr_register) {
-        SPDLOG_DEBUG("Return operation created");
-    }
+    SPDLOG_DEBUG("Return operation created");
+}
 
 void ReturnOp::operator()() {
     SPDLOG_TRACE("Executing return operation");
@@ -286,8 +281,8 @@ CheckOp::CheckOp(DualRegisters& cpu)
       dir_flag2(cpu.dir_flag2),
       is_space_empty_flags(cpu.is_space_empty_flags),
       instr_failed_flag(cpu.instr_failed_flag) {
-        SPDLOG_DEBUG("Check operation created");
-    }
+    SPDLOG_DEBUG("Check operation created");
+}
 
 void CheckOp::operator()() {
     SPDLOG_TRACE("Executing check operation");
@@ -302,16 +297,19 @@ void CheckOp::operator()() {
     uchar idx = (dir_flag1 << 1) | dir_flag2;
     bool is_empty = (is_space_empty_flags >> idx) & 1;
     instr_failed_flag = !is_empty;
-    SPDLOG_TRACE("Checking direction: {} -> {}", "RULD"[idx], (is_empty ? "EMPTY": "FULL"));
+    SPDLOG_TRACE("Checking direction: {} -> {}", "RULD"[idx],
+                 (is_empty ? "EMPTY" : "FULL"));
 }
 
 // SCENT ON /////////////////////////////////////////
 ScentOnOp::ScentOnOp(DualRegisters& cpu, uchar scent_idx)
-    : scent_behaviors(cpu.scent_behaviors), delta_scents(cpu.delta_scents),
+    : scent_behaviors(cpu.scent_behaviors),
+      delta_scents(cpu.delta_scents),
       scent_idx(scent_idx) {}
 
 void ScentOnOp::operator()() {
-    scent_behaviors.write_scent_behavior = IncrementScentBehavior(delta_scents, scent_idx);
+    scent_behaviors.write_scent_behavior =
+        IncrementScentBehavior(delta_scents, scent_idx);
 }
 
 // SCENT OFF /////////////////////////////////////////
@@ -323,7 +321,8 @@ void ScentOffOp::operator()() {
 }
 
 // SET SCENT PRIORITY /////////////////////////////////////////
-SetScentPriorityOp::SetScentPriorityOp(DualRegisters& cpu, uchar scent_idx, uchar priority)
+SetScentPriorityOp::SetScentPriorityOp(DualRegisters& cpu, uchar scent_idx,
+                                       uchar priority)
     : priorities(cpu.scent_behaviors.priorities),
       clear_mask(~(0xFFUL << (scent_idx * 8))),
       priority(static_cast<ulong>(priority) << (scent_idx * 8)) {}
@@ -334,7 +333,8 @@ void SetScentPriorityOp::operator()() {
 
 // TURN DIRECTION BY READING SCENT /////////////////////////////////////////
 TurnByScentOp::TurnByScentOp(DualRegisters& cpu)
-    : dir_flag1(cpu.dir_flag1), dir_flag2(cpu.dir_flag2),
+    : dir_flag1(cpu.dir_flag1),
+      dir_flag2(cpu.dir_flag2),
       scent_dir1(cpu.scent_behaviors.scent_dir1),
       scent_dir2(cpu.scent_behaviors.scent_dir2) {}
 

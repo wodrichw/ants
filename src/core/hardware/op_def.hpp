@@ -19,7 +19,8 @@ struct NoOP {
 
 // load a constant to the register
 struct LoadConstantOp {
-    LoadConstantOp(DualRegisters&, cpu_word_size& reg, cpu_word_size const value);
+    LoadConstantOp(DualRegisters&, cpu_word_size& reg,
+                   cpu_word_size const value);
     void operator()();
 
    private:
@@ -42,21 +43,21 @@ struct DigOp {
 struct CopyOp {
     CopyOp(DualRegisters&, cpu_word_size& reg_src, cpu_word_size& reg_dst);
     void operator()();
-    cpu_word_size& reg_src, &reg_dst;
+    cpu_word_size &reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct AddOp {
     AddOp(DualRegisters&, cpu_word_size& reg_src, cpu_word_size& reg_dst);
     void operator()();
-    cpu_word_size& reg_src, &reg_dst;
+    cpu_word_size &reg_src, &reg_dst;
     bool& zero_flag;
 };
 
 struct SubOp {
     SubOp(DualRegisters&, cpu_word_size& reg_src, cpu_word_size& reg_dst);
     void operator()();
-    cpu_word_size& reg_src, &reg_dst;
+    cpu_word_size &reg_src, &reg_dst;
     bool& zero_flag;
 };
 

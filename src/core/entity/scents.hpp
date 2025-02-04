@@ -14,13 +14,14 @@ void update_scent_and_sum(long& total, ulong& scents, long priority);
 // Scent Writing
 // =============================================================================
 
-template<typename Modifier>
-class ScentWriter{
+template <typename Modifier>
+class ScentWriter {
     ulong& delta_scents;
-    uchar bit_idx = 0; // multiple of 8
+    uchar bit_idx = 0;  // multiple of 8
 
-    public:
-    ScentWriter(ulong& delta_scents, uchar scent_idx) : delta_scents(delta_scents), bit_idx(scent_idx * 8)  {}
+   public:
+    ScentWriter(ulong& delta_scents, uchar scent_idx)
+        : delta_scents(delta_scents), bit_idx(scent_idx * 8) {}
     void operator()() {
         // get scent
         ulong delta_scent = get_scent(delta_scents, bit_idx);
@@ -51,14 +52,14 @@ using IncrementScentBehavior = ScentWriter<IncrementScent>;
 // Scent Reading
 // =============================================================================
 
-
 class ScentReader {
     bool &scent_dir1, &scent_dir2;
     uchar const& is_space_empty_flag;
     ulong const& base_priorities;
 
-    public:
-    ScentReader(bool& scent_dir1, bool& dir_flag2, uchar const& is_space_empty_flag, ulong const& priorities);
+   public:
+    ScentReader(bool& scent_dir1, bool& dir_flag2,
+                uchar const& is_space_empty_flag, ulong const& priorities);
     void operator()(ulong abs_scents[4]);
 };
 

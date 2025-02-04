@@ -3,18 +3,19 @@
 #include <stddef.h>
 
 #include "app/globals.hpp"
-#include "utils/serializer.hpp"
-#include "proto/hardware.pb.h"
 #include "entity/scents.hpp"
+#include "proto/hardware.pb.h"
+#include "utils/serializer.hpp"
 
 using uchar = unsigned char;
 using ushort = unsigned short;
 
 struct DualRegisters {
-    cpu_word_size registers[2] = {0,0};
+    cpu_word_size registers[2] = {0, 0};
     cpu_word_size ram[64] = {};
-    ulong chunk_scents_list[4] = {}; // scents of chunks: right, up, left, down
-    ulong delta_scents = 0; // delta scents of current chunk
+    ulong chunk_scents_list[4] = {};  // scents of chunks: right, up, left, down
+    ulong delta_scents = 0;           // delta scents of current chunk
+    ScentBehaviors scent_behaviors;
 
     ushort instr_ptr_register = 0;
     ushort base_ptr_register = 0;
@@ -34,13 +35,14 @@ struct DualRegisters {
     // sync flags
     bool is_move_flag = 0, is_dig_flag = 0;
 
-    // 4 bits - down(most-sig), left, up, right(lst-sig) (absolute - not relative to heading)
-    // all directions are stored so turns can be updated without checking the map
-    // which would generate a sync event and halt the async steps
+    // 4 bits - down(most-sig), left, up, right(lst-sig) (absolute - not
+    // relative to heading) all directions are stored so turns can be updated
+    // without checking the map which would generate a sync event and halt the
+    // async steps
     uchar is_space_empty_flags = 0b1111;
-    
-    ushort wait_move_tick_count = 12; // 60 FPS / 5 moves per sec = 12
-    ushort wait_dig_tick_count = 4; // 60 FPS / 15 digs per sec = 4
+
+    ushort wait_move_tick_count = 12;  // 60 FPS / 5 moves per sec = 12
+    ushort wait_dig_tick_count = 4;    // 60 FPS / 15 digs per sec = 4
 
     ScentBehaviors scent_behaviors;
     DualRegisters();

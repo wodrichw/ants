@@ -1,20 +1,20 @@
 #pragma once
 
+#include <hardware/compiler.hpp>
 #include <vector>
 
-#include <hardware/compiler.hpp>
 #include "hardware.pb.h"
 
 struct ProgramExecutor;
 struct CompileArgs;
 
 struct HardwareManager {
-    private:
+   private:
     using ExecutorList = std::vector<ProgramExecutor*>;
     ExecutorList exec_list;
     Compiler compiler;
 
-    public:
+   public:
     HardwareManager(CommandMap const&);
     HardwareManager(const ant_proto::HardwareManager& msg, CommandMap const&);
     void push_back(ProgramExecutor*);

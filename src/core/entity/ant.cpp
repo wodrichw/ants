@@ -3,27 +3,23 @@
 #include <libtcod/color.hpp>
 
 #include "entity.pb.h"
-#include "hardware/program_executor.hpp"
-#include "ui/colors.hpp"
 #include "entity/entity_data.hpp"
+#include "hardware/program_executor.hpp"
 #include "spdlog/spdlog.h"
+#include "ui/colors.hpp"
 #include "utils/thread_pool.hpp"
 
 Player::Player(EntityData const& data, ItemInfoMap const& info_map)
-    : data(data), inventory(1,1, 1000, info_map) {
-        SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
+    : data(data), inventory(1, 1, 1000, info_map) {
+    SPDLOG_INFO("Player created at ({}, {})", data.x, data.y);
 }
 
-Player::Player(const ant_proto::Player& msg, ItemInfoMap const& info_map) :
-    data(msg.data()),
-    inventory(msg.inventory(), info_map)
-{
+Player::Player(const ant_proto::Player& msg, ItemInfoMap const& info_map)
+    : data(msg.data()), inventory(msg.inventory(), info_map) {
     SPDLOG_TRACE("Completed unpacking player");
 }
 
-EntityData& Player::get_data() {
-    return data;
-}
+EntityData& Player::get_data() { return data; }
 
 MapEntityType Player::get_type() const { return PLAYER; }
 
@@ -38,24 +34,30 @@ ant_proto::Player Player::get_proto() const {
     return msg;
 }
 
-Worker::Worker(EntityData const& data, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool)
-    : data(data), cpu(), program_executor(instr_clock, max_instruction_per_tick, cpu.instr_ptr_register, job_pool), inventory(1, 1, 1000, info_map) 
-{ }
+Worker::Worker(EntityData const& data, ulong const& instr_clock,
+               ItemInfoMap const& info_map,
+               ThreadPool<AsyncProgramJob>& job_pool)
+    : data(data),
+      cpu(),
+      program_executor(instr_clock, max_instruction_per_tick,
+                       cpu.instr_ptr_register, job_pool),
+      inventory(1, 1, 1000, info_map) {}
 
-Worker::Worker(const ant_proto::Worker& msg, ulong const& instr_clock, ItemInfoMap const& info_map, ThreadPool<AsyncProgramJob>& job_pool):
-    data(msg.data()), cpu(msg.dual_registers()), program_executor(msg.program_executor(),
-    instr_clock, max_instruction_per_tick, cpu.instr_ptr_register, job_pool), inventory(msg.inventory(), info_map) 
-{
+Worker::Worker(const ant_proto::Worker& msg, ulong const& instr_clock,
+               ItemInfoMap const& info_map,
+               ThreadPool<AsyncProgramJob>& job_pool)
+    : data(msg.data()),
+      cpu(msg.dual_registers()),
+      program_executor(msg.program_executor(), instr_clock,
+                       max_instruction_per_tick, cpu.instr_ptr_register,
+                       job_pool),
+      inventory(msg.inventory(), info_map) {
     SPDLOG_TRACE("Completed unpacking worker");
 }
 
-EntityData& Worker::get_data() {
-    return data;
-}
+EntityData& Worker::get_data() { return data; }
 
-void Worker::request_move() { 
-    program_executor.execute_sync(); 
-}
+void Worker::request_move() { program_executor.execute_sync(); }
 
 void Worker::handle_empty_space(uchar bits) {
     cpu.is_space_empty_flags |= bits;
@@ -76,10 +78,10 @@ ant_proto::Worker Worker::get_proto() {
 }
 
 void toggle_color(tcod::ColorRGB& col) {
-    if(col == color::light_green){
+    if(col == color::light_green) {
         col = color::dark_yellow;
         SPDLOG_DEBUG("Worker toggled color to dark yellow");
-    }else{
+    } else {
         col = color::light_green;
         SPDLOG_DEBUG("Worker toggled color to light green");
     }
@@ -107,11 +109,10 @@ void Worker::move_callback(EntityMoveUpdate const& update) {
 
 void Worker::debug_empty_space_flags() {
     SPDLOG_TRACE("Update worker full space flags: D:{} L:{} U:{} R:{}",
-        (cpu.is_space_empty_flags >> 3) & 1,
-        (cpu.is_space_empty_flags >> 2) & 1,
-        (cpu.is_space_empty_flags >> 1) & 1,
-        (cpu.is_space_empty_flags >> 0) & 1
-    );
+                 (cpu.is_space_empty_flags >> 3) & 1,
+                 (cpu.is_space_empty_flags >> 2) & 1,
+                 (cpu.is_space_empty_flags >> 1) & 1,
+                 (cpu.is_space_empty_flags >> 0) & 1);
     // Debug empty space flags
     // DLUR
     std::string facings = "+6894-7^23|>1V<o";

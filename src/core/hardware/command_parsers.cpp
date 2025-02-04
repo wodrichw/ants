@@ -11,7 +11,8 @@
 using uchar = unsigned char;
 using schar = signed char;
 
-void NoArgCommandParser::operator()(CommandConfig const& config, ParseArgs& args) {
+void NoArgCommandParser::operator()(CommandConfig const& config,
+                                    ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command - no args", config.command_string);
     args.code.push_back(config.command_enum << 3);
     TokenParser::terminate(args.code_stream, args.status, config.command_string,
@@ -19,14 +20,16 @@ void NoArgCommandParser::operator()(CommandConfig const& config, ParseArgs& args
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void NoArgCommandDeparser::operator()(CommandConfig const& config, DeparseArgs &args) {
+void NoArgCommandDeparser::operator()(CommandConfig const& config,
+                                      DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command - no args", config.command_string);
     args.lines.push_back(config.command_string);
     ++args.code_it;
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void LoadConstantParser::operator()(CommandConfig const& config, ParseArgs &args) {
+void LoadConstantParser::operator()(CommandConfig const& config,
+                                    ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar instruction = CommandEnum::LOAD;
     uchar const register_idx = TokenParser::letter_idx(args.code_stream);
@@ -41,13 +44,13 @@ void LoadConstantParser::operator()(CommandConfig const& config, ParseArgs &args
     args.code.push_back((value >> 16) & 0xFF);
     args.code.push_back((value >> 24) & 0xFF);
 
-    TokenParser::terminate(
-        args.code_stream, args.status, config.command_string,
-        "expecting 2 args");
+    TokenParser::terminate(args.code_stream, args.status, config.command_string,
+                           "expecting 2 args");
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void LoadConstantDeparser::operator()(CommandConfig const& config, DeparseArgs &args) {
+void LoadConstantDeparser::operator()(CommandConfig const& config,
+                                      DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing %s command", config.command_string);
 
     uchar const register_name = 'A' + ((*args.code_it) & 1);
@@ -65,7 +68,8 @@ void LoadConstantDeparser::operator()(CommandConfig const& config, DeparseArgs &
     SPDLOG_TRACE("{} command deparsed", config.command_string);
 }
 
-void TwoRegisterCommandParser::operator()(CommandConfig const& config, ParseArgs &args) {
+void TwoRegisterCommandParser::operator()(CommandConfig const& config,
+                                          ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
     uchar const reg_src_idx = TokenParser::letter_idx(args.code_stream);
@@ -79,7 +83,8 @@ void TwoRegisterCommandParser::operator()(CommandConfig const& config, ParseArgs
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void TwoLetterCommandDeparser::operator()(CommandConfig const& config, DeparseArgs &args) {
+void TwoLetterCommandDeparser::operator()(CommandConfig const& config,
+                                          DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command", config.command_string);
     uchar const register_names = *args.code_it;
     uchar const reg_src = 'A' + ((register_names >> 1) & 1);
@@ -93,7 +98,8 @@ void TwoLetterCommandDeparser::operator()(CommandConfig const& config, DeparseAr
     SPDLOG_TRACE("{} command deparsed", config.command_string);
 }
 
-void OneRegisterCommandParser::operator()(CommandConfig const& config, ParseArgs &args) {
+void OneRegisterCommandParser::operator()(CommandConfig const& config,
+                                          ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
     uchar const register_idx = TokenParser::letter_idx(args.code_stream);
@@ -105,7 +111,8 @@ void OneRegisterCommandParser::operator()(CommandConfig const& config, ParseArgs
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void OneLetterCommandDeparser::operator()(CommandConfig const& config, DeparseArgs &args) {
+void OneLetterCommandDeparser::operator()(CommandConfig const& config,
+                                          DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command", config.command_string);
     uchar const reg_name = 'A' + ((*args.code_it) & 1);
 
@@ -117,7 +124,7 @@ void OneLetterCommandDeparser::operator()(CommandConfig const& config, DeparseAr
     SPDLOG_TRACE("{} command deparsed", config.command_string);
 }
 
-void JumpParser::operator()(CommandConfig const& config, ParseArgs &args) {
+void JumpParser::operator()(CommandConfig const& config, ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
     std::string label = TokenParser::get_label(args.code_stream, args.status);
@@ -132,11 +139,11 @@ void JumpParser::operator()(CommandConfig const& config, ParseArgs &args) {
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void JumpDeparser::operator()(CommandConfig const& config, DeparseArgs &args) {
+void JumpDeparser::operator()(CommandConfig const& config, DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command", config.command_string);
 
     ushort const label_idx = (*(++args.code_it)) | ((*(++args.code_it)) << 8);
-    std::string const &label = args.labels.at(label_idx);
+    std::string const& label = args.labels.at(label_idx);
 
     std::stringstream ss;
     ss << config.command_string << " " << label;
@@ -146,7 +153,8 @@ void JumpDeparser::operator()(CommandConfig const& config, DeparseArgs &args) {
     SPDLOG_TRACE("{} command deparsed", config.command_string);
 }
 
-void OneScentCommandParser::operator()(CommandConfig const& config, ParseArgs &args) {
+void OneScentCommandParser::operator()(CommandConfig const& config,
+                                       ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
     uchar const scent_idx = TokenParser::letter_idx(args.code_stream);
@@ -158,14 +166,16 @@ void OneScentCommandParser::operator()(CommandConfig const& config, ParseArgs &a
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void SetScentPriorityParser::operator()(CommandConfig const& config, ParseArgs &args) {
+void SetScentPriorityParser::operator()(CommandConfig const& config,
+                                        ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
     uchar const scent_idx = TokenParser::letter_idx(args.code_stream);
 
     args.code.push_back((instruction << 3) | (scent_idx & 0b111));
 
-    schar priority = TokenParser::get_signed_byte(args.code_stream, args.status);
+    schar priority =
+        TokenParser::get_signed_byte(args.code_stream, args.status);
     args.code.push_back(static_cast<uchar>(priority));
 
     TokenParser::terminate(args.code_stream, args.status, config.command_string,
@@ -173,14 +183,16 @@ void SetScentPriorityParser::operator()(CommandConfig const& config, ParseArgs &
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void SetScentPriorityDeparser::operator()(CommandConfig const& config, DeparseArgs &args) {
+void SetScentPriorityDeparser::operator()(CommandConfig const& config,
+                                          DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command", config.command_string);
     uchar const reg_name = 'A' + ((*args.code_it) & 1);
     schar const priority = static_cast<schar>(*(++args.code_it));
     std::string sign = priority < 0 ? "-" : "";
 
     std::stringstream ss;
-    ss << config.command_string << " " << reg_name << " " << sign << std::abs(priority);
+    ss << config.command_string << " " << reg_name << " " << sign
+       << std::abs(priority);
     args.lines.push_back(ss.str());
 
     ++args.code_it;

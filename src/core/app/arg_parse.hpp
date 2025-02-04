@@ -11,7 +11,6 @@ class ArgumentParser {
     ArgumentParser();
     ArgumentParser(int argc, char* argv[]);
 
-
     bool hasKey(const std::string& key) const;
 
     std::string const& getString(const std::string& key,
@@ -35,8 +34,7 @@ class ProjectArguments {
     bool const is_walls_enabled = {};
     bool const no_fov = {};
     ProjectArguments(int argc, char* argv[]);
-    ProjectArguments(
-        std::string const& default_map_file_path,
-        std::string const& save_path,
-        bool is_render, bool is_debug_graphics, bool is_walls_enabled);
+    ProjectArguments(std::string const& default_map_file_path,
+                     std::string const& save_path, bool is_render,
+                     bool is_debug_graphics, bool is_walls_enabled);
 };

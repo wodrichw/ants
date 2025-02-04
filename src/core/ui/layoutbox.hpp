@@ -33,7 +33,8 @@ struct BoxManager {
     BoxManager(ulong w, ulong h);
 
     LayoutBox *map_box = nullptr, *sidebar_box = nullptr;
-    LayoutBox *text_editor_content_box = nullptr, *text_editor_registers_box = nullptr;
+    LayoutBox *text_editor_content_box = nullptr,
+              *text_editor_registers_box = nullptr;
 
    private:
     LayoutBox main;

@@ -5,11 +5,11 @@
 #include <cassert>
 #include <chrono>
 #include <ctime>
+#include <deque>
+#include <list>
+#include <mutex>
 #include <optional>
 #include <thread>
-#include <list>
-#include <deque>
-#include <mutex>
 
 #include "app/globals.hpp"
 #include "spdlog/spdlog.h"
@@ -27,50 +27,46 @@ class ThreadWork {
     std::atomic_ullong& pending_jobs_count;
     std::atomic_ullong& active_worker_count;
 
-public:
-    explicit ThreadWork(
-        std::atomic_bool& is_working,
-        std::atomic_bool const& threadpool_active,
-        std::deque<ThreadTask>& pending_jobs,
-        std::atomic_ullong& pending_jobs_count,
-        std::atomic_ullong& active_worker_count
-    ) :
-        is_working(is_working),
-        threadpool_active(threadpool_active),
-        running_task(false),
-        pending_jobs(pending_jobs),
-        active_task(),
-        pending_jobs_count(pending_jobs_count),
-        active_worker_count(active_worker_count)
-    {}
+   public:
+    explicit ThreadWork(std::atomic_bool& is_working,
+                        std::atomic_bool const& threadpool_active,
+                        std::deque<ThreadTask>& pending_jobs,
+                        std::atomic_ullong& pending_jobs_count,
+                        std::atomic_ullong& active_worker_count)
+        : is_working(is_working),
+          threadpool_active(threadpool_active),
+          running_task(false),
+          pending_jobs(pending_jobs),
+          active_task(),
+          pending_jobs_count(pending_jobs_count),
+          active_worker_count(active_worker_count) {}
 
     void operator()() {
         std::chrono::nanoseconds initial_backoff(10);
         std::chrono::nanoseconds max_backoff(1000);
         std::chrono::nanoseconds backoff(initial_backoff);
-        while ( threadpool_active ) {
+        while(threadpool_active) {
             {
                 std::scoped_lock lock(globals::threadpool_mutex);
-                if (!pending_jobs.empty()) {
+                if(!pending_jobs.empty()) {
                     active_task.emplace(std::move(pending_jobs.front()));
                     pending_jobs.pop_front();
                     ++active_worker_count;
                     --pending_jobs_count;
                     SPDLOG_TRACE("Threadwork acquired task");
                     backoff = initial_backoff;
-                    
-                } 
+                }
             }
-            if (active_task.has_value()) {
+            if(active_task.has_value()) {
                 running_task = true;
                 active_task->run();
                 --active_worker_count;
                 running_task = false;
-                active_task.reset(); // Clear the active task after it's done
+                active_task.reset();  // Clear the active task after it's done
             } else {
                 std::this_thread::sleep_for(backoff);
                 backoff *= 2;
-                if (backoff > max_backoff) backoff = max_backoff;
+                if(backoff > max_backoff) backoff = max_backoff;
             }
         }
     }
@@ -79,33 +75,24 @@ public:
 class ThreadWorker {
     std::atomic_bool _is_working;
     std::thread _thread;
-public:
-    template <class ThreadTask>
-    ThreadWorker(
-        std::atomic_bool const& threadpool_active,
-        std::deque<ThreadTask>& pending_jobs,
-        std::atomic_ullong& pending_jobs_count,
-        std::atomic_ullong& active_worker_count
-    ) :
-        _is_working(false),
-        _thread([&]() {
-            ThreadWork<ThreadTask> thread_work(
-                _is_working,
-                threadpool_active,
-                pending_jobs,
-                pending_jobs_count,
-                active_worker_count
-            );
-            thread_work();
-        })
-    { }
 
-    bool is_working() const {
-        return _is_working;
-    }
+   public:
+    template <class ThreadTask>
+    ThreadWorker(std::atomic_bool const& threadpool_active,
+                 std::deque<ThreadTask>& pending_jobs,
+                 std::atomic_ullong& pending_jobs_count,
+                 std::atomic_ullong& active_worker_count)
+        : _is_working(false), _thread([&]() {
+              ThreadWork<ThreadTask> thread_work(
+                  _is_working, threadpool_active, pending_jobs,
+                  pending_jobs_count, active_worker_count);
+              thread_work();
+          }) {}
+
+    bool is_working() const { return _is_working; }
 
     ~ThreadWorker() {
-        if (_thread.joinable()) {
+        if(_thread.joinable()) {
             _thread.join();
         }
     }
@@ -123,16 +110,16 @@ class ThreadPool {
     std::atomic_ullong pending_jobs_count;
     std::atomic_ullong active_worker_count;
 
-public:
-    ThreadPool(ulong number_threads) :
-        workers(),
-        pending_jobs(),
-        is_active(true),
-        pending_jobs_count(),
-        active_worker_count()
-    {
-        for (ulong i = 0; i < number_threads; ++i) {
-            workers.emplace_back(is_active, pending_jobs, pending_jobs_count, active_worker_count);
+   public:
+    ThreadPool(ulong number_threads)
+        : workers(),
+          pending_jobs(),
+          is_active(true),
+          pending_jobs_count(),
+          active_worker_count() {
+        for(ulong i = 0; i < number_threads; ++i) {
+            workers.emplace_back(is_active, pending_jobs, pending_jobs_count,
+                                 active_worker_count);
         }
     }
 
@@ -141,7 +128,7 @@ public:
     ThreadPool& operator=(const ThreadPool<ThreadTask>&) = delete;
 
     void await_jobs() const {
-        while (active_worker_count > 0 || pending_jobs_count > 0) {
+        while(active_worker_count > 0 || pending_jobs_count > 0) {
             /*do nothing */
         }
     }
@@ -157,6 +144,3 @@ public:
         assert(pending_jobs.empty());
     }
 };
-
-
-

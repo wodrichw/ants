@@ -45,7 +45,7 @@ struct TextEditor {
     ushort get_offset_x() const;
     ushort get_offset_y() const;
 
-    private:
+   private:
     ushort cursor_x = 0, cursor_y = 0;
     ushort pan_x = 0, pan_y = 0;
 };

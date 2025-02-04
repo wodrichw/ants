@@ -1,4 +1,5 @@
 #include "hardware/token_parser.hpp"
+
 #include "spdlog/spdlog.h"
 
 using uchar = unsigned char;
@@ -71,13 +72,14 @@ schar TokenParser::get_signed_byte(std::istringstream &ss, Status &status) {
 }
 
 void TokenParser::terminate(std::istringstream &ss, Status &status,
-                            std::string const& cmd_name,
-                            std::string const& err_msg) {
+                            std::string const &cmd_name,
+                            std::string const &err_msg) {
     std::string word;
     ss >> word;
     if(ss) {
         status.error(err_msg);
-        SPDLOG_ERROR("Additional characters remained: {} - {}", cmd_name, err_msg);
+        SPDLOG_ERROR("Additional characters remained: {} - {}", cmd_name,
+                     err_msg);
     }
     (void)cmd_name;
 }

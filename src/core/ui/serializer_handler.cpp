@@ -1,8 +1,11 @@
-#include "app/engine_state.hpp"
 #include "ui/serializer_handler.hpp"
+
+#include "app/engine_state.hpp"
 #include "spdlog/spdlog.h"
 
-AutoSaveTriggerHandler::AutoSaveTriggerHandler(EngineState& engine, std::string const save_path): engine(engine), save_path(save_path) {}
+AutoSaveTriggerHandler::AutoSaveTriggerHandler(EngineState& engine,
+                                               std::string const save_path)
+    : engine(engine), save_path(save_path) {}
 
 void AutoSaveTriggerHandler::operator()(KeyboardEvent const&) {
     SPDLOG_INFO("Starting autosave...");

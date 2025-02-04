@@ -1,21 +1,23 @@
 
-#include <algorithm> 
+#include "utils/string.hpp"
+
+#include <algorithm>
 #include <cctype>
 #include <locale>
-#include "utils/string.hpp"
 
 // trim from start (in place)
 inline void ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }));
+                return !std::isspace(ch);
+            }));
 }
 
 // trim from end (in place)
 inline void rtrim(std::string &s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+                         [](unsigned char ch) { return !std::isspace(ch); })
+                .base(),
+            s.end());
 }
 
 // trim from both ends (in place)
@@ -31,13 +33,13 @@ inline long trimmed_size(const std::string &s) {
     if (start == std::string::npos || end == std::string::npos) {
         return 0; // String consists entirely of whitespace
     }
-    
+
     return end - start + 1;
 }
 
-inline bool trimmed_empty(std::string const& s) {
-    for (char ch : s) {
-        if (!std::isspace(ch)) {
+inline bool trimmed_empty(std::string const &s) {
+    for(char ch : s) {
+        if(!std::isspace(ch)) {
             return false;
         }
     }

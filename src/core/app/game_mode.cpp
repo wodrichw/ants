@@ -1,74 +1,64 @@
 #include "app/game_mode.hpp"
+
 #include "map/manager.hpp"
 #include "ui/text_editor_handler.hpp"
 #include "ui/ui_handlers.hpp"
 
-EditorMode::EditorMode(Renderer& renderer, LayoutBox& box, SoftwareManager& software_manager, std::vector<Level> const& levels)
-: renderer(renderer), box(box), editor(software_manager), levels(levels) {
+EditorMode::EditorMode(Renderer& renderer, LayoutBox& box,
+                       SoftwareManager& software_manager,
+                       std::vector<Level> const& levels)
+    : renderer(renderer), box(box), editor(software_manager), levels(levels) {
     // text editor listeners
     event_system.keyboard_events.add(RETURN_KEY_EVENT,
-            new NewLineHandler(editor));
+                                     new NewLineHandler(editor));
     event_system.keyboard_events.add(BACKSPACE_KEY_EVENT,
-            new BackspaceHandler(editor));
+                                     new BackspaceHandler(editor));
     event_system.keyboard_events.add(LEFT_KEY_EVENT,
-            new MoveCursorLeftHandler(editor));
+                                     new MoveCursorLeftHandler(editor));
     event_system.keyboard_events.add(RIGHT_KEY_EVENT,
-            new MoveCursorRightHandler(editor));
+                                     new MoveCursorRightHandler(editor));
     event_system.keyboard_events.add(UP_KEY_EVENT,
-            new MoveCursorUpHandler(editor));
+                                     new MoveCursorUpHandler(editor));
     event_system.keyboard_events.add(DOWN_KEY_EVENT,
-            new MoveCursorDownHandler(editor));
+                                     new MoveCursorDownHandler(editor));
 
     // text editor printable char listener
     event_system.char_keyboard_events.add(CHAR_KEY_EVENT,
-            new EditorKeyHandler(editor));
+                                          new EditorKeyHandler(editor));
 }
 
-PrimaryMode::PrimaryMode(
-        LayoutBox& box,
-        CommandMap const& command_map,
-        SoftwareManager& software_manager,
-        EntityManager& entity_manager,
-        MapManager& map_manager,
-        MapWorld& map_world,
-        Renderer& renderer,
-        bool& is_reload_game,
-        const ThreadPool<AsyncProgramJob>& job_pool
-): 
-        box(box),
-        hardware_manager(command_map),
-        entity_manager(entity_manager),
-        map_manager(map_manager),
-        map_world(map_world),
-        renderer(renderer),
-        is_reload_game(is_reload_game),
-        job_pool(job_pool)
-{
-
+PrimaryMode::PrimaryMode(LayoutBox& box, CommandMap const& command_map,
+                         SoftwareManager& software_manager,
+                         EntityManager& entity_manager, MapManager& map_manager,
+                         MapWorld& map_world, Renderer& renderer,
+                         bool& is_reload_game,
+                         const ThreadPool<AsyncProgramJob>& job_pool)
+    : box(box),
+      hardware_manager(command_map),
+      entity_manager(entity_manager),
+      map_manager(map_manager),
+      map_world(map_world),
+      renderer(renderer),
+      is_reload_game(is_reload_game),
+      job_pool(job_pool) {
     initialize(software_manager);
 }
 
-PrimaryMode::PrimaryMode(
-        const ant_proto::HardwareManager msg,
-        LayoutBox& box,
-        CommandMap const& command_map,
-        SoftwareManager& software_manager,
-        EntityManager& entity_manager,
-        MapManager& map_manager,
-        MapWorld& map_world,
-        Renderer& renderer,
-        bool& is_reload_game,
-        const ThreadPool<AsyncProgramJob>& job_pool
- ):
-        box(box),
-        hardware_manager(msg, command_map),
-        entity_manager(entity_manager),
-        map_manager(map_manager),
-        map_world(map_world),
-        renderer(renderer),
-        is_reload_game(is_reload_game),
-        job_pool(job_pool)
-{
+PrimaryMode::PrimaryMode(const ant_proto::HardwareManager msg, LayoutBox& box,
+                         CommandMap const& command_map,
+                         SoftwareManager& software_manager,
+                         EntityManager& entity_manager, MapManager& map_manager,
+                         MapWorld& map_world, Renderer& renderer,
+                         bool& is_reload_game,
+                         const ThreadPool<AsyncProgramJob>& job_pool)
+    : box(box),
+      hardware_manager(msg, command_map),
+      entity_manager(entity_manager),
+      map_manager(map_manager),
+      map_world(map_world),
+      renderer(renderer),
+      is_reload_game(is_reload_game),
+      job_pool(job_pool) {
     SPDLOG_DEBUG("Unpacking primary mode object");
     initialize(software_manager);
     entity_manager.rebuild_workers(hardware_manager, software_manager);
@@ -81,89 +71,94 @@ void PrimaryMode::initialize(SoftwareManager& software_manager) {
     // MOVE PLAYER EVENTS
     event_system.keyboard_events.add(
         LEFT_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, -1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, -1, 0));
     event_system.keyboard_events.add(
         RIGHT_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true,  1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, 1, 0));
     event_system.keyboard_events.add(
         UP_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, -1));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, 0, -1));
     event_system.keyboard_events.add(
         DOWN_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, 1));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, 0, 1));
     event_system.keyboard_events.add(
         H_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, -1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, -1, 0));
     event_system.keyboard_events.add(
         L_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 1, 0));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, 1, 0));
     event_system.keyboard_events.add(
         K_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, -1));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, 0, -1));
     event_system.keyboard_events.add(
         J_KEY_EVENT,
-        new MoveHandler(entity_manager.player, map_manager, map_world, entity_manager.player_depth, true, 0, 1));
+        new MoveHandler(entity_manager.player, map_manager, map_world,
+                        entity_manager.player_depth, true, 0, 1));
 
     // ADD ANT EVENT
     event_system.keyboard_events.add(
-        A_KEY_EVENT,
-        new CreateAntHandler(entity_manager, hardware_manager, software_manager));
-    
+        A_KEY_EVENT, new CreateAntHandler(entity_manager, hardware_manager,
+                                          software_manager));
 
     // GO UP AND DOWN LEVELS EVNETS
     event_system.keyboard_events.add(
         E_KEY_EVENT,
         new ChangeLevelHandler(map_manager, ChangeLevelHandler::Direction::UP));
     event_system.keyboard_events.add(
-        Q_KEY_EVENT,
-        new ChangeLevelHandler(map_manager, ChangeLevelHandler::Direction::DOWN));
-
+        Q_KEY_EVENT, new ChangeLevelHandler(
+                         map_manager, ChangeLevelHandler::Direction::DOWN));
 
     // DIG EVENTS
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, LEFT_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, -1, 0)
-    );
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, -1, 0));
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, RIGHT_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, 1, 0)
-    );
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, 1, 0));
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, UP_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, 0, -1)
-    );
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, 0, -1));
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, DOWN_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, 0, 1)
-    );
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, 0, 1));
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, H_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, -1, 0)
-    );
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, -1, 0));
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, L_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, 1, 0)
-    );
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, 1, 0));
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, K_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, 0, -1)
-    );
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, 0, -1));
     event_system.keyboard_chord_events.add(
         {D_KEY_EVENT, J_KEY_EVENT},
-        new DigHandler(entity_manager.player, map_world, entity_manager.player.inventory, 0, 1)
-    );
-
+        new DigHandler(entity_manager.player, map_world,
+                       entity_manager.player.inventory, 0, 1));
 
     // RELOAD GAME EVENT
+    event_system.keyboard_events.add(R_KEY_EVENT,
+                                     new ReloadGameHandler(is_reload_game));
+
     event_system.keyboard_events.add(
-        R_KEY_EVENT,
-        new ReloadGameHandler(is_reload_game));
-
-
-    event_system.keyboard_events.add(ZERO_KEY_EVENT, new DefaultMapTileRendererHandler(renderer));
+        ZERO_KEY_EVENT, new DefaultMapTileRendererHandler(renderer));
 
     // Available scents A-H (8 total)
-    ScentMapTileRendererHandler* scent_map_handler = new ScentMapTileRendererHandler(renderer);
+    ScentMapTileRendererHandler* scent_map_handler =
+        new ScentMapTileRendererHandler(renderer);
     event_system.keyboard_events.add(ONE_KEY_EVENT, scent_map_handler);
     event_system.keyboard_events.add(TWO_KEY_EVENT, scent_map_handler);
     event_system.keyboard_events.add(THREE_KEY_EVENT, scent_map_handler);
@@ -174,33 +169,37 @@ void PrimaryMode::initialize(SoftwareManager& software_manager) {
     event_system.keyboard_events.add(EIGHT_KEY_EVENT, scent_map_handler);
 
     // click listeners
-    event_system.mouse_events.add(
-        LEFT_MOUSE_EVENT, new ClickHandler(map_world, renderer));
-    SPDLOG_TRACE("Completed adding the prim(gdbary mode event system subscriptions");
+    event_system.mouse_events.add(LEFT_MOUSE_EVENT,
+                                  new ClickHandler(map_world, renderer));
+    SPDLOG_TRACE(
+        "Completed adding the prim(gdbary mode event system subscriptions");
 }
 
 void PrimaryMode::render() {
     // SPDLOG_TRACE("Rendering engine");
 
     // draw the map
-    renderer.render_map(box, map_world.current_level().map, map_world.map_window);
+    renderer.render_map(box, map_world.current_level().map,
+                        map_world.map_window);
 
     // draw the buildings
     // SPDLOG_TRACE("Rendering {} buildings", buildings.size());
-    for(auto building: map_world.current_level().buildings) {
+    for(auto building : map_world.current_level().buildings) {
         renderer.render_building(box, *building, map_world.map_window);
     }
 
     // draw the workers
     // SPDLOG_TRACE("Rendering {} workers", workers.size());
     for(auto ant : map_world.current_level().workers) {
-        renderer.render_ant(box, map_world.current_level().map, ant->get_data(), map_world.map_window);
+        renderer.render_ant(box, map_world.current_level().map, ant->get_data(),
+                            map_world.map_window);
     }
 
     // draw the player
-    if (entity_manager.player_depth == map_world.current_depth) {
-        renderer.render_ant(box, map_world.current_level().map, entity_manager.player.get_data(),
-            map_world.map_window);
+    if(entity_manager.player_depth == map_world.current_depth) {
+        renderer.render_ant(box, map_world.current_level().map,
+                            entity_manager.player.get_data(),
+                            map_world.map_window);
     }
 }
 
@@ -221,4 +220,3 @@ void PrimaryMode::update() {
         exec->execute_sync();
     }
 }
-
