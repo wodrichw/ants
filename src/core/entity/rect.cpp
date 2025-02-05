@@ -3,7 +3,6 @@
 #include "spdlog/spdlog.h"
 
 Rect::Rect(long x1, long y1, long w, long h) : w(w), h(h) {
-    SPDLOG_TRACE("New Room Rect: ({}, {}) -> {}x{}", x1, y1, w, h);
     set_top_left(x1, y1);
 }
 
