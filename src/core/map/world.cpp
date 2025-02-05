@@ -290,11 +290,6 @@ void Region::do_blueprint_planning() {
 }
 
 
-uint32_t Region::get_seed() {
-    return seed_x ^ seed_y;
-}
-
-
 Region::Region(const Rect& perimeter)
     : perimeter(perimeter), is_first_region(true) {
     // NO Seeds provided so generate them

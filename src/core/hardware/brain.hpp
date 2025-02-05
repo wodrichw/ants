@@ -44,7 +44,6 @@ struct DualRegisters {
     ushort wait_move_tick_count = 12;  // 60 FPS / 5 moves per sec = 12
     ushort wait_dig_tick_count = 4;    // 60 FPS / 15 digs per sec = 4
 
-    ScentBehaviors scent_behaviors;
     DualRegisters();
     DualRegisters(const ant_proto::DualRegisters& msg);
 

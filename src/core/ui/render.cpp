@@ -26,6 +26,7 @@ struct Box {
                   ushort offset_y = 0) {
         // SPDLOG_TRACE("Populating box with {} lines", text.size());
 
+
         // render corners
         // SPDLOG_DEBUG("Rendering corners");
         populate_char(0, 0, '+');
@@ -116,7 +117,6 @@ void DebugMapTileRenderer::operator()(TCOD_ConsoleTile &tile, long x, long y) {
     }
 }
 
-TcodMapTileRenderer::TcodMapTileRenderer(Map &map) : map(map) {}
 
 TcodMapTileRenderer::TcodMapTileRenderer(Map& map):
     map(map),
