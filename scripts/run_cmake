@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Ensure that environment variables are set
+if [ -z "$CMAKE_BUILD_TYPE" ]; then
+    echo "Please run scripts/set_env first to set environment variables."
+    exit 1
+fi
+build_dir="./build_${CMAKE_BUILD_TYPE}_${LOG}"
+[ -n "$LOG" ] && log_arg="-DLOG=$LOG"
+
+
+(
+    mkdir -p "$build_dir"
+    cd "$build_dir" || exit 1
+
+    # Run cmake with the selected build type and log level
+    echo "Running CMake with build type $CMAKE_BUILD_TYPE and log level '$LOG'"
+    echo "cmake -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE $log_arg .."
+    cmake -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE $log_arg ..
+
+)

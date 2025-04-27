@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Ensure that environment variables are set
+if [ -z "$CMAKE_BUILD_TYPE" ]; then
+    echo "Please run scripts/set_env first to set environment variables."
+    exit 1
+fi
+
+build_dir="./build_${CMAKE_BUILD_TYPE}_${LOG}"
+
+
+(
+    cd "$build_dir" || exit 1
+    # Build the project using make
+    make
+
+    unset LOG_LEVEL
+    [ -n "$LOG" ] && LOG_LEVEL="--log_level $(echo "$LOG" | tr '[:upper:]' '[:lower:]')"
+    # Run the program with the selected options
+    echo "Running ./ants with the following arguments:"
+    echo "./ants $MAP_PATH $SAVE_PATH $NO_RENDER $DEBUG_GRAPHICS $LOG_LEVEL"
+    ./ants $MAP_PATH $SAVE_PATH $NO_RENDER $DEBUG_GRAPHICS $LOG_LEVEL
+
+)
