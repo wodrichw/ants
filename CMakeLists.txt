@@ -9,7 +9,7 @@ set (STD 20)
 set(CMAKE_CXX_STANDARD ${STD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project (ants C CXX VERSION 0.0.1)
+project(ants LANGUAGES C CXX VERSION 0.0.1)
 add_executable(ants src/main.cpp)
 set_target_properties(ants PROPERTIES CXX_STANDARD ${STD} CXX_STANDARD_REQUIRED
     ON)
