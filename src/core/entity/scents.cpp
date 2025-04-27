@@ -1,5 +1,8 @@
 #include "entity/scents.hpp"
 
+#include <math.h>
+#include <stdlib.h>
+
 #include "spdlog/spdlog.h"
 
 using ulong = unsigned long;
@@ -8,9 +11,70 @@ ulong get_scent(ulong const& scents, ulong bit_idx) {
     return (scents >> bit_idx) & 0xFF;
 }
 
-void update_scent_and_sum(long& total, ulong& scents, long priority) {
-    total += static_cast<long>(scents & 0xFF) * priority;
-    scents >>= 8;
+// Function to calculate softmax probabilities and select a direction
+long select_direction(ulong scents[4], ulong weights, uchar is_empty) {
+    // Extract weights into an array of signed integers
+    std::cout << "\nSTART" << std::endl;
+    long weight_array[8];
+    std::cout << "Weights: ";
+    for(int i = 0; i < 8; i++) {
+        weight_array[i] = (long)(signed char)((weights >> (i * 8)) & 0xFF);
+        std::cout << weight_array[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // Compute scores for each direction
+    double scores[4] = {0};
+    double NEG_INFINITIY = -1e18;
+    double max_score = NEG_INFINITIY;
+
+    std::cout << "Scores:" << std::endl;
+    for(int dir = 0; dir < 4; dir++) {
+        if((is_empty & (1 << dir)) == 0) {
+            // If the direction is not empty, set score to -INFINITY
+            scores[dir] = NEG_INFINITIY;
+            continue;
+        }
+
+        for(int i = 0; i < 8; i++) {
+            int scent = (scents[dir] >> (i * 8)) & 0xFF;
+            scores[dir] += scent * weight_array[i];
+            std::cout << scent << " ";
+        }
+        std::cout << "--> " << scores[dir] << std::endl;
+
+        max_score = std::max(max_score, scores[dir]);
+    }
+
+    // Compute the softmax probabilities
+    double exp_scores[4] = {0};
+    double sum_exp = 0;
+
+    for(ulong dir = 0; dir < 4; dir++) {
+        exp_scores[dir] = exp(scores[dir] - max_score);  // Stability adjustment
+        sum_exp += exp_scores[dir];
+    }
+
+    // Normalize probabilities
+    double probabilities[4] = {0};
+    for(ulong dir = 0; dir < 4; dir++) {
+        probabilities[dir] = exp_scores[dir] / sum_exp;
+    }
+
+    // Select a direction based on the probabilities
+    double random_value = ((double)rand() / RAND_MAX);
+    double cumulative_probability = 0;
+
+    for(ulong dir = 0; dir < 4; dir++) {
+        cumulative_probability += probabilities[dir];
+        if(random_value <= cumulative_probability) {
+            SPDLOG_INFO("Selected: {}", dir);
+            return dir;
+        }
+    }
+
+    return -1;  // Should not reach here if probabilities are calculated
+                // correctly
 }
 
 void DecrementScent::operator()(ulong& delta_scent) {
@@ -32,76 +96,12 @@ ScentReader::ScentReader(bool& scent_dir1, bool& dir_flag2,
       base_priorities(priorities) {}
 
 void ScentReader::operator()(ulong abs_scents[4]) {
-    if(base_priorities == 0) return;
+    long direction =
+        select_direction(abs_scents, base_priorities, is_space_empty_flag);
+    if(direction < 0) return;
 
-    // abs_scents - chunk directions: right, up, left, down
-    ulong right_scents = abs_scents[0];
-    ulong up_scents = abs_scents[1];
-    ulong left_scents = abs_scents[2];
-    ulong down_scents = abs_scents[3];
-
-    // Horizontal - positive values push to the left
-    // Vertical - positive values push forward
-    long left_scent = 0, right_scent = 0, up_scent = 0, down_scent = 0;
-    for(ulong priorities = base_priorities; priorities != 0; priorities >>= 8) {
-        // Get and shift priorities
-        long priority =
-            static_cast<long>(static_cast<schar>(priorities & 0xFF));
-
-        // Get and shift left / right scents
-        update_scent_and_sum(left_scent, left_scents, priority);
-        update_scent_and_sum(right_scent, right_scents, priority);
-
-        // Get and shift forward /reverse scents
-        update_scent_and_sum(up_scent, up_scents, priority);
-        update_scent_and_sum(down_scent, down_scents, priority);
-    }
-
-    bool can_move_right = is_space_empty_flag & 1;
-    bool can_move_up = (is_space_empty_flag >> 1) & 1;
-    bool can_move_left = (is_space_empty_flag >> 2) & 1;
-    bool can_move_down = (is_space_empty_flag >> 3) & 1;
-
-    long min_scent =
-        std::min({left_scent, right_scent, up_scent, down_scent}) - 1;
-
-    left_scent = can_move_left ? (-min_scent + left_scent) : 0;
-    right_scent = can_move_right ? (-min_scent + right_scent) : 0;
-
-    up_scent = can_move_up ? (-min_scent + up_scent) : 0;
-    down_scent = can_move_down ? (-min_scent + down_scent) : 0;
-    // SPDLOG_DEBUG("Scent reader - left: {} right {} up: {} down: {} min: {}",
-    // left_scent, right_scent, up_scent, down_scent, min_scent);
-
-    long total_scent = left_scent + right_scent + up_scent + down_scent + 1;
-
-    long rand_dir = rand() % total_scent;
-    long accumulated_value = 0;
-
-    accumulated_value += right_scent;
-    if(rand_dir < accumulated_value) {
-        // turn right;
-        SPDLOG_TRACE("Scent turn right");
-        scent_dir1 = false, scent_dir2 = false;
-        return;
-    }
-    accumulated_value += up_scent;
-    if(rand_dir < accumulated_value) {
-        // turn up;
-        SPDLOG_TRACE("Scent turn up");
-        scent_dir1 = false, scent_dir2 = true;
-        return;
-    }
-    accumulated_value += left_scent;
-    if(rand_dir < accumulated_value) {
-        // turn left;
-        SPDLOG_TRACE("Scent turn left");
-        scent_dir1 = true, scent_dir2 = false;
-        return;
-    }
-    // turn down;
-    SPDLOG_TRACE("Scent turn down");
-    scent_dir1 = true, scent_dir2 = true;
+    scent_dir1 = (direction & 2) != 0;
+    scent_dir2 = (direction & 1) != 0;
 }
 
 ScentBehaviors::ScentBehaviors(uchar const& is_space_empty_flag)
