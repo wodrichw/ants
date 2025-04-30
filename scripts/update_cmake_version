@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+NEW_VERSION=$1
+
+echo "[update-cmake-version] Updating CMakeLists.txt to version $NEW_VERSION"
+
+# Update the VERSION line
+sed -i.bak -E "s/(project\(.* VERSION )[0-9]+\.[0-9]+\.[0-9]+/\1$NEW_VERSION/" CMakeLists.txt
+
+rm CMakeLists.txt.bak
+
+echo "[update-cmake-version] Done updating CMakeLists.txt"

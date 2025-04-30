@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Find directories with the pattern "build_{type}_{log}" or "build_{type}_"
+dirs=$(find . -type d -name "build_*_*" -or -name "build_*_" | sort)
+
+# Use fzf to select the directory with custom formatting
+selected_dir=$(echo "$dirs" | fzf --preview="echo {2}" --preview-window=up:1:wrap --select-1 --exit-0)
+
+# Check if a directory was selected
+if [[ -n "$selected_dir" ]]; then
+    # Extract type and log from the selected directory
+    dir_name=$(basename "$selected_dir")
+    IFS='_' read -r type log <<< "$dir_name"
+
+    # Check if setup file exists and source it
+    setup_file="$selected_dir/setup"
+    if [[ -f "$setup_file" ]]; then
+        # Display selected directory info
+        source "$setup_file"
+    else
+        echo "No setup file found in $selected_dir"
+    fi
+fi

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Ensure that environment variables are set
+if [ -z "$CMAKE_BUILD_TYPE" ]; then
+    echo "Please run scripts/set_env first to set environment variables."
+    exit 1
+fi
+
+build_dir="./build_${CMAKE_BUILD_TYPE}_${LOG}"
+
+# Check if build directory exists
+if [ ! -d "$build_dir" ]; then
+    echo "Build directory $build_dir does not exist. Please run the build process first."
+    exit 1
+fi
+
+# Debug using lldb
+(
+    cd "$build_dir" || exit 1
+    # Build the project using make (in debug mode)
+    make
+
+    unset LOG_LEVEL
+    [ -n "$LOG" ] && LOG_LEVEL="--log_level $(echo "$LOG" | tr '[:upper:]' '[:lower:]')"
+
+    # Debug the program with lldb
+    echo "Starting lldb with ./ants and the following arguments:"
+    echo "./ants $MAP_PATH $SAVE_PATH $NO_RENDER $DEBUG_GRAPHICS $LOG_LEVEL"
+
+    # Run the program using lldb
+    lldb -- ./ants $MAP_PATH $SAVE_PATH $NO_RENDER $DEBUG_GRAPHICS $LOG_LEVEL
+)

@@ -1,0 +1,84 @@
+#!/bin/bash
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    echo "Script is not being sourced. Exiting."
+    exit 1
+fi
+
+unset READ_PATH
+unset MAP_PATH
+unset BUILD_TYPE
+unset LOG_LEVEL
+unset NO_RENDER
+unset DEBUG_GRAPHICS
+
+# Prompt for save path and allow empty input
+echo "Enter Save Path (leave empty for none):"
+read SAVE_PATH
+if [[ -n "$SAVE_PATH" ]]; then
+    SAVE_PATH="--save_path $SAVE_PATH"
+fi
+
+# Prompt for map path and allow empty input
+echo "Enter Map Path (leave empty for none):"
+read MAP_PATH
+if [[ -n "$MAP_PATH" ]]; then
+    MAP_PATH="--map_path $MAP_PATH"
+fi
+
+BUILD_TYPE=$(fzf --prompt="Select Build Type: " <<< $'Release\nDebug\nRelWithDebInfo\nMinSizeRel')
+
+if [[ "$BUILD_TYPE" == "Debug" || "$BUILD_TYPE" == "RelWithDebInfo" ]]; then
+    # Set environment variables using fzf
+    LOG_LEVEL=$(fzf --prompt="Select Log Level: " <<< $'TRACE\nDEBUG\nINFO\nWARN\nERROR\nCRITICAL\nOFF')
+fi
+
+# Ask for NO_RENDER and check for "Y" or "N" input
+echo "Disable Rendering? (y/N)"
+read NO_RENDER_INPUT
+if [[ "$NO_RENDER_INPUT" =~ ^[Yy]$ ]]; then
+    NO_RENDER="--no_render"
+else
+    NO_RENDER=""
+fi
+
+if [[ "$BUILD_TYPE" == "Debug" ]]; then
+    # Ask for DEBUG_GRAPHICS and check for "Y" or "N" input
+    echo "Enable Debug Graphics? (y/N)"
+    read DEBUG_GRAPHICS_INPUT
+    if [[ "$DEBUG_GRAPHICS_INPUT" =~ ^[Yy]$ ]]; then
+        DEBUG_GRAPHICS="--debug_graphics"
+    else
+        DEBUG_GRAPHICS=""
+    fi
+fi
+
+# Define build directory
+build_dir="./build_${CMAKE_BUILD_TYPE}_${LOG}"
+
+# Create the directory if it doesn't exist
+mkdir -p "$build_dir"
+build_file="$build_dir/setup"
+
+# Write variables to "$build_file"
+echo "export CMAKE_BUILD_TYPE=\"$BUILD_TYPE\"" > "$build_file"
+echo "export LOG=\"$LOG_LEVEL\"" >> "$build_file"
+echo "export MAP_PATH=\"$MAP_PATH\"" >> "$build_file"
+echo "export SAVE_PATH=\"$SAVE_PATH\"" >> "$build_file"
+echo "export NO_RENDER=\"${NO_RENDER:-""}\"" >> "$build_file"  # Default to empty if not selected
+echo "export DEBUG_GRAPHICS=\"${DEBUG_GRAPHICS:-""}\"" >> "$build_file"  # Default to empty if not selected
+
+# Source the "$build_file" file in subsequent scripts
+echo "Wrote to: $build_file"
+source "$build_file"
+
+# Display selected values
+[[ -n "$CMAKE_BUILD_TYPE" ]] && echo "Build Type: $CMAKE_BUILD_TYPE"
+[[ -n "$LOG" ]] && echo "Log Level: $LOG"
+[[ -n "$MAP_PATH" ]] && echo "Map Path: $MAP_PATH"
+[[ -n "$SAVE_PATH" ]] && echo "Save Path: $SAVE_PATH"
+[[ -n "$NO_RENDER" ]] && echo "No Render: $NO_RENDER"
+[[ -n "$DEBUG_GRAPHICS" ]] && echo "Debug Graphics: $DEBUG_GRAPHICS"
+
+./scripts/run_cmake || return 1
+(cd "$build_dir" && make)

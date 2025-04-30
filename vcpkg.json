@@ -16,5 +16,12 @@
     "pybind11",
     "protobuf",
     "benchmark"
-  ]
+  ],
+  "overrides": [
+    {
+      "name": "libtcod",
+      "version": "1.24.0"
+    }
+  ],
+  "builtin-baseline": "96d5fb3de135b86d7222c53f2352ca92827a156b"
 }
