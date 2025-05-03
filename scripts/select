@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    echo "Script is not being sourced. Exiting."
+    exit 1
+fi
+
 # Find directories with the pattern "build_{type}_{log}" or "build_{type}_"
 dirs=$(find . -type d -name "build_*_*" -or -name "build_*_" | sort)
 

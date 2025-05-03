@@ -12,7 +12,7 @@ build_dir="./build_${CMAKE_BUILD_TYPE}_${LOG}"
 (
     cd "$build_dir" || exit 1
     # Build the project using make
-    make
+    make || exit 1
 
     unset LOG_LEVEL
     [ -n "$LOG" ] && LOG_LEVEL="--log_level $(echo "$LOG" | tr '[:upper:]' '[:lower:]')"
