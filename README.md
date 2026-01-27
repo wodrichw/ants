@@ -24,6 +24,32 @@ sudo apt install libfreetype6-dev libsdl2-ttf-dev libsdl2-ttf-2.0-0 -y
 - run `./install_dependencies.sh`
 - after this, you can build ants with `make`
 
+## Python bindings (local build)
+This repository does not ship a pip-installable package. To use the Python bindings, build the extension module and add it to your Python path.
+
+### Install Python dependencies
+```
+python3 -m pip install -r requirements.txt
+```
+
+### Build the Python extension
+```
+cmake -S . -B build_python -DCMAKE_BUILD_TYPE=Release
+cmake --build build_python --target ant_core
+```
+
+This produces the module at `build_python/src/py_wrapper/ant_core.so`.
+
+## Run from a Python file
+Use the helper script in `scripts/run_game.py`:
+```
+python3.10 scripts/run_game.py
+```
+
+If you want your own entry point, base it on [scripts/run_game.py](scripts/run_game.py).
+
+Note: the prebuilt module in this repo is compiled for Python 3.10. If you are using a different Python version, rebuild the extension with your current interpreter (see the build steps above).
+
 ## Development Progress
 
 ### Source Code Structure

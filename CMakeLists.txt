@@ -156,3 +156,8 @@ if (BENCH)
     add_executable(bench src/benchmark/ant_bench.cpp)
     target_link_libraries(bench ants_benchmark)
 endif()
+
+option(UNIT_TEST "Compile unit tests" OFF)
+if (UNIT_TEST)
+    add_subdirectory(tests)
+endif()
