@@ -15,6 +15,7 @@ struct Status;
 namespace TokenParser {
     // Parse string to integer
     cpu_word_size integer(std::istringstream& ss);
+    cpu_word_size integer(std::istringstream& ss, Status& status);
 
     // Parse register names to an index
     // Register names are single characters A-Z
@@ -22,6 +23,7 @@ namespace TokenParser {
     // B -> 1
     // ...
     uchar letter_idx(std::istringstream& ss);
+    uchar letter_idx(std::istringstream& ss, Status& status);
 
     // Parse direction keyword to a dx and dy pair
     void direction(std::istringstream& ss, schar& dx, schar& dy,

@@ -19,6 +19,10 @@ ushort LabelMap::at(std::string const& label) const {
     return label_map.at(label);
 }
 
+bool LabelMap::contains(std::string const& label) const {
+    return label_map.find(label) != label_map.end();
+}
+
 void LabelMap::clear() {
     label_map.clear();
     address_map.clear();

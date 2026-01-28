@@ -32,6 +32,9 @@ CommandMap::CommandMap() {
                              LoadConstantDeparser(),
                              LoadConstantCompiler<LoadConstantOp>()));
 
+    // Alias for LOAD
+    str_map["LDI"] = str_map["LOAD"];
+
     // Copy register to register
     insert(new CommandConfig(
         "COPY", CommandEnum::COPY, TwoRegisterCommandParser(),
@@ -58,7 +61,7 @@ CommandMap::CommandMap() {
         OneLetterCommandDeparser(), OneRegisterCommandCompiler<DecOp>()));
 
     // MOVE command
-    insert(new CommandConfig("MOVE", CommandEnum::MOVE, NoArgCommandParser(),
+    insert(new CommandConfig("MOVE", CommandEnum::MOVE, MoveCommandParser(),
                              NoArgCommandDeparser(),
                              MoveAntCompiler<MoveOp>()));
 

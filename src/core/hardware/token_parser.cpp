@@ -9,6 +9,21 @@ cpu_word_size TokenParser::integer(std::istringstream &ss) {
     ss >> word;
     return std::stoi(word);
 }
+cpu_word_size TokenParser::integer(std::istringstream &ss, Status &status) {
+    std::string word;
+    ss >> word;
+    if(!ss) {
+        status.error("Expecting an integer argument - none given");
+        return 0;
+    }
+
+    try {
+        return std::stoi(word);
+    } catch(const std::exception &) {
+        status.error("Invalid integer argument");
+        return 0;
+    }
+}
 uchar TokenParser::letter_idx(std::istringstream &ss) {
     uchar firstChar;
     ss >> firstChar;
@@ -26,10 +41,36 @@ uchar TokenParser::letter_idx(std::istringstream &ss) {
     return 0b111;
 }
 
+uchar TokenParser::letter_idx(std::istringstream &ss, Status &status) {
+    uchar firstChar = 0;
+    ss >> firstChar;
+
+    if(!ss) {
+        status.error("Expecting a register argument - none given");
+        return 0;
+    }
+
+    if(firstChar >= 'A' && firstChar <= 'Z') {
+        SPDLOG_TRACE("Parsed register index: {}", firstChar - 'A');
+        return firstChar - 'A';
+    }
+
+    SPDLOG_ERROR("Invalid register index: {}", firstChar);
+    status.error("Invalid register argument - expected A-Z");
+    return 0;
+}
+
 void TokenParser::direction(std::istringstream &ss, schar &dx, schar &dy,
                             Status &status) {
     std::string word;
     ss >> word;
+
+    if(!ss) {
+        status.error(
+            "Expecting a direction argument - acceptable directions are: UP, "
+            "LEFT, DOWN and RIGHT.");
+        return;
+    }
 
     if(word == "UP") {
         dy = -1;

@@ -17,6 +17,12 @@
 - Once a program is intered into the text editor, you can close it and create a
   worker ant by occupying the nursery ant pressing 'a'.
 
+
+# Saving and restoring the game
+- pressing \ - saves the game
+- pressing r - reload game from the last saved point
+- save requires a CLI save path: run the game with --save_path <path> to enable saving.
+
 # Current Controls
 
 - NOP - no operation
