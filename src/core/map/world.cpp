@@ -295,6 +295,15 @@ MapWorld::MapWorld(const Rect& border, bool is_walls_enabled)
             Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
 }
 
+MapWorld::MapWorld(const Rect& border, bool is_walls_enabled, uint32_t seed_x,
+                   uint32_t seed_y)
+    : levels{}, regions(seed_x, seed_y), map_window(border) {
+    // Ensure that levels are created
+    for(size_t i = 0; i < globals::MAX_LEVEL_DEPTH; ++i)
+        levels.emplace_back(
+            Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
+}
+
 MapWorld::MapWorld(const ant_proto::MapWorld& msg,
                    ThreadPool<AsyncProgramJob>& thread_pool,
                    bool is_walls_enabled)
@@ -321,4 +330,13 @@ ant_proto::MapWorld MapWorld::get_proto() const {
     *msg.mutable_map_window() = map_window.get_proto();
 
     return msg;
+}
+
+bool MapWorld::get_origin_region_seeds(uint32_t& seed_x,
+                                       uint32_t& seed_y) const {
+    auto it = regions.rmap.find(Region_Key{0, 0});
+    if(it == regions.rmap.end()) return false;
+    seed_x = it->second.seed_x;
+    seed_y = it->second.seed_y;
+    return true;
 }

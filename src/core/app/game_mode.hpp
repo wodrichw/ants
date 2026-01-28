@@ -78,6 +78,7 @@ class EditorMode : public Mode {
     get_char_keyboard_publisher() override {
         return event_system.char_keyboard_events;
     }
+
 };
 
 class PrimaryMode : public Mode {
@@ -131,6 +132,8 @@ class PrimaryMode : public Mode {
     get_char_keyboard_publisher() override {
         return event_system.char_keyboard_events;
     }
+
+    HardwareManager& get_hardware_manager() { return hardware_manager; }
 
     ant_proto::HardwareManager get_proto() const {
         ant_proto::HardwareManager msg;

@@ -24,6 +24,29 @@ sudo apt install libfreetype6-dev libsdl2-ttf-dev libsdl2-ttf-2.0-0 -y
 - run `./install_dependencies.sh`
 - after this, you can build ants with `make`
 
+## Debug build with logs
+For a Debug build with maximum debuggability and JSON logging of build/test issues:
+```
+./scripts/build_debug_with_logs.sh
+```
+
+This writes a timestamped JSON Lines log to `.github/logs` and continues through all steps, logging any errors.
+
+## E2E tests
+- Test sources:
+  - [tests/e2e_tests/replay_e2e_tests.cpp](tests/e2e_tests/replay_e2e_tests.cpp)
+  - [tests/e2e_tests/action_e2e_tests.cpp](tests/e2e_tests/action_e2e_tests.cpp)
+  - Helpers: [tests/e2e_tests/e2e_helpers.hpp](tests/e2e_tests/e2e_helpers.hpp), [tests/e2e_tests/e2e_helpers.cpp](tests/e2e_tests/e2e_helpers.cpp)
+- Replay fixtures (generated): [tests/test_assets/replays/generated](tests/test_assets/replays/generated)
+
+### Run E2E tests
+Build with tests enabled, then run the E2E target:
+```
+cmake -S . -B build_tests -DUNIT_TEST=ON
+cmake --build build_tests
+ctest --test-dir build_tests -R E2ETests --output-on-failure
+```
+
 ## Python bindings (local build)
 This repository does not ship a pip-installable package. To use the Python bindings, build the extension module and add it to your Python path.
 

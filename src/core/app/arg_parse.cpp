@@ -70,6 +70,8 @@ ProjectArguments::ProjectArguments(int argc, char* argv[])
     : parser(argc, argv),
       default_map_file_path(parser.getString("map_path")),
       save_path(parser.getString("save_path")),
+    replay_record_path(parser.getString("record_replay")),
+    replay_play_path(parser.getString("play_replay")),
       is_render(!parser.getBool("no_render", false)),
       is_debug_graphics(parser.getBool("debug_graphics", false)),
       is_walls_enabled(!parser.getBool("disable_walls", false)),
@@ -82,11 +84,15 @@ ProjectArguments::ProjectArguments(int argc, char* argv[])
 }
 
 ProjectArguments::ProjectArguments(std::string const& default_map_file_path,
-                                   std::string const& save_path, bool is_render,
-                                   bool is_debug_graphics,
-                                   bool is_walls_enabled)
+                                                                     std::string const& save_path,
+                                                                     std::string const& replay_record_path,
+                                                                     std::string const& replay_play_path,
+                                                                     bool is_render, bool is_debug_graphics,
+                                                                     bool is_walls_enabled)
     : default_map_file_path(default_map_file_path),
       save_path(save_path),
+            replay_record_path(replay_record_path),
+            replay_play_path(replay_play_path),
       is_render(is_render),
       is_debug_graphics(is_debug_graphics),
       is_walls_enabled(is_walls_enabled) {
@@ -98,6 +104,8 @@ void ProjectArguments::help() const {
     std::cout << "Options:\n";
     std::cout << "  --map_path <path>    Path to the map file\n";
     std::cout << "  --save_path <path>   Path to the file for auto-save\n";
+    std::cout << "  --record_replay <path>  Record UI input replay to file\n";
+    std::cout << "  --play_replay <path>    Replay UI inputs from file\n";
     std::cout
         << "  --no_render          Does not render any graphics for the game\n";
     std::cout << "  --debug_graphics     Add debug graphics to the GUI\n";

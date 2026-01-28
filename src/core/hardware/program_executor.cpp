@@ -38,8 +38,10 @@ void ProgramExecutor::execute_async() {
     // trigger: {}", instr_clock, instr_trigger);
     has_executed_async = false;
     if(instr_ptr_register >= _ops.size()) return;
-    if((instr_clock % (instr_trigger + 1)) != 0) return;
-    instr_trigger = 0;  // if not 0, then a syncronous move is occurring
+    if(instr_trigger > 0) {
+        --instr_trigger;
+        return;
+    }
     has_executed_async = true;
     AsyncProgramJob job(*this);
     job_pool.submit_job(job);
@@ -69,7 +71,7 @@ bool ProgramExecutor::is_sync() {
 }
 
 void AsyncProgramJob::run() {
-    for(ulong i = 1; i < pe.max_instruction_per_tick &&
+    for(ulong i = 0; i < pe.max_instruction_per_tick &&
                      pe.instr_ptr_register < pe._ops.size();
         ++i) {
         if(pe.is_sync()) {  // break if a syncronous instruction

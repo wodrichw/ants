@@ -1,0 +1,54 @@
+syntax = "proto3";
+package ant_proto;
+
+message ReplayEnvironment {
+    uint32 region_seed_x = 1;
+    uint32 region_seed_y = 2;
+    bool is_walls_enabled = 3;
+    string map_path = 4;
+}
+
+message ReplayHeader {
+    uint32 version = 1;
+    uint64 created_unix_ms = 2;
+    string build = 3;
+    ReplayEnvironment environment = 4;
+}
+
+enum ReplayEventKind {
+    REPLAY_EVENT_UNKNOWN = 0;
+    REPLAY_EVENT_MOUSE_BUTTON_DOWN = 1;
+    REPLAY_EVENT_KEY_DOWN = 2;
+    REPLAY_EVENT_KEY_UP = 3;
+    REPLAY_EVENT_CHAR = 4;
+    REPLAY_EVENT_QUIT = 5;
+}
+
+message ReplayMouseEvent {
+    int64 x = 1;
+    int64 y = 2;
+    int32 button = 3;
+}
+
+message ReplayKeyEvent {
+    int32 key_sym = 1;
+    int32 key_mod = 2;
+}
+
+message ReplayCharEvent {
+    uint32 key = 1;
+}
+
+message ReplayEvent {
+    ReplayEventKind kind = 1;
+    oneof payload {
+        ReplayMouseEvent mouse = 2;
+        ReplayKeyEvent key = 3;
+        ReplayCharEvent ch = 4;
+    }
+}
+
+message ReplayFrame {
+    uint64 frame_index = 1;
+    repeated ReplayEvent events = 2;
+}

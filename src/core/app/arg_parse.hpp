@@ -29,12 +29,16 @@ class ProjectArguments {
    public:
     std::string const default_map_file_path = {};
     std::string const save_path = {};
+   std::string const replay_record_path = {};
+   std::string const replay_play_path = {};
     bool const is_render = {};
     bool const is_debug_graphics = {};
     bool const is_walls_enabled = {};
     bool const no_fov = {};
     ProjectArguments(int argc, char* argv[]);
     ProjectArguments(std::string const& default_map_file_path,
-                     std::string const& save_path, bool is_render,
+                     std::string const& save_path,
+                     std::string const& replay_record_path,
+                     std::string const& replay_play_path, bool is_render,
                      bool is_debug_graphics, bool is_walls_enabled);
 };

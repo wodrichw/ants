@@ -200,8 +200,16 @@ struct Regions {
     }
 
     Regions() : rmap() {
-        rmap.emplace(Region_Key{0, 0}, Region(Rect(0, 0, globals::WORLD_LENGTH,
-                                                   globals::WORLD_LENGTH)));
+        rmap.emplace(Region_Key{0, 0},
+                     Region(Rect(0, 0, globals::WORLD_LENGTH,
+                                 globals::WORLD_LENGTH)));
+    }
+
+    Regions(uint32_t seed_x, uint32_t seed_y) : rmap() {
+        rmap.emplace(Region_Key{0, 0},
+                     Region(seed_x, seed_y,
+                            Rect(0, 0, globals::WORLD_LENGTH,
+                                 globals::WORLD_LENGTH)));
     }
 };
 
@@ -216,9 +224,13 @@ class MapWorld {
 
     MapWorld(const Rect& border,
              bool is_walls_enabled);  // guaranteed first world
+    MapWorld(const Rect& border, bool is_walls_enabled, uint32_t seed_x,
+             uint32_t seed_y);
     MapWorld(const ant_proto::MapWorld& msg,
              ThreadPool<AsyncProgramJob>& thread_pool, bool is_walls_enabled);
     ant_proto::MapWorld get_proto() const;
+
+    bool get_origin_region_seeds(uint32_t& seed_x, uint32_t& seed_y) const;
 
     Level& current_level();
     Level& operator[](ulong depth);

@@ -159,5 +159,6 @@ endif()
 
 option(UNIT_TEST "Compile unit tests" OFF)
 if (UNIT_TEST)
+    enable_testing()
     add_subdirectory(tests)
 endif()
