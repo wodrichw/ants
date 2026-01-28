@@ -1,6 +1,7 @@
 add_executable(test_e2e
     ${CMAKE_CURRENT_SOURCE_DIR}/action_e2e_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/replay_e2e_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/save_restore_e2e_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/e2e_helpers.cpp
 )
 

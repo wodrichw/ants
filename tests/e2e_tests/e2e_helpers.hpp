@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "app/arg_parse.hpp"
+#include "app/globals.hpp"
 #include "app/engine.hpp"
 #include "app/engine_state.hpp"
 #include "replay.pb.h"
@@ -84,5 +85,53 @@ std::vector<std::pair<long, long>> collect_offsets(Map& map,
                                                    long y,
                                                    bool want_wall,
                                                    size_t count);
+
+std::string save_dir();
+std::string save_path();
+void clear_save_file();
+void trigger_save(EngineState& state, const std::string& path);
+
+struct MapTileSnapshot {
+    long x = 0;
+    long y = 0;
+    bool is_wall = true;
+};
+
+struct WorkerSnapshot {
+    long x = 0;
+    long y = 0;
+    cpu_word_size reg_a = 0;
+    cpu_word_size reg_b = 0;
+    bool zero_flag = false;
+    bool instr_failed_flag = false;
+    bool dir_flag1 = false;
+    bool dir_flag2 = false;
+    bool is_move_flag = false;
+    bool is_dig_flag = false;
+    unsigned short instr_ptr = 0;
+    unsigned long instr_trigger = 0;
+};
+
+struct WorldSnapshot {
+    long player_x = 0;
+    long player_y = 0;
+    unsigned long player_depth = 0;
+    unsigned long current_depth = 0;
+    size_t worker_count = 0;
+    std::vector<WorkerSnapshot> workers = {};
+    std::vector<MapTileSnapshot> map_tiles = {};
+    bool has_code = false;
+    std::vector<unsigned char> current_code = {};
+    size_t current_label_count = 0;
+    std::vector<unsigned char> ant_code = {};
+    size_t ant_label_count = 0;
+};
+
+WorldSnapshot capture_world_snapshot(
+    EngineState& state,
+    const std::vector<std::pair<long, long>>& map_tiles);
+
+void assert_world_state(EngineState& state,
+                        const WorldSnapshot& expected);
 
 }  // namespace e2e

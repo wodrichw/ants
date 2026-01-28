@@ -1,7 +1,12 @@
 #include "e2e_helpers.hpp"
 
+#include <cstdio>
 #include <fstream>
 #include <ostream>
+
+#include <gtest/gtest.h>
+
+#include "ui/serializer_handler.hpp"
 
 namespace e2e {
 
@@ -152,6 +157,139 @@ std::vector<std::pair<long, long>> collect_offsets(Map& map,
         }
     }
     return offsets;
+}
+
+std::string save_dir() {
+    return std::string(E2E_ASSET_DIR) + "/saves";
+}
+
+std::string save_path() { return save_dir() + "/e2e_save.bin"; }
+
+void clear_save_file() {
+    const auto path = save_path();
+    std::remove(path.c_str());
+}
+
+void trigger_save(EngineState& state, const std::string& path) {
+    AutoSaveTriggerHandler handler(state, path);
+    KeyboardEvent event;
+    handler(event);
+}
+
+WorldSnapshot capture_world_snapshot(
+    EngineState& state,
+    const std::vector<std::pair<long, long>>& map_tiles) {
+    WorldSnapshot snapshot;
+    auto& player = state.entity_manager.player.get_data();
+    snapshot.player_x = player.x;
+    snapshot.player_y = player.y;
+    snapshot.player_depth = state.entity_manager.player_depth;
+    snapshot.current_depth = state.map_world.current_depth;
+
+    snapshot.worker_count = state.entity_manager.num_workers();
+    snapshot.workers.reserve(snapshot.worker_count);
+    for(auto& level : state.map_world.levels) {
+        for(auto* worker : level.workers) {
+            WorkerSnapshot worker_snapshot;
+            const auto& data = worker->get_data();
+            const auto& cpu = worker->cpu;
+            worker_snapshot.x = data.x;
+            worker_snapshot.y = data.y;
+            worker_snapshot.reg_a = cpu.registers[0];
+            worker_snapshot.reg_b = cpu.registers[1];
+            worker_snapshot.zero_flag = cpu.zero_flag;
+            worker_snapshot.instr_failed_flag = cpu.instr_failed_flag;
+            worker_snapshot.dir_flag1 = cpu.dir_flag1;
+            worker_snapshot.dir_flag2 = cpu.dir_flag2;
+            worker_snapshot.is_move_flag = cpu.is_move_flag;
+            worker_snapshot.is_dig_flag = cpu.is_dig_flag;
+            worker_snapshot.instr_ptr = cpu.instr_ptr_register;
+            worker_snapshot.instr_trigger = worker->program_executor.instr_trigger;
+            snapshot.workers.push_back(worker_snapshot);
+        }
+    }
+
+    auto& map = state.map_world.current_level().map;
+    snapshot.map_tiles.reserve(map_tiles.size());
+    for(const auto& [x, y] : map_tiles) {
+        MapTileSnapshot tile;
+        tile.x = x;
+        tile.y = y;
+        tile.is_wall = map.is_wall(x, y);
+        snapshot.map_tiles.push_back(tile);
+    }
+
+    snapshot.has_code = state.software_manager.has_code();
+    auto& current_code = state.software_manager.get();
+    snapshot.current_label_count = current_code.labels.size();
+    snapshot.current_code.assign(current_code.code.begin(),
+                                 current_code.code.end());
+
+    if(snapshot.worker_count > 0) {
+        auto& ant_code = state.software_manager[0];
+        snapshot.ant_label_count = ant_code.labels.size();
+        snapshot.ant_code.assign(ant_code.code.begin(), ant_code.code.end());
+    }
+
+    return snapshot;
+}
+
+void assert_world_state(EngineState& state,
+                        const WorldSnapshot& expected) {
+    const auto& player = state.entity_manager.player.get_data();
+    EXPECT_EQ(player.x, expected.player_x);
+    EXPECT_EQ(player.y, expected.player_y);
+    EXPECT_EQ(state.entity_manager.player_depth, expected.player_depth);
+    EXPECT_EQ(state.map_world.current_depth, expected.current_depth);
+
+    std::vector<Worker*> workers;
+    workers.reserve(expected.worker_count);
+    for(auto& level : state.map_world.levels) {
+        for(auto* worker : level.workers) {
+            workers.push_back(worker);
+        }
+    }
+
+    ASSERT_EQ(workers.size(), expected.workers.size());
+    EXPECT_EQ(workers.size(), expected.worker_count);
+    for(size_t i = 0; i < workers.size(); ++i) {
+        auto* worker = workers[i];
+        const auto& cpu = worker->cpu;
+        const auto& snapshot = expected.workers[i];
+        EXPECT_EQ(worker->get_data().x, snapshot.x);
+        EXPECT_EQ(worker->get_data().y, snapshot.y);
+        EXPECT_EQ(cpu.registers[0], snapshot.reg_a);
+        EXPECT_EQ(cpu.registers[1], snapshot.reg_b);
+        EXPECT_EQ(cpu.zero_flag, snapshot.zero_flag);
+        EXPECT_EQ(cpu.instr_failed_flag, snapshot.instr_failed_flag);
+        EXPECT_EQ(cpu.dir_flag1, snapshot.dir_flag1);
+        EXPECT_EQ(cpu.dir_flag2, snapshot.dir_flag2);
+        EXPECT_EQ(cpu.is_move_flag, snapshot.is_move_flag);
+        EXPECT_EQ(cpu.is_dig_flag, snapshot.is_dig_flag);
+        EXPECT_EQ(cpu.instr_ptr_register, snapshot.instr_ptr);
+        EXPECT_EQ(worker->program_executor.instr_trigger,
+                  snapshot.instr_trigger);
+    }
+
+    auto& map = state.map_world.current_level().map;
+    for(const auto& tile : expected.map_tiles) {
+        EXPECT_EQ(map.is_wall(tile.x, tile.y), tile.is_wall);
+    }
+
+    EXPECT_EQ(state.software_manager.has_code(), expected.has_code);
+    const auto& current_code = state.software_manager.get();
+    std::vector<unsigned char> actual_current(current_code.code.begin(),
+                                              current_code.code.end());
+    EXPECT_EQ(actual_current, expected.current_code);
+    EXPECT_EQ(current_code.labels.size(), expected.current_label_count);
+
+    if(expected.worker_count > 0) {
+        const auto& ant_code = state.software_manager[0];
+        std::vector<unsigned char> actual_ant(ant_code.code.begin(),
+                                              ant_code.code.end());
+        EXPECT_EQ(actual_ant, expected.ant_code);
+        EXPECT_EQ(ant_code.labels.size(), expected.ant_label_count);
+    }
 }
 
 }  // namespace e2e
