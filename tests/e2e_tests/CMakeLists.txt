@@ -19,5 +19,6 @@ target_compile_definitions(test_e2e PRIVATE
 )
 
 add_test(NAME E2ETests COMMAND test_e2e)
+add_test(NAME E2eSaveRestoreTests COMMAND test_e2e --gtest_filter=E2eSaveRestore*)
 
 list(APPEND TEST_TARGETS test_e2e)

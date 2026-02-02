@@ -34,10 +34,25 @@ ReplayStatus read_message(std::ifstream& input,
         return ReplayStatus::failure(err);
     }
 
-    if(size <= 0) {
+    if(size < 0) {
         ReplayError err = make_error("Invalid replay message size: " +
                                      std::to_string(size));
         return ReplayStatus::failure(err);
+    }
+
+    if(size == 0) {
+        if(input.peek() == std::ifstream::traits_type::eof()) {
+            ReplayError err = make_error("Invalid replay message size: " +
+                                         std::to_string(size));
+            return ReplayStatus::failure(err);
+        }
+        std::string data;
+        if(!msg.ParseFromString(data)) {
+            ReplayError err =
+                make_error("Failed to parse replay message for " + context);
+            return ReplayStatus::failure(err);
+        }
+        return ReplayStatus::success();
     }
 
     std::string data(size, '\0');

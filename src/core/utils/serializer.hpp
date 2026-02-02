@@ -26,6 +26,7 @@ class Packer {
         int size = msg.size();
         write_int(size);
         output.write(msg.data(), size);
+        output.flush();
 
         return *this;
     }
@@ -61,7 +62,7 @@ class Unpacker {
 
     Unpacker& operator>>(tcod::ColorRGB& col);
 
-    bool is_valid() const;
+    bool is_valid();
 
    private:
     void close();

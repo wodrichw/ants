@@ -37,6 +37,9 @@ class Engine {
     void action_go_up();
     void action_go_down();
 
+    EngineState* get_state();
+    void reload_state_for_tests();
+
    private:
     void initialize();
     Renderer* create_renderer() const;

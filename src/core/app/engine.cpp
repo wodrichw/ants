@@ -73,11 +73,14 @@ EngineState* Engine::create_state() {
 }
 
 void Engine::update() {
-    if(state->is_reload_game) {
+    if(state->is_reload_game && !state->is_replay_playing) {
         delete state;
         state = create_state();
     }
     state->update();
+    if(state->is_replay_playing || state->replay_done()) {
+        state->is_reload_game = false;
+    }
     // SPDLOG_TRACE("Engine update complete");
 }
 
@@ -125,3 +128,12 @@ void Engine::action_assign_program_to_ant(ulong ant_idx) {
 void Engine::action_go_up() { state->action_go_up(); }
 
 void Engine::action_go_down() { state->action_go_down(); }
+
+EngineState* Engine::get_state() { return state; }
+
+void Engine::reload_state_for_tests() {
+    if(state != nullptr && state->is_reload_game) {
+        delete state;
+        state = create_state();
+    }
+}

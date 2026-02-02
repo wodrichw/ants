@@ -2,6 +2,9 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <string>
 #include <utility>
@@ -37,6 +40,13 @@ struct ScenarioResult {
     e2e::WorldSnapshot snapshot;
     std::pair<long, long> control_wall_tile;
 };
+
+std::string make_temp_path(const std::string& prefix) {
+    auto ts = std::chrono::steady_clock::now().time_since_epoch().count();
+    return (std::filesystem::temp_directory_path() /
+            (prefix + std::to_string(ts)))
+        .string();
+}
 
 std::vector<SaveRestoreScenario> build_scenarios() {
     return {
@@ -350,6 +360,19 @@ std::vector<E2eCase> build_save_restore_cases() {
             e2e::assert_world_state(*engine.get_state(), result.snapshot);
         });
     }
+
+    add_case("save_restore_empty_file_1", []() {
+        const std::string path = make_temp_path("e2e_empty_save_");
+        {
+            std::ofstream out(path, std::ios::binary);
+        }
+
+        ProjectArguments config("", path, "", "", false, false, true);
+        Engine engine(config);
+        ASSERT_NE(engine.get_state(), nullptr);
+
+        std::filesystem::remove(path);
+    });
 
     return cases;
 }

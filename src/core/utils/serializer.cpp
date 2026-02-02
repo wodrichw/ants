@@ -51,7 +51,17 @@ Unpacker& Unpacker::operator>>(tcod::ColorRGB& col) {
     return *this;
 }
 
-bool Unpacker::is_valid() const { return input ? true : false; }
+bool Unpacker::is_valid() {
+    if(!input) return false;
+    auto pos = input.tellg();
+    int ch = input.peek();
+    if(ch == std::ifstream::traits_type::eof()) {
+        return false;
+    }
+    input.clear();
+    input.seekg(pos);
+    return true;
+}
 
 void Unpacker::close() { input.close(); }
 

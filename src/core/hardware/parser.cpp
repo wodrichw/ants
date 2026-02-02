@@ -96,6 +96,10 @@ void Parser::deparse(MachineCode const& machine_code,
 bool Parser::handle_label(LabelMap& labels, std::string const& word,
                           ushort address, Status& status) {
     SPDLOG_TRACE("Checking if label: {}", word);
+    if(word.find_first_of(" \t") != std::string::npos) {
+        SPDLOG_TRACE("Label contains whitespace - treating as instruction");
+        return false;
+    }
     if(word[word.length() - 1] != ':') {
         SPDLOG_TRACE("Word is not a label");
         return false;

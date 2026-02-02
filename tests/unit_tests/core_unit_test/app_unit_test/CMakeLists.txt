@@ -12,3 +12,4 @@ target_link_libraries(test_app
 )
 
 add_test(NAME AppUnitTests COMMAND test_app)
+add_test(NAME SaveRestoreUnitTests COMMAND test_app --gtest_filter=SaveRestore*)

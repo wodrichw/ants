@@ -1,11 +1,13 @@
 #include "e2e_helpers.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <fstream>
 #include <ostream>
 
 #include <gtest/gtest.h>
 
+#include "app/globals.hpp"
 #include "ui/serializer_handler.hpp"
 
 namespace e2e {
@@ -146,7 +148,8 @@ std::vector<std::pair<long, long>> collect_offsets(Map& map,
                                                    bool want_wall,
                                                    size_t count) {
     std::vector<std::pair<long, long>> offsets;
-    for(long radius = 1; radius <= 20; ++radius) {
+    const long max_radius = std::max(globals::COLS, globals::ROWS) + 10;
+    for(long radius = 1; radius <= max_radius; ++radius) {
         for(long dx = -radius; dx <= radius; ++dx) {
             for(long dy = -radius; dy <= radius; ++dy) {
                 if(dx == 0 && dy == 0) continue;
