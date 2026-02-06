@@ -1,11 +1,11 @@
 #pragma once
 
 #include "app/engine.hpp"
+#include "utils/types.hpp"
 
 #include <string>
 #include <vector>
 
-using ulong = unsigned long;
 
 class AntGameFacade {
    public:

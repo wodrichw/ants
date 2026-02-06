@@ -13,6 +13,9 @@ file(GLOB_RECURSE src_files
 
 # Add the sources to a library target
 add_library(ants_src ${src_files})
+if(MSVC)
+    target_compile_options(ants_src PRIVATE /wd4251 /wd4267)
+endif()
 target_link_libraries(ants_src PRIVATE
     ${LINK_TCOD}
     ${SDL2MAIN}

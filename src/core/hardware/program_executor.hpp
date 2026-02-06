@@ -3,12 +3,11 @@
 #include <functional>
 #include <vector>
 
+#include "app/globals.hpp"
 #include "hardware.pb.h"
 #include "hardware/op_def.hpp"
 #include "utils/thread_pool.hpp"
-
-using ulong = unsigned long;
-using ushort = unsigned short;
+#include "utils/types.hpp"
 
 class Packer;
 class Unpacker;

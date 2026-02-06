@@ -17,8 +17,9 @@ Rect::Rect(Rect const& other)
       center_x(other.center_x),
       center_y(other.center_y) {}
 
-Rect::Rect(const ant_proto::Rect& msg) : w(msg.w()), h(msg.h()) {
-    set_top_left(msg.x1(), msg.y1());
+Rect::Rect(const ant_proto::Rect& msg)
+    : w(static_cast<long>(msg.w())), h(static_cast<long>(msg.h())) {
+    set_top_left(static_cast<long>(msg.x1()), static_cast<long>(msg.y1()));
     SPDLOG_TRACE("Unpacking rectangle - x: {} y: {} w: {} h: {}", msg.x1(),
                  msg.y1(), w, h);
 }

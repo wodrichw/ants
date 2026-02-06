@@ -1,0 +1,56 @@
+{
+  "version": 4,
+  "configurePresets": [
+    {
+      "name": "windows-ninja-msvc",
+      "displayName": "Windows Ninja (MSVC)",
+      "description": "Configure with Ninja + MSVC. Run from a VS Dev Prompt (x64 host/target).",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build_tests_ninja_msvc",
+      "environment": {
+        "VSCMD_ARG_TGT_ARCH": "x64",
+        "VSCMD_ARG_HOST_ARCH": "x64",
+        "INCLUDE": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/include;C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/ucrt;C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/um;C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/shared;C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/winrt;C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/cppwinrt",
+        "LIB": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/lib/x64;C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22621.0/ucrt/x64;C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22621.0/um/x64"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe",
+        "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe",
+        "CMAKE_AR": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/lib.exe",
+        "CMAKE_RANLIB": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/lib.exe",
+        "CMAKE_C_COMPILER_AR": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/lib.exe",
+        "CMAKE_CXX_COMPILER_AR": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/lib.exe",
+        "CMAKE_LINKER": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/link.exe",
+        "CMAKE_MAKE_PROGRAM": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe",
+        "CMAKE_RC_COMPILER": "C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/rc.exe",
+        "CMAKE_MT": "C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/mt.exe",
+        "PYBIND11_FINDPYTHON": "ON",
+        "Python3_ROOT_DIR": "${sourceDir}/build_tests_ninja_msvc/vcpkg_installed/x64-windows",
+        "Python3_FIND_STRATEGY": "LOCATION"
+      }
+    },
+    {
+      "name": "windows-ninja-msvc-debug-trace",
+      "displayName": "Windows Ninja (MSVC) Debug + Trace",
+      "description": "Windows Ninja + MSVC with Debug build type and TRACE logging.",
+      "inherits": "windows-ninja-msvc",
+      "binaryDir": "${sourceDir}/build_tests_ninja_msvc_debug_trace",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LOG": "TRACE"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-ninja-msvc",
+      "configurePreset": "windows-ninja-msvc",
+      "jobs": 0
+    },
+    {
+      "name": "windows-ninja-msvc-debug-trace",
+      "configurePreset": "windows-ninja-msvc-debug-trace",
+      "jobs": 0
+    }
+  ]
+}

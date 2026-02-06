@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <mutex>
 
+#include "utils/types.hpp"
 using cpu_word_size = unsigned int;
 
 namespace globals {
@@ -16,7 +18,7 @@ namespace globals {
     const long MAX_SECTION_LENGTH = CHUNK_LENGTH * 16;
 
     const long WORLD_LENGTH = MAX_SECTION_LENGTH * 2;
-    const long MAX_LEVEL_DEPTH = 10;
+    const ulong MAX_LEVEL_DEPTH = 10;
 
     const long TEXTBOXHEIGHT = 17;
     const long TEXTBOXWIDTH = 25;

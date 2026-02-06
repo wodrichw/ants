@@ -82,5 +82,6 @@ struct EngineState {
                            CharKeyboardEvent& char_keyboard_event);
     void dispatch_key_up(SDL_Keysym const& key_sym);
     void dispatch_char_event(uint32_t key);
+    friend class KeyboardE2eTestAccess;
     friend Packer& operator<<(Packer&, EngineState const&);
 };

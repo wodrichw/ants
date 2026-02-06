@@ -11,6 +11,12 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${proto_files})
 # Add the .pb.cc files to a library
 add_library(ProtoSources ${PROTO_SRCS} ${PROTO_HDRS})
 
+target_compile_options(ProtoSources PRIVATE
+	"$<$<CXX_COMPILER_ID:MSVC>:/wd4100>"
+	"$<$<CXX_COMPILER_ID:MSVC>:/wd4251>"
+	"$<$<CXX_COMPILER_ID:MSVC>:/wd4267>"
+)
+
 # Link the Protobuf library and its absl dependencies
 find_package(absl CONFIG REQUIRED)
 target_link_libraries(ProtoSources PUBLIC

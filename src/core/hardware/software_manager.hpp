@@ -2,12 +2,11 @@
 
 #include <vector>
 
+#include "app/globals.hpp"
 #include "hardware.pb.h"
 #include "hardware/command_config.hpp"
 #include "hardware/machine_code.hpp"
 #include "hardware/parser.hpp"
-
-using ulong = unsigned long;
 
 class SoftwareManager {
     Parser parser;

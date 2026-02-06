@@ -48,7 +48,7 @@ TEST(SoftwareManagerTest, AssignStoresCurrentCode) {
 
     manager.add_lines({"NOP"});
     manager.assign(1);
-    manager.add_lines({"MOVE"});
+    manager.add_lines({"MOVE DOWN"});
 
     EXPECT_FALSE(manager[1].is_empty());
 }
@@ -66,7 +66,7 @@ TEST(SoftwareManagerTest, GetProtoReflectsAssignments) {
 
     manager.add_lines({"NOP"});
     manager.assign(2);
-    manager.add_lines({"MOVE"});
+    manager.add_lines({"MOVE DOWN"});
 
     auto proto = manager.get_proto();
     EXPECT_GE(proto.ant_machine_codes_size(), 1);
@@ -79,7 +79,7 @@ TEST(SoftwareManagerTest, AddLinesAfterAssignCreatesNewCurrent) {
 
     manager.add_lines({"NOP"});
     manager.assign(3);
-    manager.add_lines({"MOVE"});
+    manager.add_lines({"MOVE DOWN"});
 
     EXPECT_FALSE(manager.get().is_empty());
 }

@@ -25,7 +25,7 @@ cpu_word_size TokenParser::integer(std::istringstream &ss, Status &status) {
     }
 
     try {
-        size_t idx = 0;
+        std::string::size_type idx = 0;
         long long value = std::stoll(word, &idx, 10);
         if(idx != word.size()) {
             status.error("Invalid integer argument");
@@ -38,7 +38,7 @@ cpu_word_size TokenParser::integer(std::istringstream &ss, Status &status) {
             return 0;
         }
         return static_cast<cpu_word_size>(value);
-    } catch(const std::exception &ex) {
+    } catch(const std::exception &) {
         status.error("Invalid integer argument");
         SPDLOG_ERROR("Invalid integer token: {}", word);
         return 0;
@@ -114,7 +114,7 @@ schar TokenParser::get_signed_byte(std::istringstream &ss, Status &status) {
     }
 
     try {
-        size_t idx = 0;
+        std::string::size_type idx = 0;
         long long value = std::stoll(word, &idx, 10);
         if(idx != word.size()) {
             status.error("Invalid signed integer argument");
@@ -128,7 +128,7 @@ schar TokenParser::get_signed_byte(std::istringstream &ss, Status &status) {
         schar number = static_cast<schar>(value);
         SPDLOG_DEBUG("Parsed number: {}", number);
         return number;
-    } catch(const std::exception &ex) {
+    } catch(const std::exception &) {
         status.error("Invalid signed integer argument");
         SPDLOG_ERROR("Invalid signed integer token: {}", word);
         return 0;

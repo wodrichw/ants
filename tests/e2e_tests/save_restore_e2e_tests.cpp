@@ -30,10 +30,10 @@ struct SaveRestoreScenario {
     bool is_move_flag;
     bool is_dig_flag;
     unsigned short instr_ptr;
-    unsigned long instr_trigger;
+    ulong instr_trigger;
     std::vector<std::string> program_lines;
-    size_t move_index;
-    size_t dig_index;
+    ulong move_index;
+    ulong dig_index;
 };
 
 struct ScenarioResult {
@@ -218,15 +218,19 @@ ScenarioResult setup_scenario(EngineState& state,
 
     std::vector<std::pair<long, long>> tracked_tiles;
     tracked_tiles.reserve(5);
-    for(size_t i = 0; i < 3; ++i) {
+    for(ulong i = 0; i < 3; ++i) {
         const auto [dx, dy] =
-            wall_offsets[(scenario.dig_index + i) % wall_offsets.size()];
+            wall_offsets[static_cast<decltype(wall_offsets)::size_type>(
+                (scenario.dig_index + i) %
+                static_cast<ulong>(wall_offsets.size()))];
         state.action_dig(dx, dy);
         tracked_tiles.emplace_back(player.x + dx, player.y + dy);
     }
 
     const auto [control_dx, control_dy] =
-        wall_offsets[(scenario.dig_index + 3) % wall_offsets.size()];
+        wall_offsets[static_cast<decltype(wall_offsets)::size_type>(
+            (scenario.dig_index + 3) %
+            static_cast<ulong>(wall_offsets.size()))];
     std::pair<long, long> control_wall_tile{player.x + control_dx,
                                             player.y + control_dy};
     tracked_tiles.push_back(control_wall_tile);
@@ -312,7 +316,7 @@ std::vector<E2eCase> build_save_restore_cases() {
 
     const auto scenarios = build_scenarios();
 
-    for(size_t i = 0; i < scenarios.size(); ++i) {
+    for(ulong i = 0; i < static_cast<ulong>(scenarios.size()); ++i) {
         const auto scenario = scenarios[i];
         const std::string name =
             "save_restore_startup_" + std::to_string(i + 1);
@@ -333,7 +337,7 @@ std::vector<E2eCase> build_save_restore_cases() {
         });
     }
 
-    for(size_t i = 0; i < scenarios.size(); ++i) {
+    for(ulong i = 0; i < static_cast<ulong>(scenarios.size()); ++i) {
         const auto scenario = scenarios[i];
         const std::string name =
             "save_restore_reload_" + std::to_string(i + 1);

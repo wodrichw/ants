@@ -2,7 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
-using ulong = unsigned long;
+#include "app/globals.hpp"
+#include "utils/types.hpp"
 
 enum MouseEventType {
     LEFT_MOUSE_EVENT,
@@ -102,37 +103,46 @@ struct CharKeyboardEvent {
 namespace std {
     template <>
     struct hash<MouseEvent> {
-        std::size_t operator()(MouseEvent const& e) const noexcept {
-            return static_cast<std::size_t>(e.type);
+        auto operator()(MouseEvent const& e) const noexcept
+            -> decltype(std::hash<int>()(0)) {
+            return static_cast<decltype(std::hash<int>()(0))>(
+                std::hash<MouseEventType>{}(e.type));
         }
     };
 
     template <>
     struct hash<KeyboardEvent> {
-        std::size_t operator()(KeyboardEvent const& e) const noexcept {
-            return static_cast<std::size_t>(e.type);
+        auto operator()(KeyboardEvent const& e) const noexcept
+            -> decltype(std::hash<int>()(0)) {
+            return static_cast<decltype(std::hash<int>()(0))>(
+                std::hash<KeyboardEventType>{}(e.type));
         }
     };
 
     template <>
     struct hash<CharKeyboardEvent> {
-        std::size_t operator()(CharKeyboardEvent const& e) const noexcept {
-            return static_cast<std::size_t>(e.type);
+        auto operator()(CharKeyboardEvent const& e) const noexcept
+            -> decltype(std::hash<int>()(0)) {
+            return static_cast<decltype(std::hash<int>()(0))>(
+                std::hash<CharKeyboardEventType>{}(e.type));
         }
     };
 
     template <>
     struct hash<KeyboardChordEventType> {
-        std::size_t operator()(KeyboardChordEventType const& e) const noexcept {
+        auto operator()(KeyboardChordEventType const& e) const noexcept
+            -> decltype(std::hash<int>()(0)) {
             ulong constexpr HASH_MULT = 196613UL;
-            return static_cast<std::size_t>(e.first) * HASH_MULT +
-                   static_cast<std::size_t>(e.second);
+            return static_cast<decltype(std::hash<int>()(0))>(e.first) *
+                       HASH_MULT +
+                   static_cast<decltype(std::hash<int>()(0))>(e.second);
         }
     };
 
     template <>
     struct hash<KeyboardChordEvent> {
-        std::size_t operator()(KeyboardChordEvent const& e) const noexcept {
+        auto operator()(KeyboardChordEvent const& e) const noexcept
+            -> decltype(std::hash<int>()(0)) {
             std::hash<KeyboardChordEventType> hash;
             return hash(e.chord);
         }

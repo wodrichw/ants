@@ -75,9 +75,9 @@ FileMapBuilder::FileMapBuilder(const std::string &filename) : section_data({}) {
     load_file(filename);
 }
 
-void FileMapBuilder::operator()(MapSectionData &section_data) const {
+void FileMapBuilder::operator()(MapSectionData &out_section_data) const {
     SPDLOG_DEBUG("Copying section_data from FileMapBuilder to section_data");
-    section_data = this->section_data;
+    out_section_data = this->section_data;
 }
 
 void FileMapBuilder::load_file(const std::string &filename) {

@@ -269,10 +269,10 @@ void ReturnOp::operator()() {
     stack_ptr_register = base_ptr_register;
 
     // Restore the base pointer
-    base_ptr_register = ram[--stack_ptr_register];
+    base_ptr_register = static_cast<ushort>(ram[--stack_ptr_register]);
 
     // Get the previous instruction address
-    instr_ptr_register = ram[--stack_ptr_register];
+    instr_ptr_register = static_cast<ushort>(ram[--stack_ptr_register]);
 }
 
 // CHECK MAP /////////////////////////////////////////
@@ -294,7 +294,8 @@ void CheckOp::operator()() {
     // 1 0 | 2
     // 1 1 | 3
 
-    uchar idx = (dir_flag1 << 1) | dir_flag2;
+    uchar idx = static_cast<uchar>((static_cast<uchar>(dir_flag1) << 1) |
+                                   static_cast<uchar>(dir_flag2));
     bool is_empty = (is_space_empty_flags >> idx) & 1;
     instr_failed_flag = !is_empty;
     SPDLOG_TRACE("Checking direction: {} -> {}", "RULD"[idx],
@@ -324,7 +325,7 @@ void ScentOffOp::operator()() {
 SetScentPriorityOp::SetScentPriorityOp(DualRegisters& cpu, uchar scent_idx,
                                        uchar priority)
     : priorities(cpu.scent_behaviors.priorities),
-      clear_mask(~(0xFFUL << (scent_idx * 8))),
+    clear_mask(~(static_cast<ulong>(0xFF) << (scent_idx * 8))),
       priority(static_cast<ulong>(priority) << (scent_idx * 8)) {}
 
 void SetScentPriorityOp::operator()() {

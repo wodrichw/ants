@@ -6,9 +6,8 @@
 #include "entity/scents.hpp"
 #include "proto/hardware.pb.h"
 #include "utils/serializer.hpp"
+#include "utils/types.hpp"
 
-using uchar = unsigned char;
-using ushort = unsigned short;
 
 struct DualRegisters {
     cpu_word_size registers[2] = {0, 0};
@@ -47,8 +46,8 @@ struct DualRegisters {
     DualRegisters();
     DualRegisters(const ant_proto::DualRegisters& msg);
 
-    cpu_word_size& operator[](size_t idx);
-    cpu_word_size const& operator[](size_t idx) const;
+    cpu_word_size& operator[](ulong idx);
+    cpu_word_size const& operator[](ulong idx) const;
 
     ant_proto::DualRegisters get_proto() const;
 };

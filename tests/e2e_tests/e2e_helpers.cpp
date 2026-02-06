@@ -116,15 +116,15 @@ void write_replay_with_truncated_frame(const std::string& path,
     packer << header;
     std::ofstream out(path, std::ios::binary | std::ios::app);
     out.write(reinterpret_cast<const char*>(&size), sizeof(int));
-    std::string data(static_cast<size_t>(bytes_written), '\0');
+    std::string data(static_cast<std::string::size_type>(bytes_written), '\0');
     out.write(data.data(), static_cast<std::streamsize>(data.size()));
 }
 
-ReplayRunResult run_replay(const std::string& path, size_t max_frames) {
+ReplayRunResult run_replay(const std::string& path, ulong max_frames) {
     ProjectArguments config("", "", "", path, false, false, false);
     Engine engine(config);
 
-    for(size_t i = 0; i < max_frames; ++i) {
+    for(ulong i = 0; i < max_frames; ++i) {
         if(engine.replay_has_error()) break;
         if(engine.replay_done()) break;
         engine.update();
@@ -146,7 +146,7 @@ std::vector<std::pair<long, long>> collect_offsets(Map& map,
                                                    long x,
                                                    long y,
                                                    bool want_wall,
-                                                   size_t count) {
+                                                   ulong count) {
     std::vector<std::pair<long, long>> offsets;
     const long max_radius = std::max(globals::COLS, globals::ROWS) + 10;
     for(long radius = 1; radius <= max_radius; ++radius) {
@@ -255,7 +255,7 @@ void assert_world_state(EngineState& state,
 
     ASSERT_EQ(workers.size(), expected.workers.size());
     EXPECT_EQ(workers.size(), expected.worker_count);
-    for(size_t i = 0; i < workers.size(); ++i) {
+    for(ulong i = 0; i < static_cast<ulong>(workers.size()); ++i) {
         auto* worker = workers[i];
         const auto& cpu = worker->cpu;
         const auto& snapshot = expected.workers[i];

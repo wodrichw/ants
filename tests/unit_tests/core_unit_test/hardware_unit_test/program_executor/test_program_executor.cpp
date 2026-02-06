@@ -50,10 +50,10 @@ protected:
         program_executor.reset();
         job_pool.reset();
 
+        SPDLOG_DEBUG("ProgramExecutor test cleanup complete");
+
         // Handle log cleanup based on test result
         handleLogCleanup();
-
-        SPDLOG_DEBUG("ProgramExecutor test cleanup complete");
     }
 
     void setupTestLogging() {
@@ -73,18 +73,25 @@ protected:
 
     void handleLogCleanup() {
         // Check if we should keep logs based on environment variable
-        bool keep_logs = (std::getenv("ANTS_TEST_KEEP_LOGS") != nullptr);
+        char* keep_logs_env = nullptr;
+        size_t keep_logs_len = 0;
+        bool keep_logs = (_dupenv_s(&keep_logs_env, &keep_logs_len,
+                                    "ANTS_TEST_KEEP_LOGS") == 0 &&
+                          keep_logs_env != nullptr);
+        if(keep_logs_env) {
+            free(keep_logs_env);
+        }
         bool test_passed = !::testing::Test::HasFailure();
+
+        // Ensure log file is flushed and closed before file operations.
+        spdlog::shutdown();
 
         // Always create run.log for transcript
         std::filesystem::copy_file(log_filename, "run.log",
             std::filesystem::copy_options::overwrite_existing);
 
         if (!keep_logs && test_passed) {
-            SPDLOG_TRACE("Test passed, cleaning up log files");
             std::filesystem::remove(log_filename);
-        } else {
-            SPDLOG_INFO("Retaining log files - keep_logs: {}, test_passed: {}", keep_logs, test_passed);
         }
     }
 

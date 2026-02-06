@@ -3,9 +3,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "utils/types.hpp"
 #include "spdlog/spdlog.h"
-
-using ulong = unsigned long;
 
 ulong get_scent(ulong const& scents, ulong bit_idx) {
     return (scents >> bit_idx) & 0xFF;
@@ -69,7 +68,7 @@ long select_direction(ulong scents[4], ulong weights, uchar is_empty) {
         cumulative_probability += probabilities[dir];
         if(random_value <= cumulative_probability) {
             SPDLOG_INFO("Selected: {}", dir);
-            return dir;
+            return static_cast<long>(dir);
         }
     }
 

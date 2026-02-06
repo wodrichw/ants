@@ -39,6 +39,8 @@ KeyboardEventType get_keyboard_type(SDL_Keycode event) {
     switch(event) {
         case SDLK_SLASH:
             return SLASH_KEY_EVENT;
+        case SDLK_KP_DIVIDE:
+            return SLASH_KEY_EVENT;
         case SDLK_a:
             return A_KEY_EVENT;
         case SDLK_b:
@@ -155,6 +157,7 @@ void unset_keyboard_chord_type(SDL_Keysym const& event,
 }
 
 SDL_Keycode get_keyboard_key(SDL_Keysym const& event) {
+    if(event.sym == SDLK_KP_DIVIDE) return SDLK_SLASH;
     if(!(event.mod & (KMOD_RSHIFT | KMOD_LSHIFT))) return event.sym;
     if(event.sym == SDLK_3) return SDLK_HASH;
     if(event.sym == SDLK_SEMICOLON) return SDLK_COLON;
@@ -163,7 +166,8 @@ SDL_Keycode get_keyboard_key(SDL_Keysym const& event) {
 
 void set_char_keyboard_type(SDL_Keysym const& event,
                             CharKeyboardEvent& char_keyboard_event) {
-    char_keyboard_event.key = get_keyboard_key(event);
+    char_keyboard_event.key =
+        static_cast<char>(get_keyboard_key(event));
     SPDLOG_DEBUG("Getting char keyboard event: key={}, mod={}",
                  char_keyboard_event.key, event.mod);
 }

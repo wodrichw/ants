@@ -32,6 +32,19 @@ For a Debug build with maximum debuggability and JSON logging of build/test issu
 
 This writes a timestamped JSON Lines log to `.github/logs` and continues through all steps, logging any errors.
 
+## CMake presets (Windows Ninja + MSVC)
+From a Visual Studio Developer Command Prompt (x64 host/target):
+```
+cmake --preset windows-ninja-msvc
+cmake --build --preset windows-ninja-msvc
+```
+
+Debug + trace preset:
+```
+cmake --preset windows-ninja-msvc-debug-trace
+cmake --build --preset windows-ninja-msvc-debug-trace
+```
+
 ## E2E tests
 - Test sources:
   - [tests/e2e_tests/replay_e2e_tests.cpp](tests/e2e_tests/replay_e2e_tests.cpp)

@@ -18,9 +18,7 @@ MapManager::MapManager(const ant_proto::MapManager& msg, MapWorld& map_world)
     : is_walls_enabled(msg.is_walls_enabled()),
       map_section_width(msg.map_section_width()),
       map_section_height(msg.map_section_height()),
-      map_world(map_world) {
-    map_world.regions.build_section(0, 0, map_world.current_level());
-}
+            map_world(map_world) {}
 
 bool MapManager::update_current_level(const EntityData& d) {
     Map& cur_map = map_world.current_level().map;

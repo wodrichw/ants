@@ -27,12 +27,14 @@ void MoveCommandParser::operator()(CommandConfig const& config,
 
     std::string direction;
     args.code_stream >> direction;
-    if(!args.code_stream) {
-        args.status.error(
-            "Invalid direction keyword - acceptable directions are: UP, "
-            "LEFT, DOWN and RIGHT.");
+    if(!args.code_stream || direction.empty()) {
+        args.code.push_back(instruction << 3);
+        TokenParser::terminate(args.code_stream, args.status,
+                               config.command_string, "expecting no args");
+        SPDLOG_TRACE("{} command parsed", config.command_string);
         return;
     }
+
     bool dir_flag1 = false;
     bool dir_flag2 = false;
 

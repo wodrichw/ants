@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utils/types.hpp"
 #include "map/map.hpp"
 
 using schar = signed char;

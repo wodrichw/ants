@@ -4,11 +4,10 @@
 
 #include "app/globals.hpp"
 #include "entity/scents.hpp"
+#include "utils/types.hpp"
 
 using uchar = unsigned char;
 using schar = signed char;
-using ushort = unsigned short;
-using ulong = unsigned long;
 
 struct DualRegisters;
 
@@ -165,7 +164,7 @@ struct CheckOp {
 struct ScentOnOp {
     ScentBehaviors& scent_behaviors;
     ulong& delta_scents;
-    ulong scent_idx;
+    uchar scent_idx;
     ScentOnOp(DualRegisters&, uchar);
     void operator()();
 };

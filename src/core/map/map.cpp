@@ -1,10 +1,13 @@
 #include "map/map.hpp"
 
+#include <algorithm>
+#include <cstdint>
+#include <vector>
+
 #include "app/globals.hpp"
 #include "spdlog/spdlog.h"
 #include "utils/math.hpp"
 
-using ulong = unsigned long;
 
 Chunk::Chunk(long x, long y, bool update_parity)
     : x(x),
@@ -13,13 +16,17 @@ Chunk::Chunk(long x, long y, bool update_parity)
       tiles(globals::CHUNK_AREA, Tile()) {}
 
 Chunk::Chunk(const ant_proto::Chunk& msg)
-    : x(msg.x()), y(msg.y()), update_parity(msg.update_parity()), tiles() {
+        : x(static_cast<long>(msg.x())),
+            y(static_cast<long>(msg.y())),
+            update_parity(msg.update_parity()),
+            tiles() {
     tiles.reserve(globals::CHUNK_AREA);
-    ulong is_explored = msg.is_explored(), in_fov = msg.in_fov(),
-          is_wall = msg.is_wall();
+    ulong is_explored = static_cast<ulong>(msg.is_explored());
+    ulong in_fov = static_cast<ulong>(msg.in_fov());
+    ulong is_wall = static_cast<ulong>(msg.is_wall());
     for(ulong i = 0; i < globals::CHUNK_AREA; ++i) {
-        tiles.emplace_back((is_explored >> i) & 1UL, (in_fov >> i) & 1UL,
-                           (is_wall >> i) & 1UL);
+        tiles.emplace_back((is_explored >> i) & 1ULL, (in_fov >> i) & 1ULL,
+                           (is_wall >> i) & 1ULL);
     }
 }
 
@@ -40,18 +47,18 @@ ant_proto::Chunk Chunk::get_proto() {
 
     ulong is_explored = 0, in_fov = 0, is_wall = 0;
     for(ulong i = 0; i < globals::CHUNK_AREA; ++i) {
-        Tile const& tile = (*this)[i];
-        is_explored |= ((tile.is_explored & 1UL) << i);
-        in_fov |= ((tile.in_fov & 1UL) << i);
-        is_wall |= ((tile.is_wall & 1UL) << i);
+        Tile const& tile = (*this)[static_cast<long>(i)];
+        is_explored |= ((static_cast<ulong>(tile.is_explored) & 1ULL) << i);
+        in_fov |= ((static_cast<ulong>(tile.in_fov) & 1ULL) << i);
+        is_wall |= ((static_cast<ulong>(tile.is_wall) & 1ULL) << i);
     }
     // SPDLOG_TRACE("Packing chunk - x: {} y: {} update: {} explored: {:x} fov:
     // {:x} walls: {:x}", obj.x, obj.y, obj.update_parity, is_explored, in_fov,
     // is_wall);
 
-    msg.set_is_explored(is_explored);
-    msg.set_in_fov(in_fov);
-    msg.set_is_wall(is_wall);
+    msg.set_is_explored(static_cast<int64_t>(is_explored));
+    msg.set_in_fov(static_cast<int64_t>(in_fov));
+    msg.set_is_wall(static_cast<int64_t>(is_wall));
 
     return msg;
 }
@@ -119,10 +126,18 @@ std::vector<ChunkMarker> Chunks::get_chunk_markers(const Rect& rect) const {
 
 ant_proto::Chunks Chunks::get_proto() const {
     ant_proto::Chunks msg;
+    std::vector<ulong> keys;
+    keys.reserve(chunks.size());
     for(const auto& chunk : chunks) {
+        keys.push_back(chunk.first);
+    }
+    std::sort(keys.begin(), keys.end());
+    for(const auto key : keys) {
+        auto it = chunks.find(key);
+        if(it == chunks.end()) continue;
         ant_proto::ChunkKeyVal kv_msg;
-        kv_msg.set_key(chunk.first);
-        *kv_msg.mutable_val() = chunk.second->get_proto();
+        kv_msg.set_key(key);
+        *kv_msg.mutable_val() = it->second->get_proto();
         *msg.add_chunk_key_vals() = kv_msg;
     }
     return msg;
@@ -138,6 +153,7 @@ Map::Map(Rect const& border, bool is_walls_enabled,
       is_walls_enabled(is_walls_enabled) {
     SPDLOG_INFO("Creating map with border: ({}, {}) - {}x{}", border.x1,
                 border.y1, border.w, border.h);
+        (void)border;
 }
 
 Map::Map(const ant_proto::Map& msg, bool is_walls_enabled,
@@ -336,6 +352,7 @@ void Map::update_chunks(Rect const& rect) {
                  rect.x2, rect.y2);
     chunk_update_parity = !chunk_update_parity;
     SPDLOG_TRACE("Finished updating chunks");
+    (void)rect;
 }
 
 void Map::reset_fov() {

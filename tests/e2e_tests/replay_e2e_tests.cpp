@@ -21,10 +21,11 @@ std::vector<E2eCase> build_replay_cases() {
     // Area 1: Replay version mismatch (5 cases)
     {
         const std::vector<uint32_t> versions = {0, 2, 7, 99, 1234};
-        for(size_t i = 0; i < versions.size(); ++i) {
+        for(ulong i = 0; i < static_cast<ulong>(versions.size()); ++i) {
             const std::string name =
                 "replay_version_mismatch_" + std::to_string(i + 1);
-            const uint32_t version = versions[i];
+            const uint32_t version =
+                versions[static_cast<decltype(versions)::size_type>(i)];
             add_case(name, [name, version]() {
                 const auto path = e2e::make_replay_path(name);
                 e2e::write_replay(path, e2e::make_header(version), {});
@@ -40,10 +41,11 @@ std::vector<E2eCase> build_replay_cases() {
     {
         const std::vector<std::vector<uint64_t>> sequences = {
             {1}, {2}, {5}, {0, 2}, {0, 1, 3}};
-        for(size_t i = 0; i < sequences.size(); ++i) {
+        for(ulong i = 0; i < static_cast<ulong>(sequences.size()); ++i) {
             const std::string name =
                 "replay_frame_index_mismatch_" + std::to_string(i + 1);
-            const auto seq = sequences[i];
+            const auto seq =
+                sequences[static_cast<decltype(sequences)::size_type>(i)];
             add_case(name, [name, seq]() {
                 const auto path = e2e::make_replay_path(name);
                 std::vector<ant_proto::ReplayFrame> frames;
@@ -171,15 +173,16 @@ std::vector<E2eCase> build_replay_cases() {
 
     // Area 10: Large mixed event frames (5 cases)
     {
-        const std::vector<size_t> counts = {1, 10, 25, 50, 100};
-        for(size_t i = 0; i < counts.size(); ++i) {
+        const std::vector<ulong> counts = {1, 10, 25, 50, 100};
+        for(ulong i = 0; i < static_cast<ulong>(counts.size()); ++i) {
             const std::string name =
                 "replay_large_frame_" + std::to_string(i + 1);
-            const size_t count = counts[i];
+            const ulong count =
+                counts[static_cast<decltype(counts)::size_type>(i)];
             add_case(name, [name, count]() {
                 std::vector<ant_proto::ReplayEvent> events;
-                events.reserve(count);
-                for(size_t idx = 0; idx < count; ++idx) {
+                events.reserve(static_cast<decltype(events)::size_type>(count));
+                for(ulong idx = 0; idx < count; ++idx) {
                     switch(idx % 4) {
                         case 0:
                             events.push_back(e2e::make_mouse_event(

@@ -14,3 +14,5 @@ diagrams
 tmp/
 .DS_Store
 node_modules
+scripts/ants_debug.gdb
+.github/issues/2026-02-03-test-failures.md

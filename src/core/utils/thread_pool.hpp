@@ -12,9 +12,8 @@
 #include <thread>
 
 #include "app/globals.hpp"
+#include "utils/types.hpp"
 #include "spdlog/spdlog.h"
-
-using ulong = unsigned long;
 
 template <class ThreadTask>
 class ThreadWork {
@@ -115,8 +114,8 @@ class ThreadPool {
         : workers(),
           pending_jobs(),
           is_active(true),
-          pending_jobs_count(),
-          active_worker_count() {
+                    pending_jobs_count(0),
+                    active_worker_count(0) {
         for(ulong i = 0; i < number_threads; ++i) {
             workers.emplace_back(is_active, pending_jobs, pending_jobs_count,
                                  active_worker_count);

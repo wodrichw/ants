@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "utils/types.hpp"
+
 #include "replay.pb.h"
 #include "utils/serializer.hpp"
 
@@ -74,6 +76,6 @@ class ReplayPlayer {
    private:
     ant_proto::ReplayHeader header_msg = {};
     std::vector<ant_proto::ReplayFrame> frames = {};
-    size_t next_index = 0;
+    ulong next_index = 0;
     bool loaded = false;
 };

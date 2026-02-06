@@ -195,17 +195,20 @@ void EngineState::dispatch_mouse_event(const MouseEvent& mouse_event) {
 void EngineState::dispatch_key_down(SDL_Keysym const& key_sym,
                                     KeyboardEvent& keyboard_event,
                                     CharKeyboardEvent& char_keyboard_event) {
+    Mode* mode_at_dispatch = state.mode;
     set_keyboard_chord_type(key_sym, keyboard_chord_event);
     root_event_system.keyboard_chord_events.notify(keyboard_chord_event);
-    state.get_keyboard_chord_publisher().notify(keyboard_chord_event);
+    mode_at_dispatch->get_keyboard_chord_publisher().notify(
+        keyboard_chord_event);
 
-    set_keyboard_type(key_sym, keyboard_event);
+   set_keyboard_type(key_sym, keyboard_event);
     root_event_system.keyboard_events.notify(keyboard_event);
-    state.get_keyboard_publisher().notify(keyboard_event);
+    mode_at_dispatch->get_keyboard_publisher().notify(keyboard_event);
 
     set_char_keyboard_type(key_sym, char_keyboard_event);
     root_event_system.char_keyboard_events.notify(char_keyboard_event);
-    state.get_char_keyboard_publisher().notify(char_keyboard_event);
+    mode_at_dispatch->get_char_keyboard_publisher().notify(
+        char_keyboard_event);
 }
 
 void EngineState::dispatch_key_up(SDL_Keysym const& key_sym) {
@@ -260,8 +263,8 @@ void EngineState::update() {
                             return;
                         }
                         MouseEvent m;
-                        m.x = ev.mouse().x();
-                        m.y = ev.mouse().y();
+                        m.x = static_cast<long>(ev.mouse().x());
+                        m.y = static_cast<long>(ev.mouse().y());
                         m.type = get_mouse_type(static_cast<char>(
                             ev.mouse().button()));
                         dispatch_mouse_event(m);
@@ -280,7 +283,7 @@ void EngineState::update() {
                         }
                         SDL_Keysym sym = {};
                         sym.sym = ev.key().key_sym();
-                        sym.mod = static_cast<SDL_Keymod>(ev.key().key_mod());
+                        sym.mod = static_cast<Uint16>(ev.key().key_mod());
                         dispatch_key_down(sym, keyboard_event,
                                           char_keyboard_event);
                         break;
@@ -298,7 +301,7 @@ void EngineState::update() {
                         }
                         SDL_Keysym sym = {};
                         sym.sym = ev.key().key_sym();
-                        sym.mod = static_cast<SDL_Keymod>(ev.key().key_mod());
+                        sym.mod = static_cast<Uint16>(ev.key().key_mod());
                         dispatch_key_up(sym);
                         break;
                     }

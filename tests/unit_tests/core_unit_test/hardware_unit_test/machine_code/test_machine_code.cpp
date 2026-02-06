@@ -22,7 +22,7 @@ TEST_P(MachineCodeTest, RoundTripAndSize) {
         code.labels.insert(static_cast<ushort>(i), "L" + std::to_string(i));
     }
 
-    EXPECT_EQ(code.size(), static_cast<size_t>(param.code_size));
+    EXPECT_EQ(code.size(), static_cast<ulong>(param.code_size));
     EXPECT_EQ(code.is_empty(), param.code_size == 0 && param.label_count == 0);
 
     auto proto = code.get_proto();
@@ -30,8 +30,8 @@ TEST_P(MachineCodeTest, RoundTripAndSize) {
     EXPECT_EQ(proto.labels_size(), param.label_count);
 
     MachineCode restored(proto);
-    EXPECT_EQ(restored.size(), static_cast<size_t>(param.code_size));
-    EXPECT_EQ(restored.labels.size(), static_cast<size_t>(param.label_count));
+    EXPECT_EQ(restored.size(), static_cast<ulong>(param.code_size));
+    EXPECT_EQ(restored.labels.size(), static_cast<ulong>(param.label_count));
 }
 
 INSTANTIATE_TEST_SUITE_P(

@@ -4,12 +4,34 @@ set (CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 # Set the default toolchain to use a Vcpkg submodule.
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/lib/vcpkg/scripts/buildsystems/vcpkg.cmake")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 set (STD 20)
 set(CMAKE_CXX_STANDARD ${STD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(ants LANGUAGES C CXX VERSION 0.0.1)
+
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+else()
+    foreach(flag_var IN ITEMS
+        CMAKE_C_FLAGS
+        CMAKE_CXX_FLAGS
+        CMAKE_C_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_C_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        CMAKE_C_FLAGS_MINSIZEREL
+        CMAKE_CXX_FLAGS_MINSIZEREL
+    )
+        string(REPLACE "-fPIC" "" ${flag_var} "${${flag_var}}")
+        string(REPLACE "/Zi" "/Z7" ${flag_var} "${${flag_var}}")
+        set(${flag_var} "${${flag_var}}" CACHE STRING "" FORCE)
+    endforeach()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /FS" CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FS" CACHE STRING "" FORCE)
+endif()
 add_executable(ants src/main.cpp)
 set_target_properties(ants PROPERTIES CXX_STANDARD ${STD} CXX_STANDARD_REQUIRED
     ON)
@@ -51,10 +73,18 @@ add_custom_target(copy_font
 # Enforce UTF-8 encoding on MSVC.
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/FS>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/FS>")
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/MP>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/MP>")
 
 # Enable extra warnings for all samples.
 if(MSVC)
     add_compile_options("/W4")
+    add_compile_options("/utf-8")
+    add_compile_definitions(FMT_UNICODE=0)
+    # Suppress MSVC warnings from protobuf headers.
+    add_compile_options("/wd4251" "/wd4267")
 else()
     add_compile_options("-Wall" "-Wextra")
 endif()
@@ -88,17 +118,29 @@ endif()
 option(OPT "Enable optimization flags" OFF)
 if(OPT)
     message(STATUS "Enabling optimization flags")
-    add_compile_options("-O3")
+    if(MSVC)
+        add_compile_options("/O2")
+    else()
+        add_compile_options("-O3")
+    endif()
 else()
     message(STATUS "Disabling optimization flags")
-    add_compile_options("-O0")
+    if(MSVC)
+        add_compile_options("/Od")
+    else()
+        add_compile_options("-O0")
+    endif()
 endif()
 
 # Check if the user wants to enable debug flags
 option(DBG "Enable debug flags" OFF)
 if(DBG)
     message(STATUS "Enabling debug flags")
-    add_compile_options("-g")
+    if(MSVC)
+        add_compile_options("/Z7")
+    else()
+        add_compile_options("-g")
+    endif()
 endif()
 
 if (DBG_GRAPHICS)
@@ -147,6 +189,9 @@ endif()
 add_subdirectory(src)
 include_directories(${PROJECT_SOURCE_DIR}/src/core ${PROTOBUF_INCLUDE_DIRS_1})
 target_link_libraries(ants ants_src)
+if(MSVC)
+    target_compile_options(ants PRIVATE /wd4251 /wd4267)
+endif()
 if (CONAN_FILE)
     add_dependencies(ants copy_font)
 endif()

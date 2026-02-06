@@ -20,7 +20,7 @@ class Renderer {
                                  MapWindow const&) = 0;
     virtual void render_text_editor(LayoutBox const& box,
                                     TextEditor const& editor,
-                                    size_t ant_count) = 0;
+                                    ulong ant_count) = 0;
     virtual void render_help_boxes(LayoutBox const& box) = 0;
     virtual void present() = 0;
     virtual void pixel_to_tile_coordinates(int pixel_x, int pixel_y,
@@ -35,7 +35,7 @@ class NoneRenderer : public Renderer {
     void render_map(LayoutBox const&, Map&, MapWindow const&) {};
     void render_ant(LayoutBox const&, Map&, EntityData&, MapWindow const&) {};
     void render_building(LayoutBox const&, Building&, MapWindow const&) {};
-    void render_text_editor(LayoutBox const&, TextEditor const&, size_t) {};
+    void render_text_editor(LayoutBox const&, TextEditor const&, ulong) {};
     void render_help_boxes(LayoutBox const&) {};
     void present() {};
     void pixel_to_tile_coordinates(int, int, long& tile_x, long& tile_y) {
@@ -53,7 +53,7 @@ struct MapTileRenderer {
 
 struct TcodMapTileRenderer : public MapTileRenderer {
     Map& map;
-    bool is_debug_graphics;
+    bool is_debug_graphics = false;
     TcodMapTileRenderer(Map& map);
     void operator()(TCOD_ConsoleTile& tile, long x, long y);
 };
@@ -79,7 +79,7 @@ class tcodRenderer : public Renderer {
                     MapWindow const&);
     void render_building(LayoutBox const& box, Building& b, MapWindow const&);
     void render_text_editor(LayoutBox const& box, TextEditor const& editor,
-                            size_t ant_count);
+                            ulong ant_count);
     void render_help_boxes(LayoutBox const&);
     void present();
     void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,

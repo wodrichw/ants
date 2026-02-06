@@ -79,6 +79,9 @@ class EditorMode : public Mode {
         return event_system.char_keyboard_events;
     }
 
+    TextEditor& get_editor() { return editor; }
+    const TextEditor& get_editor() const { return editor; }
+
 };
 
 class PrimaryMode : public Mode {

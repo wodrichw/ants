@@ -13,7 +13,6 @@ struct Worker;
 struct Building;
 
 class MapManager {
-    Rect border;
     bool is_walls_enabled;
     ulong map_section_width;
     ulong map_section_height;

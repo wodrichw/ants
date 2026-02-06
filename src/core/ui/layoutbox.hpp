@@ -2,7 +2,8 @@
 
 #include <utility>
 
-using ulong = unsigned long;
+#include "app/globals.hpp"
+#include "utils/types.hpp"
 
 struct LayoutBox {
     enum Orientation { HORIZONTAL, VERTICAL };

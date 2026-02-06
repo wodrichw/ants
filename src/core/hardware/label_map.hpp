@@ -2,7 +2,9 @@
 
 #include <unordered_map>
 
+#include "app/globals.hpp"
 #include "proto/hardware.pb.h"
+#include "utils/types.hpp"
 
 class LabelMap {
     std::unordered_map<std::string, ushort> label_map;
@@ -18,7 +20,9 @@ class LabelMap {
     std::string const& at(ushort address) const;
     ushort at(std::string const& label) const;
     bool contains(std::string const& label) const;
-    inline size_t size() const { return label_map.size(); }
+    inline ulong size() const {
+        return static_cast<ulong>(label_map.size());
+    }
     void clear();
     void get_addresses(std::vector<ushort>& out) const;
     google::protobuf::RepeatedPtrField<ant_proto::LabelRecord> get_proto()

@@ -1,5 +1,8 @@
 #include "app/arg_parse.hpp"
 
+#include <cctype>
+#include <chrono>
+#include <filesystem>
 #include <iostream>
 
 #include "spdlog/spdlog.h"
@@ -66,10 +69,34 @@ bool ArgumentParser::getBool(const std::string& key, bool default_value) const {
 // ProjectArguments
 // ============================================================================
 
+static std::string make_temp_save_path() {
+    const auto ts = std::chrono::steady_clock::now().time_since_epoch().count();
+    const auto filename = std::string("ants_save_") + std::to_string(ts) + ".bin";
+    return (std::filesystem::temp_directory_path() / filename).string();
+}
+
+static std::string resolve_save_path(const std::string& save_path) {
+    if(save_path.empty()) {
+        return save_path;
+    }
+
+    std::string normalized = save_path;
+    for(auto& c : normalized) {
+        c = static_cast<char>(
+            std::tolower(static_cast<unsigned char>(c)));
+    }
+
+    if(normalized == "auto" || normalized == "temp") {
+        return make_temp_save_path();
+    }
+
+    return save_path;
+}
+
 ProjectArguments::ProjectArguments(int argc, char* argv[])
-    : parser(argc, argv),
-      default_map_file_path(parser.getString("map_path")),
-      save_path(parser.getString("save_path")),
+        : parser(argc, argv),
+            default_map_file_path(parser.getString("map_path")),
+            save_path(resolve_save_path(parser.getString("save_path"))),
     replay_record_path(parser.getString("record_replay")),
     replay_play_path(parser.getString("play_replay")),
       is_render(!parser.getBool("no_render", false)),
@@ -84,13 +111,13 @@ ProjectArguments::ProjectArguments(int argc, char* argv[])
 }
 
 ProjectArguments::ProjectArguments(std::string const& default_map_file_path,
-                                                                     std::string const& save_path,
-                                                                     std::string const& replay_record_path,
-                                                                     std::string const& replay_play_path,
-                                                                     bool is_render, bool is_debug_graphics,
-                                                                     bool is_walls_enabled)
+                                               std::string const& save_path,
+                                               std::string const& replay_record_path,
+                                               std::string const& replay_play_path,
+                                               bool is_render, bool is_debug_graphics,
+                                               bool is_walls_enabled)
     : default_map_file_path(default_map_file_path),
-      save_path(save_path),
+    save_path(resolve_save_path(save_path)),
             replay_record_path(replay_record_path),
             replay_play_path(replay_play_path),
       is_render(is_render),
@@ -103,7 +130,8 @@ void ProjectArguments::help() const {
     std::cout << "Usage: ants [options]\n";
     std::cout << "Options:\n";
     std::cout << "  --map_path <path>    Path to the map file\n";
-    std::cout << "  --save_path <path>   Path to the file for auto-save\n";
+    std::cout << "  --save_path <path>   Path to the file for auto-save. Use 'auto'\n";
+    std::cout << "                        or 'temp' to generate a temp file per run.\n";
     std::cout << "  --record_replay <path>  Record UI input replay to file\n";
     std::cout << "  --play_replay <path>    Replay UI inputs from file\n";
     std::cout
@@ -120,7 +148,10 @@ void ProjectArguments::help() const {
 
 void ProjectArguments::setup_logging() const {
     std::string log_level = parser.getString("log_level", "info");
-    for(auto& c : log_level) c = std::toupper((unsigned char)c);
+    for(auto& c : log_level) {
+        c = static_cast<char>(
+            std::toupper(static_cast<unsigned char>(c)));
+    }
 
     // change log pattern
     spdlog::set_pattern("%^[%l]: %v%$");

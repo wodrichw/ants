@@ -6,10 +6,8 @@
 #include "hardware/op_def.hpp"
 #include "hardware/program_executor.hpp"
 #include "spdlog/spdlog.h"
+#include "utils/types.hpp"
 
-using uchar = unsigned char;
-using schar = signed char;
-using ushort = unsigned short;
 
 template <typename Operation, unsigned short TickCount = 0>
 struct NoArgCommandCompiler {

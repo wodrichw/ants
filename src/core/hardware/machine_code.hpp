@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "app/globals.hpp"
+#include "utils/types.hpp"
 #include "hardware.pb.h"
 #include "hardware/label_map.hpp"
 
@@ -16,6 +18,6 @@ struct MachineCode {
 
     void clear();
     bool is_empty() const;
-    size_t size() const;
+    ulong size() const;
     ant_proto::MachineCode get_proto();
 };

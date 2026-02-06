@@ -7,9 +7,10 @@
 #include "app/globals.hpp"
 #include "spdlog/spdlog.h"
 #include "ui/debug_graphics.hpp"
+#include "utils/types.hpp"
 
 struct Box {
-    ulong x, y, w, h;
+    long x, y, w, h;
     std::vector<std::string> &asciiGrid;
     Box(std::vector<std::string> &asciiGrid, long x, long y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {
@@ -32,20 +33,20 @@ struct Box {
         populate_char(0, h - 1, '+');
         populate_char(w - 1, 0, '+');
         populate_char(w - 1, h - 1, '+');
-        for(ulong i = 1; i < h - 1; ++i) {
+        for(long i = 1; i < h - 1; ++i) {
             populate_char(0, i, '|');
             populate_char(w - 1, i, '|');
         }
-        for(ulong i = 1; i < w - 1; ++i) {
+        for(long i = 1; i < w - 1; ++i) {
             populate_char(i, 0, '-');
             populate_char(i, h - 1, '-');
         }
 
-        for(ushort i = 1; i < h - 1; ++i) {
-            ushort text_line_idx = offset_y + i - 1;
+        for(long i = 1; i < h - 1; ++i) {
+            auto text_line_idx = static_cast<size_t>(offset_y + i - 1);
             bool is_line_filled = text_line_idx < text.size();
-            for(ushort j = 1; j < w - 1; ++j) {
-                ushort char_idx = offset_x + j - 1;
+            for(long j = 1; j < w - 1; ++j) {
+                auto char_idx = static_cast<size_t>(offset_x + j - 1);
                 populate_char(
                     j, i,
                     is_line_filled && char_idx < text[text_line_idx].size()
@@ -223,7 +224,7 @@ void tcodRenderer::render_building(LayoutBox const &box, Building &b,
 
 void tcodRenderer::render_text_editor(LayoutBox const &box,
                                       TextEditor const &editor,
-                                      size_t ant_count) {
+                                      ulong ant_count) {
     // SPDLOG_TRACE("Rendering text editor");
     std::vector<std::string> asciiGrid(globals::TEXTBOXHEIGHT + 2);
     for(int i = 0; i < globals::TEXTBOXHEIGHT + 2; ++i) {
@@ -247,7 +248,8 @@ void tcodRenderer::render_text_editor(LayoutBox const &box,
     accBox.populate({"ACC:0   "});
     bacBox.populate({"BAC:1   "});
 
-    int numAntsSpaces = 4 - std::to_string(ant_count).length();
+    int numAntsSpaces =
+        4 - static_cast<int>(std::to_string(ant_count).length());
     std::ostringstream numAntsStream;
     numAntsStream << "ANT:" << ant_count << std::string(numAntsSpaces, ' ');
     antBox.populate({numAntsStream.str()});

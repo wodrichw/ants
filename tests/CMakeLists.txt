@@ -11,7 +11,15 @@ find_package(absl CONFIG REQUIRED)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(${CMAKE_BINARY_DIR}/vcpkg_installed/x64-linux/include)
+if(DEFINED VCPKG_TARGET_TRIPLET)
+    include_directories(${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/include)
+else()
+    include_directories(${CMAKE_BINARY_DIR}/vcpkg_installed/x64-linux/include)
+endif()
+
+if(WIN32)
+    add_library(pthread INTERFACE)
+endif()
 
 # Create test directories
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/unit_tests/core_unit_test)
@@ -61,6 +69,12 @@ list(APPEND TEST_TARGETS test_py_wrapper)
 option(E2E_TESTS "Compile end-to-end tests" OFF)
 if (E2E_TESTS)
     add_subdirectory(e2e_tests)
+endif()
+
+if(MSVC)
+    foreach(test_target IN LISTS TEST_TARGETS)
+        target_compile_options(${test_target} PRIVATE /wd4251 /wd4267)
+    endforeach()
 endif()
 
 # Create a target to run all tests

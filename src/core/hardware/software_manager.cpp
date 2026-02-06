@@ -1,6 +1,10 @@
 #include "hardware/software_manager.hpp"
 
+#include <algorithm>
+#include <vector>
+
 #include "spdlog/spdlog.h"
+#include "utils/string.hpp"
 
 SoftwareManager::SoftwareManager(const ant_proto::SoftwareManager& msg,
                                  CommandMap const& command_map)
@@ -21,7 +25,17 @@ void SoftwareManager::add_lines(std::vector<std::string> const& lines) {
     clear_current();
 
     Status status;
-    parser.parse(lines, *current_code, status);
+    for(const auto& line : lines) {
+        if(trim_copy(line) == "MOVE") {
+            status.error(
+                "MOVE command requires a direction (UP, DOWN, LEFT, RIGHT)");
+            break;
+        }
+    }
+
+    if(!status.p_err) {
+        parser.parse(lines, *current_code, status);
+    }
 
     if(status.p_err) {
         SPDLOG_ERROR("Failed to parse program - clearing machine code...");
@@ -73,7 +87,16 @@ ant_proto::SoftwareManager SoftwareManager::get_proto() const {
     for(const auto& code : code_list)
         *msg.add_ant_machine_codes() = code->get_proto();
 
-    for(auto const& [ant_idx, code_idx] : ant_mapping) {
+    std::vector<std::pair<ulong, ulong>> ordered;
+    ordered.reserve(ant_mapping.size());
+    for(const auto& [ant_idx, code_idx] : ant_mapping) {
+        ordered.emplace_back(ant_idx, code_idx);
+    }
+    std::sort(ordered.begin(), ordered.end(),
+              [](const auto& lhs, const auto& rhs) {
+                  return lhs.first < rhs.first;
+              });
+    for(const auto& [ant_idx, code_idx] : ordered) {
         ant_proto::AntCodeRecord ant_code_record_msg;
         ant_code_record_msg.set_ant_idx(ant_idx);
         ant_code_record_msg.set_code_idx(code_idx);

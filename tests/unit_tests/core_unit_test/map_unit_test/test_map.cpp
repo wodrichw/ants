@@ -6,7 +6,7 @@
 
 TEST(MapChunkTest, ChunkConstructorCreatesTiles) {
     Chunk chunk(0, 0, true);
-    EXPECT_EQ(chunk.tiles.size(), static_cast<size_t>(globals::CHUNK_AREA));
+    EXPECT_EQ(chunk.tiles.size(), static_cast<ulong>(globals::CHUNK_AREA));
 }
 
 TEST(MapChunkTest, ChunkProtoRoundTripPreservesWalls) {

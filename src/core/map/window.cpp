@@ -2,9 +2,8 @@
 
 #include <libtcod.hpp>
 
+#include "app/globals.hpp"
 #include "spdlog/spdlog.h"
-
-using ulong = unsigned long;
 
 MapWindow::MapWindow(Rect const& border)
     : border(border),

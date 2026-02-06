@@ -12,6 +12,9 @@ TextEditor::TextEditor(SoftwareManager& software_manager)
 void TextEditor::open() {
     SPDLOG_INFO("Opening the editor");
     software_manager.get_lines(lines);
+    if(lines.empty()) {
+        lines.push_back("");
+    }
     go_to_text_y();
     SPDLOG_TRACE("Successfully opened the editor");
 }
@@ -37,8 +40,8 @@ void TextEditor::go_to_text_x() {
 }
 
 void TextEditor::go_to_text_y() {
-    if(cursor_y >= lines.size()) {
-        cursor_y = lines.size() - 1;
+    if(!lines.empty() && cursor_y >= lines.size()) {
+        cursor_y = static_cast<ushort>(lines.size() - 1);
         pan_to_cursor_y();
     }
     go_to_text_x();
@@ -64,12 +67,19 @@ void TextEditor::reset() {
     SPDLOG_DEBUG("Clearing the text editor lines");
     lines.clear();
     lines.push_back("");
+    cursor_x = 0;
+    cursor_y = 0;
+    pan_x = 0;
+    pan_y = 0;
 }
 
-ushort TextEditor::line_length() const { return lines.at(cursor_y).size(); }
+ushort TextEditor::line_length() const {
+    if(lines.empty() || cursor_y >= lines.size()) return 0;
+    return static_cast<ushort>(lines.at(cursor_y).size());
+}
 
 void TextEditor::pan_to_cursor_x() {
-    ushort x_pos = std::max(0, cursor_x - 2);
+    ushort x_pos = cursor_x > 2 ? static_cast<ushort>(cursor_x - 2) : 0;
     if(x_pos < pan_x) {
         SPDLOG_TRACE("Panning to the left - pan x: {} -> {}", pan_x, cursor_x);
         pan_x = x_pos;
@@ -104,7 +114,8 @@ bool TextEditor::on_top_edge() const { return cursor_y == 0; }
 bool TextEditor::on_right_edge() const { return cursor_x == line_length(); }
 
 bool TextEditor::on_bottom_edge() const {
-    return cursor_y == (lines.size() - 1);
+    return !lines.empty() &&
+           cursor_y == static_cast<ushort>(lines.size() - 1);
 }
 
 void TextEditor::move_left() {
@@ -132,7 +143,17 @@ void TextEditor::move_down() {
 }
 
 void TextEditor::insert(char ch) {
+    if(lines.empty()) {
+        lines.push_back("");
+        cursor_y = 0;
+    }
+    if(cursor_y >= lines.size()) {
+        cursor_y = static_cast<ushort>(lines.size() - 1);
+    }
     std::string& line = lines[cursor_y];
+    if(cursor_x > line.size()) {
+        cursor_x = static_cast<ushort>(line.size());
+    }
     line.insert(line.begin() + cursor_x, ch);
     move_right();
 }
