@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 3,
   "configurePresets": [
     {
       "name": "windows-ninja-msvc",
@@ -39,6 +39,19 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "LOG": "TRACE"
       }
+    },
+    {
+      "name": "ubuntu-debug-trace",
+      "displayName": "Ubuntu Debug + Trace",
+      "description": "Ubuntu with Debug build type, TRACE logging, unit tests, and e2e tests.",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build_tests_ubuntu_debug_trace",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "LOG": "TRACE",
+        "UNIT_TEST": "ON",
+        "E2E_TESTS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -50,6 +63,11 @@
     {
       "name": "windows-ninja-msvc-debug-trace",
       "configurePreset": "windows-ninja-msvc-debug-trace",
+      "jobs": 0
+    },
+    {
+      "name": "ubuntu-debug-trace",
+      "configurePreset": "ubuntu-debug-trace",
       "jobs": 0
     }
   ]

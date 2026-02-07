@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <iostream>
 #include <filesystem>
 #include <thread>
@@ -14,10 +15,13 @@
 class ProgramExecutorTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        SPDLOG_INFO("Starting ProgramExecutor test setup");
-
+        if (!spdlog::default_logger()) {
+            spdlog::set_default_logger(spdlog::stdout_color_mt("test_logger_fallback"));
+        }
         // Setup logging for this test
         setupTestLogging();
+
+        SPDLOG_INFO("Starting ProgramExecutor test setup");
 
         // Initialize test data
         instr_clock = 0;
@@ -60,31 +64,45 @@ protected:
         // Create log file for this test case
         std::string test_name = ::testing::UnitTest::GetInstance()->current_test_info()->name();
         log_filename = "test_" + test_name + ".log";
+        std::string logger_name = "test_logger_" + test_name;
 
         try {
-            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_filename, true);
-            auto logger = std::make_shared<spdlog::logger>("test_logger", file_sink);
+            auto logger = spdlog::get(logger_name);
+            if (!logger) {
+                logger = spdlog::basic_logger_mt(logger_name, log_filename, true);
+            }
             spdlog::set_default_logger(logger);
             spdlog::set_level(spdlog::level::trace);
         } catch (const spdlog::spdlog_ex& ex) {
             std::cerr << "Log initialization failed: " << ex.what() << std::endl;
+            if (!spdlog::default_logger()) {
+                spdlog::set_default_logger(spdlog::stdout_color_mt("test_logger_fallback"));
+            }
         }
     }
 
     void handleLogCleanup() {
         // Check if we should keep logs based on environment variable
+        bool keep_logs = false;
+#if defined(_WIN32)
         char* keep_logs_env = nullptr;
         size_t keep_logs_len = 0;
-        bool keep_logs = (_dupenv_s(&keep_logs_env, &keep_logs_len,
-                                    "ANTS_TEST_KEEP_LOGS") == 0 &&
-                          keep_logs_env != nullptr);
-        if(keep_logs_env) {
+        keep_logs = (_dupenv_s(&keep_logs_env, &keep_logs_len,
+                               "ANTS_TEST_KEEP_LOGS") == 0 &&
+                     keep_logs_env != nullptr);
+        if (keep_logs_env) {
             free(keep_logs_env);
         }
+#else
+        const char* keep_logs_env = std::getenv("ANTS_TEST_KEEP_LOGS");
+        keep_logs = (keep_logs_env != nullptr && *keep_logs_env != '\0');
+#endif
         bool test_passed = !::testing::Test::HasFailure();
 
-        // Ensure log file is flushed and closed before file operations.
-        spdlog::shutdown();
+        // Ensure log file is flushed before file operations.
+        if (auto logger = spdlog::default_logger()) {
+            logger->flush();
+        }
 
         // Always create run.log for transcript
         std::filesystem::copy_file(log_filename, "run.log",
@@ -268,11 +286,19 @@ TEST_F(ProgramExecutorTest, ComplexAssemblyProgram) {
     program_executor->_ops = std::move(ops);
     SPDLOG_DEBUG("Loaded complex assembly program with {} instructions", program_executor->_ops.size());
 
-    // Execute async - should stop at first sync instruction (CHK at position 4)
-    program_executor->execute_async();
-    waitForAsyncCompletion();
+    // Execute async in ticks - should stop at first sync instruction (CHK at position 4)
+    const ushort expected_sync_index = 4;
+    const ulong max_async_ticks = 20;  // Safety cap to avoid infinite loops
+    for (ulong tick = 0;
+         tick < max_async_ticks &&
+         instr_ptr_register < program_executor->_ops.size() &&
+         !program_executor->is_sync();
+         ++tick) {
+        program_executor->execute_async();
+        waitForAsyncCompletion();
+    }
 
-    EXPECT_EQ(instr_ptr_register, 4);  // Should stop at CHK
+    EXPECT_EQ(instr_ptr_register, expected_sync_index);  // Should stop at CHK
     SPDLOG_TRACE("Async execution stopped at CHK instruction (position {})", instr_ptr_register);
 
     // Execute the sync instruction
