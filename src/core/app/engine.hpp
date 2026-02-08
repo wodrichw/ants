@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/arg_parse.hpp"
+#include "app/clock_speed.hpp"
 #include "ui/replay.hpp"
 
 #include <string>
@@ -36,6 +37,8 @@ class Engine {
     void action_assign_program_to_ant(ulong ant_idx);
     void action_go_up();
     void action_go_down();
+
+    ClockSpeed get_clock_speed() const;
 
     EngineState* get_state();
     void reload_state_for_tests();

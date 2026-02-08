@@ -14,7 +14,6 @@ DEFINE_PARSER(LoadConstantParser);
 DEFINE_PARSER(TwoRegisterCommandParser);
 DEFINE_PARSER(OneRegisterCommandParser);
 DEFINE_PARSER(JumpParser);
-DEFINE_PARSER(MoveCommandParser);
 DEFINE_PARSER(TurnLeftParser);
 DEFINE_PARSER(PopParser);
 DEFINE_PARSER(PushParser);

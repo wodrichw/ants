@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "app/globals.hpp"
 #include "ui/event_system.hpp"
 #include "ui/layoutbox.hpp"
 #include "ui/text_editor.hpp"
@@ -86,6 +87,44 @@ TEST(UiLayoutBoxTest, SplitVerticalCreatesChildren) {
     auto& children = box.split(50, LayoutBox::Orientation::VERTICAL);
     EXPECT_NE(children.first, nullptr);
     EXPECT_NE(children.second, nullptr);
+}
+
+TEST(UiLayoutBoxTest, ResizeUpdatesDimensions) {
+    LayoutBox box(1, 2, 3, 4);
+    box.resize(5, 6, 7, 8);
+
+    long x1 = 0, y1 = 0;
+    box.get_abs_pos(0, 0, x1, y1);
+    EXPECT_EQ(x1, 5);
+    EXPECT_EQ(y1, 6);
+    EXPECT_EQ(box.get_width(), 7);
+    EXPECT_EQ(box.get_height(), 8);
+}
+
+TEST(UiBoxManagerTest, SidebarToggleResizesBoxes) {
+    BoxManager manager(globals::COLS, globals::ROWS);
+
+    EXPECT_FALSE(manager.is_sidebar_expanded());
+    EXPECT_EQ(manager.map_box->get_width(), static_cast<long>(globals::COLS));
+    EXPECT_EQ(manager.map_box->get_height(), static_cast<long>(globals::ROWS));
+    EXPECT_EQ(manager.sidebar_box->get_width(), 0);
+
+    manager.toggle_sidebar();
+
+    EXPECT_TRUE(manager.is_sidebar_expanded());
+    long expected_map_w =
+        (static_cast<long>(globals::COLS) * 80) / 100;
+    long expected_sidebar_w = static_cast<long>(globals::COLS) - expected_map_w;
+    EXPECT_EQ(manager.map_box->get_width(), expected_map_w);
+    EXPECT_EQ(manager.sidebar_box->get_width(), expected_sidebar_w);
+    EXPECT_EQ(manager.sidebar_box->get_height(),
+              static_cast<long>(globals::ROWS));
+
+    manager.toggle_sidebar();
+
+    EXPECT_FALSE(manager.is_sidebar_expanded());
+    EXPECT_EQ(manager.map_box->get_width(), static_cast<long>(globals::COLS));
+    EXPECT_EQ(manager.sidebar_box->get_width(), 0);
 }
 
 TEST(UiTextEditorTest, InsertAddsCharacter) {

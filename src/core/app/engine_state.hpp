@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/arg_parse.hpp"
+#include "app/clock_speed.hpp"
 #include "app/game_mode.hpp"
 #include "app/game_state.hpp"
 #include "engine.pb.h"
@@ -10,6 +11,7 @@
 #include "map/manager.hpp"
 #include "ui/event_system.hpp"
 #include "ui/replay.hpp"
+#include "ui/sidebar_menu.hpp"
 #include "ui/text_editor.hpp"
 
 #include <optional>
@@ -21,6 +23,7 @@ class ProjectArugments;
 struct KeyboardEvent;
 
 struct EngineState {
+    Renderer& renderer;
     BoxManager box_manager;
     ThreadPool<AsyncProgramJob> job_pool;
     MapWorld map_world;
@@ -34,7 +37,10 @@ struct EngineState {
     EditorMode editor_mode;
     GameState state;
 
+    SidebarMenu sidebar_menu;
+
     KeyboardChordEvent keyboard_chord_event = {};
+    ClockSpeed clock_speed = ClockSpeed::NORMAL;
     bool is_reload_game = false;
 
     ReplayRecorder replay_recorder = {};
@@ -45,6 +51,8 @@ struct EngineState {
     uint64_t replay_frame_index = 0;
     std::optional<ReplayError> replay_error = std::nullopt;
 
+    std::string save_path;
+
    public:
     EngineState(ProjectArguments&, Renderer*);
     EngineState(ProjectArguments&, Renderer*,
@@ -53,6 +61,8 @@ struct EngineState {
     ~EngineState();
     void update();
     void render();
+    void toggle_sidebar();
+    void handle_sidebar_action(SidebarMenuAction action);
 
     void configure_replay(ProjectArguments& config);
     ReplayStatus start_replay_recording(const std::string& path,

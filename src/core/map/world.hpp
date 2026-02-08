@@ -97,7 +97,7 @@ struct Region {
     Region(const Rect& perimeter);
     Region(uint32_t seed_x, uint32_t seed_y, const Rect& perimeter);
     Region(const ant_proto::Region& msg);
-    ant_proto::Region get_proto();
+    ant_proto::Region get_proto() const;
 
     // Section_Plan& section_plan(long x, long y) {
     Section_Plan* section_plan(long x, long y, long z) {

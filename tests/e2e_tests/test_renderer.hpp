@@ -63,10 +63,19 @@ class TestRenderer : public Renderer {
 
     void render_text_editor(LayoutBox const&, TextEditor const&, ulong) override {}
     void render_help_boxes(LayoutBox const&) override {}
+    void render_sidebar(LayoutBox const& box, SidebarMenu const& menu,
+                        ClockSpeed) override {
+        sidebar_rendered = true;
+        render_sidebar_tiles(box, menu);
+    }
+    void render_toggle_button(bool expanded) override {
+        toggle_button_rendered = true;
+        toggle_button_expanded = expanded;
+    }
     void present() override {}
     void pixel_to_tile_coordinates(int, int, long& tile_x, long& tile_y) override {
-        tile_x = 0;
-        tile_y = 0;
+        tile_x = pixel_tile_x;
+        tile_y = pixel_tile_y;
     }
 
     void use_default_tile_rendering() override {
@@ -97,7 +106,136 @@ class TestRenderer : public Renderer {
         return tiles[local_index(local_x, local_y)].bg;
     }
 
+    bool was_sidebar_rendered() const { return sidebar_rendered; }
+    bool was_toggle_button_rendered() const { return toggle_button_rendered; }
+    bool get_toggle_button_expanded() const { return toggle_button_expanded; }
+    bool has_sidebar_tiles() const { return has_sidebar_tiles_; }
+    long get_sidebar_width() const { return sidebar_w; }
+    long get_sidebar_height() const { return sidebar_h; }
+    tcod::ColorRGB get_sidebar_bg(long x, long y) const {
+        if(!has_sidebar_tile(x, y)) return color::black;
+        return sidebar_tiles[sidebar_index(x, y)].bg;
+    }
+    char get_sidebar_ch(long x, long y) const {
+        if(!has_sidebar_tile(x, y)) return ' ';
+        return sidebar_tiles[sidebar_index(x, y)].ch;
+    }
+    void reset_render_flags() {
+        sidebar_rendered = false;
+        toggle_button_rendered = false;
+    }
+
+    long pixel_tile_x = 0;
+    long pixel_tile_y = 0;
+
    private:
+    void render_sidebar_tiles(LayoutBox const& box, SidebarMenu const& menu) {
+        long w = box.get_width();
+        long h = box.get_height();
+        if(w <= 3 || h <= 3) {
+            has_sidebar_tiles_ = false;
+            sidebar_tiles.clear();
+            sidebar_w = 0;
+            sidebar_h = 0;
+            return;
+        }
+
+        sidebar_w = w;
+        sidebar_h = h;
+        sidebar_tiles.assign(static_cast<size_t>(w * h), TileState{});
+        has_sidebar_tiles_ = true;
+
+        std::vector<std::string> asciiGrid(static_cast<size_t>(h));
+        for(long i = 0; i < h; ++i) {
+            asciiGrid[static_cast<size_t>(i)] =
+                std::string(static_cast<size_t>(w), ' ');
+        }
+
+        std::vector<std::string> lines;
+        const auto& items = menu.items();
+        for(size_t i = 0; i < items.size(); ++i) {
+            bool is_selected = !menu.is_submenu_open() &&
+                               menu.selected_index() == i;
+            bool is_open = menu.open_submenu_index().has_value() &&
+                           menu.open_submenu_index().value() == i;
+
+            std::string label = items[i].label;
+            if(!items[i].children.empty()) {
+                label += is_open ? " v" : " >";
+            }
+
+            lines.push_back(std::string(is_selected ? "> " : "  ") + label);
+
+            if(is_open) {
+                const auto& submenu = items[i].children;
+                for(size_t j = 0; j < submenu.size(); ++j) {
+                    bool is_sub_selected = menu.submenu_selected_index() == j;
+                    std::string sub_label = submenu[j].label;
+                    lines.push_back(
+                        std::string(is_sub_selected ? "  > " : "    ") +
+                        sub_label);
+                }
+            }
+        }
+
+        populate_box(asciiGrid, 1, 1, static_cast<int>(w - 2),
+                 static_cast<int>(h - 2), lines);
+
+        for(long y = 0; y < h; ++y) {
+            for(long x = 0; x < w; ++x) {
+                TileState& tile = sidebar_tiles[sidebar_index(x, y)];
+                tile.ch = asciiGrid[static_cast<size_t>(y)]
+                                       [static_cast<size_t>(x)];
+                tile.fg = color::white;
+                tile.bg = color::dark_grey;
+            }
+        }
+    }
+
+    void populate_box(std::vector<std::string>& asciiGrid, long x, long y,
+                      int w, int h, const std::vector<std::string>& text,
+                      ushort offset_x = 0, ushort offset_y = 0) {
+        if(w <= 1 || h <= 1) return;
+        auto populate_char = [&](long x_idx, long y_idx, char ch) {
+            asciiGrid[static_cast<size_t>(y + y_idx)]
+                     [static_cast<size_t>(x + x_idx)] = ch;
+        };
+
+        populate_char(0, 0, '+');
+        populate_char(0, h - 1, '+');
+        populate_char(w - 1, 0, '+');
+        populate_char(w - 1, h - 1, '+');
+        for(long i = 1; i < h - 1; ++i) {
+            populate_char(0, i, '|');
+            populate_char(w - 1, i, '|');
+        }
+        for(long i = 1; i < w - 1; ++i) {
+            populate_char(i, 0, '-');
+            populate_char(i, h - 1, '-');
+        }
+
+        for(long i = 1; i < h - 1; ++i) {
+            auto text_line_idx = static_cast<size_t>(offset_y + i - 1);
+            bool is_line_filled = text_line_idx < text.size();
+            for(long j = 1; j < w - 1; ++j) {
+                auto char_idx = static_cast<size_t>(offset_x + j - 1);
+                populate_char(
+                    j, i,
+                    is_line_filled && char_idx < text[text_line_idx].size()
+                        ? text[text_line_idx][char_idx]
+                        : ' ');
+            }
+        }
+    }
+
+    bool has_sidebar_tile(long x, long y) const {
+        return has_sidebar_tiles_ && x >= 0 && y >= 0 && x < sidebar_w &&
+               y < sidebar_h;
+    }
+
+    size_t sidebar_index(long x, long y) const {
+        return static_cast<size_t>(y * sidebar_w + x);
+    }
     void ensure_tiles(MapWindow const& window) {
         if(!has_window || window.border.w != last_window_border.w ||
            window.border.h != last_window_border.h ||
@@ -151,4 +289,11 @@ class TestRenderer : public Renderer {
     Rect last_window_border = {};
     bool has_window = false;
     std::vector<TileState> tiles = {};
+    bool sidebar_rendered = false;
+    bool toggle_button_rendered = false;
+    bool toggle_button_expanded = false;
+    bool has_sidebar_tiles_ = false;
+    long sidebar_w = 0;
+    long sidebar_h = 0;
+    std::vector<TileState> sidebar_tiles = {};
 };

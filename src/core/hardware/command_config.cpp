@@ -61,7 +61,7 @@ CommandMap::CommandMap() {
         OneLetterCommandDeparser(), OneRegisterCommandCompiler<DecOp>()));
 
     // MOVE command
-    insert(new CommandConfig("MOVE", CommandEnum::MOVE, MoveCommandParser(),
+    insert(new CommandConfig("MOVE", CommandEnum::MOVE, NoArgCommandParser(),
                              NoArgCommandDeparser(),
                              MoveAntCompiler<MoveOp>()));
 

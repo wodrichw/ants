@@ -32,6 +32,18 @@ void MapWindow::set_center(long x, long y) {
     border.set_center(x, y);
 }
 
+void MapWindow::resize(long width, long height) {
+    if(width <= 0 || height <= 0) {
+        SPDLOG_WARN("Attempted to resize map window to {}x{}", width, height);
+        return;
+    }
+
+    SPDLOG_INFO("Resizing map window to {}x{}", width, height);
+    delete map;
+    border = Rect(border.x1, border.y1, width, height);
+    map = new TCODMap(width, height);
+}
+
 bool MapWindow::in_fov(long x, long y) const {
     long local_x, local_y;
     bool is_valid;

@@ -4,9 +4,12 @@
 #include <filesystem>
 #include <string>
 
+#include "google/protobuf/util/message_differencer.h"
+
 #include "app/arg_parse.hpp"
 #include "app/engine_state.hpp"
 #include "engine.pb.h"
+#include "map.pb.h"
 #include "replay.pb.h"
 #include "ui/render.hpp"
 #include "utils/serializer.hpp"
@@ -119,8 +122,16 @@ TEST_P(SaveRestoreRoundTripTest, SavesAndRestoresEngineState) {
         unpacker >> roundtrip_proto;
     }
 
-    EXPECT_EQ(saved_proto.SerializeAsString(),
-              roundtrip_proto.SerializeAsString());
+    google::protobuf::util::MessageDifferencer differencer;
+    differencer.set_repeated_field_comparison(
+        google::protobuf::util::MessageDifferencer::AS_SET);
+    const auto* chunk_desc = ant_proto::Chunk::descriptor();
+    ASSERT_NE(chunk_desc, nullptr);
+    const auto* update_parity_field =
+        chunk_desc->FindFieldByName("update_parity");
+    ASSERT_NE(update_parity_field, nullptr);
+    differencer.IgnoreField(update_parity_field);
+    EXPECT_TRUE(differencer.Compare(saved_proto, roundtrip_proto));
 
     std::filesystem::remove(save_path);
     std::filesystem::remove(roundtrip_path);

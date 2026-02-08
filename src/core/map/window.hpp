@@ -15,6 +15,7 @@ class MapWindow {
     MapWindow(const ant_proto::MapWindow& msg);
     ~MapWindow();
     void set_center(long x, long y);
+    void resize(long width, long height);
     bool in_fov(long x, long y) const;  // Fov = field of view
     void compute_fov(long x, long y, long radius);
 

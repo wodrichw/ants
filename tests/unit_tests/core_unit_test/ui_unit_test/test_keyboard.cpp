@@ -297,6 +297,9 @@ class UnitTestRenderer : public Renderer {
     void render_text_editor(LayoutBox const&, TextEditor const&,
                             ulong) override {}
     void render_help_boxes(LayoutBox const&) override {}
+    void render_sidebar(LayoutBox const&, SidebarMenu const&,
+                        ClockSpeed) override {}
+    void render_toggle_button(bool) override {}
     void present() override {}
     void pixel_to_tile_coordinates(int, int, long& tile_x,
                                    long& tile_y) override {

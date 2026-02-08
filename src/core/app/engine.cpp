@@ -129,6 +129,10 @@ void Engine::action_go_up() { state->action_go_up(); }
 
 void Engine::action_go_down() { state->action_go_down(); }
 
+ClockSpeed Engine::get_clock_speed() const {
+    return state->clock_speed;
+}
+
 EngineState* Engine::get_state() { return state; }
 
 void Engine::reload_state_for_tests() {

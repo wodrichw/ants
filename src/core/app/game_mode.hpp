@@ -4,6 +4,7 @@
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 
+#include <functional>
 #include <libtcod.hpp>
 #include <libtcod/console.hpp>
 
@@ -94,12 +95,14 @@ class PrimaryMode : public Mode {
     Renderer& renderer;
     bool& is_reload_game;
     const ThreadPool<AsyncProgramJob>& job_pool;
+    std::function<bool()> input_blocker;
 
    public:
     PrimaryMode(LayoutBox& box, CommandMap const& command_map,
                 SoftwareManager& software_manager,
                 EntityManager& entity_manager, MapManager& map_manager,
                 MapWorld& map_world, Renderer& renderer, bool& is_reload_game,
+                std::function<bool()> input_blocker,
                 const ThreadPool<AsyncProgramJob>& job_pool);
 
     PrimaryMode(const ant_proto::HardwareManager msg, LayoutBox& box,
@@ -107,6 +110,7 @@ class PrimaryMode : public Mode {
                 SoftwareManager& software_manager,
                 EntityManager& entity_manager, MapManager& map_manager,
                 MapWorld& map_world, Renderer& renderer, bool& is_reload_game,
+                std::function<bool()> input_blocker,
                 const ThreadPool<AsyncProgramJob>& job_pool);
 
     void initialize(SoftwareManager& software_manager);

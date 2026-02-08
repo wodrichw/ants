@@ -273,20 +273,25 @@ Region::Region(uint32_t seed_x, uint32_t seed_y, const Rect& perimeter)
       seed_y(seed_y),
       perimeter(perimeter),
       randomizer(get_seed()),
-            is_first_region(false) {
+                        is_first_region(perimeter.x1 == 0 && perimeter.y1 == 0) {
     do_blueprint_planning();
 }
 
 Region::Region(const ant_proto::Region& msg)
-    : seed_x(msg.seed_x()),
-      seed_y(msg.seed_y()),
-      perimeter(msg.perimeter()),
-      is_first_region(msg.is_first_region()) {}
+        : seed_x(msg.seed_x()),
+            seed_y(msg.seed_y()),
+            perimeter(msg.perimeter()),
+            randomizer(get_seed()),
+            is_first_region(msg.is_first_region()) {
+        do_blueprint_planning();
+}
 
-ant_proto::Region Region::get_proto() {
+ant_proto::Region Region::get_proto() const {
     ant_proto::Region msg;
     msg.set_seed_x(seed_x);
     msg.set_seed_y(seed_y);
+    *msg.mutable_perimeter() = perimeter.get_proto();
+    msg.set_is_first_region(is_first_region);
     return msg;
 }
 
@@ -323,6 +328,7 @@ MapWorld::MapWorld(const ant_proto::MapWorld& msg,
                    ThreadPool<AsyncProgramJob>& thread_pool,
                    bool is_walls_enabled)
     : levels{},
+      regions(),
       map_window(msg.map_window()),
       current_depth(msg.current_depth()),
       item_info_map(),
@@ -336,6 +342,15 @@ MapWorld::MapWorld(const ant_proto::MapWorld& msg,
                                   is_walls_enabled, cb));
         levels.back().depth = static_cast<ulong>(i);
     }
+
+    if(!msg.region_keyvals().empty()) {
+        regions.rmap.clear();
+        for(const auto& kv : msg.region_keyvals()) {
+            regions.rmap.emplace(Region_Key{static_cast<long>(kv.x()),
+                                            static_cast<long>(kv.y())},
+                                 Region(kv.val()));
+        }
+    }
 }
 
 Level& MapWorld::current_level() { return levels[current_depth]; }
@@ -347,6 +362,27 @@ ant_proto::MapWorld MapWorld::get_proto() const {
     for(const auto& level : levels) *msg.add_levels() = level.get_proto();
     msg.set_current_depth(current_depth);
     *msg.mutable_map_window() = map_window.get_proto();
+    msg.set_instr_action_clock(instr_action_clock);
+
+    std::vector<Region_Key> ordered_keys;
+    ordered_keys.reserve(regions.rmap.size());
+    for(const auto& [key, region] : regions.rmap) {
+        ordered_keys.push_back(key);
+        (void)region;
+    }
+    std::sort(ordered_keys.begin(), ordered_keys.end(),
+              [](const Region_Key& lhs, const Region_Key& rhs) {
+                  return lhs.x == rhs.x ? lhs.y < rhs.y : lhs.x < rhs.x;
+              });
+    for(const auto& key : ordered_keys) {
+        auto it = regions.rmap.find(key);
+        if(it == regions.rmap.end()) continue;
+        ant_proto::Region_KeyVal kv_msg;
+        kv_msg.set_x(key.x);
+        kv_msg.set_y(key.y);
+        *kv_msg.mutable_val() = it->second.get_proto();
+        *msg.add_region_keyvals() = kv_msg;
+    }
 
     return msg;
 }

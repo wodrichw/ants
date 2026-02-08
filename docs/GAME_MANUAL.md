@@ -26,7 +26,7 @@
 # Current Controls
 
 - NOP - no operation
-- MOVE [UP/LEFT/DOWN/RIGHT] - moves the ant one space in the respective direction.
+- MOVE - moves the ant one space forward
 - LDI [A/B] <INTEGER> - sets the A/B register to a constant.
 - CPY [A/B] [A/B] - copys the value in one register to the other.
 - ADD [A/B] [A/B] - adds the value of the second register to the first one.
@@ -38,12 +38,15 @@
 - [LABEL]: - create a label
 
 # Example Text EDITOR commands
+
+## Explore area
+
 ```
-TOP:
-LDI A 5
-LOOP:
-MOVE DOWN
-DEC A
-JNZ LOOP
-JMP TOP
+  SWN A          ; write scent A once
+  SWP A, -128    ; lowest priority for scent A
+
+loop:
+  SRT            ; turn based on scent priorities
+  MOVE           ; step forward
+  JMP loop
 ```

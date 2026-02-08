@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <spdlog/spdlog.h>
 
 #include "entity/entity_actions.hpp"
@@ -8,7 +9,10 @@
 #include "map/map.hpp"
 #include "map/world.hpp"
 #include "ui/render.hpp"
+#include "ui/sidebar_menu.hpp"
 #include "ui/subscriber.hpp"
+
+struct EngineState;
 
 class MoveHandler : public Subscriber<KeyboardEvent> {
     MapEntity& entity;
@@ -17,11 +21,12 @@ class MoveHandler : public Subscriber<KeyboardEvent> {
     const ulong& entity_depth;
     bool move_only_on_current_depth;
     long dx = {}, dy = {};
+    std::function<bool()> is_input_blocked;
 
    public:
     MoveHandler(MapEntity& entity, MapManager& map_manager, MapWorld& map_world,
                 ulong& entity_depth, bool move_only_on_current_depth, long dx,
-                long dy);
+                long dy, std::function<bool()> is_input_blocked = nullptr);
 
     void operator()(KeyboardEvent const&);
 };
@@ -92,5 +97,31 @@ class ScentMapTileRendererHandler : public Subscriber<KeyboardEvent> {
 
    public:
     ScentMapTileRendererHandler(Renderer& renderer);
+    void operator()(KeyboardEvent const& event);
+};
+
+class SidebarToggleHandler : public Subscriber<KeyboardEvent> {
+    EngineState& engine;
+
+   public:
+    SidebarToggleHandler(EngineState& engine);
+    void operator()(KeyboardEvent const&);
+};
+
+class SidebarMouseToggleHandler : public Subscriber<MouseEvent> {
+    EngineState& engine;
+    Renderer& renderer;
+
+   public:
+    SidebarMouseToggleHandler(EngineState& engine, Renderer& renderer);
+    void operator()(MouseEvent const& event);
+};
+
+class SidebarNavHandler : public Subscriber<KeyboardEvent> {
+    EngineState& engine;
+    SidebarMenu& menu;
+
+   public:
+    SidebarNavHandler(EngineState& engine, SidebarMenu& menu);
     void operator()(KeyboardEvent const& event);
 };

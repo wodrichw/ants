@@ -22,25 +22,68 @@
 #include "spdlog/spdlog.h"
 #include "ui/serializer_handler.hpp"
 #include "ui/text_editor_handler.hpp"
+#include "ui/ui_handlers.hpp"
+#include "ui/render.hpp"
 #include "utils/thread_pool.hpp"
+#include "utils/serializer.hpp"
+
+namespace {
+Start_Data ensure_start_info(MapWorld& map_world) {
+    Level& level = map_world.current_level();
+    if(level.start_info.has_value()) {
+        return level.start_info.value();
+    }
+
+    const Rect& border = map_world.map_window.border;
+    long start_x = border.center_x;
+    long start_y = border.center_y;
+
+    if(level.map.is_wall(start_x, start_y)) {
+        bool found = false;
+        for(long y = border.y1; y <= border.y2 && !found; ++y) {
+            for(long x = border.x1; x <= border.x2; ++x) {
+                if(!level.map.is_wall(x, y)) {
+                    start_x = x;
+                    start_y = y;
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if(!found) {
+            SPDLOG_WARN(
+                "No open start tile found; defaulting to center ({}, {})",
+                border.center_x, border.center_y);
+        }
+    }
+
+    level.start_info = Start_Data{start_x, start_y};
+    return level.start_info.value();
+}
+}  // namespace
 
 EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
-    : box_manager(globals::COLS, globals::ROWS),
+        : renderer(*renderer),
+            box_manager(globals::COLS, globals::ROWS),
       job_pool(8),
       map_world(Rect(0, 0, box_manager.map_box->get_width(),
                      box_manager.map_box->get_height()),
                 config.is_walls_enabled),
       map_manager(globals::COLS * 2, globals::ROWS * 2, config, map_world),
       entity_manager(map_manager, map_world,
-                     map_world.current_level().start_info->player_x,
-                     map_world.current_level().start_info->player_y, job_pool),
+                 ensure_start_info(map_world).player_x,
+                 ensure_start_info(map_world).player_y, job_pool),
       software_manager(command_map),
       primary_mode(*box_manager.map_box, command_map, software_manager,
                    entity_manager, map_manager, map_world, *renderer,
-                   is_reload_game, job_pool),
+                                     is_reload_game,
+                                     [this]() { return box_manager.is_sidebar_expanded(); },
+                                     job_pool),
       editor_mode(*renderer, *box_manager.text_editor_content_box,
                   software_manager, map_world.levels),
-      state(&primary_mode, &editor_mode) {
+            state(&primary_mode, &editor_mode),
+            sidebar_menu(),
+            save_path(config.save_path) {
     SPDLOG_INFO("Creating engine state");
     add_listeners(config);
     SPDLOG_INFO("Engine initialized without backup");
@@ -49,24 +92,28 @@ EngineState::EngineState(ProjectArguments& config, Renderer* renderer)
 
 EngineState::EngineState(ProjectArguments& config, Renderer* renderer,
                                                  const ant_proto::ReplayEnvironment* env)
-        : box_manager(globals::COLS, globals::ROWS),
+        : renderer(*renderer),
+            box_manager(globals::COLS, globals::ROWS),
             job_pool(8),
             map_world(Rect(0, 0, box_manager.map_box->get_width(),
                                          box_manager.map_box->get_height()),
-                                config.is_walls_enabled,
-                                env ? env->region_seed_x() : 0,
+                                config.is_walls_enabled, env ? env->region_seed_x() : 0,
                                 env ? env->region_seed_y() : 0),
             map_manager(globals::COLS * 2, globals::ROWS * 2, config, map_world),
             entity_manager(map_manager, map_world,
-                                         map_world.current_level().start_info->player_x,
-                                         map_world.current_level().start_info->player_y, job_pool),
+                                         ensure_start_info(map_world).player_x,
+                                         ensure_start_info(map_world).player_y, job_pool),
             software_manager(command_map),
             primary_mode(*box_manager.map_box, command_map, software_manager,
                                      entity_manager, map_manager, map_world, *renderer,
-                                     is_reload_game, job_pool),
+                                     is_reload_game,
+                                     [this]() { return box_manager.is_sidebar_expanded(); },
+                                     job_pool),
             editor_mode(*renderer, *box_manager.text_editor_content_box,
                                     software_manager, map_world.levels),
-            state(&primary_mode, &editor_mode) {
+            state(&primary_mode, &editor_mode),
+            sidebar_menu(),
+            save_path(config.save_path) {
         SPDLOG_INFO("Creating engine state (seeded)");
         add_listeners(config);
         SPDLOG_INFO("Engine initialized without backup");
@@ -74,8 +121,9 @@ EngineState::EngineState(ProjectArguments& config, Renderer* renderer,
 }
 
 EngineState::EngineState(const ant_proto::EngineState& msg,
-                         ProjectArguments& config, Renderer* renderer)
-    : box_manager(globals::COLS, globals::ROWS),
+                                                 ProjectArguments& config, Renderer* renderer)
+        : renderer(*renderer),
+            box_manager(globals::COLS, globals::ROWS),
       job_pool(8),
       map_world(msg.map_world(), job_pool, config.is_walls_enabled),
       map_manager(msg.map_manager(), map_world),
@@ -83,10 +131,14 @@ EngineState::EngineState(const ant_proto::EngineState& msg,
       software_manager(msg.software_manger(), command_map),
       primary_mode(msg.hardware_manager(), *box_manager.map_box, command_map,
                    software_manager, entity_manager, map_manager, map_world,
-                   *renderer, is_reload_game, job_pool),
+                                     *renderer, is_reload_game,
+                                     [this]() { return box_manager.is_sidebar_expanded(); },
+                                     job_pool),
       editor_mode(*renderer, *box_manager.text_editor_content_box,
                   software_manager, map_world.levels),
-      state(&primary_mode, &editor_mode) {
+            state(&primary_mode, &editor_mode),
+            sidebar_menu(),
+            save_path(config.save_path) {
     add_listeners(config);
     SPDLOG_INFO("Engine initialized with backup");
     configure_replay(config);
@@ -104,6 +156,24 @@ void EngineState::add_listeners(ProjectArguments& config) {
     root_event_system.keyboard_events.add(
         BACK_SLASH_KEY_EVENT,
         new AutoSaveTriggerHandler(*this, config.save_path));
+
+    root_event_system.keyboard_events.add(M_KEY_EVENT,
+                                          new SidebarToggleHandler(*this));
+    root_event_system.mouse_events.add(
+        LEFT_MOUSE_EVENT, new SidebarMouseToggleHandler(*this, renderer));
+
+    primary_mode.get_keyboard_publisher().add(
+        UP_KEY_EVENT, new SidebarNavHandler(*this, sidebar_menu));
+    primary_mode.get_keyboard_publisher().add(
+        DOWN_KEY_EVENT, new SidebarNavHandler(*this, sidebar_menu));
+    primary_mode.get_keyboard_publisher().add(
+        RIGHT_KEY_EVENT, new SidebarNavHandler(*this, sidebar_menu));
+    primary_mode.get_keyboard_publisher().add(
+        RETURN_KEY_EVENT, new SidebarNavHandler(*this, sidebar_menu));
+    primary_mode.get_keyboard_publisher().add(
+        LEFT_KEY_EVENT, new SidebarNavHandler(*this, sidebar_menu));
+    primary_mode.get_keyboard_publisher().add(
+        BACKSPACE_KEY_EVENT, new SidebarNavHandler(*this, sidebar_menu));
 }
 
 void EngineState::configure_replay(ProjectArguments& config) {
@@ -230,11 +300,13 @@ void EngineState::update() {
     KeyboardEvent keyboard_event;
     CharKeyboardEvent char_keyboard_event;
 
+    const bool is_paused = clock_speed == ClockSpeed::PAUSED;
+
     if(is_replay_recording) {
         replay_recorder.begin_frame(replay_frame_index);
     }
 
-    if(is_replay_playing) {
+    if(!is_paused && is_replay_playing) {
         if(replay_player.is_done()) {
             is_replay_playing = false;
             is_replay_complete = true;
@@ -365,12 +437,16 @@ void EngineState::update() {
             }
         }
     }
-    state.update();
+    if(!is_paused) {
+        state.update();
+    }
 
     if(is_replay_recording) {
         replay_recorder.end_frame();
     }
-    replay_frame_index++;
+    if(!is_paused || is_replay_recording) {
+        replay_frame_index++;
+    }
 
     // SPDLOG_TRACE("Engine state update complete");
 }
@@ -403,7 +479,58 @@ void EngineState::action_go_up() { map_manager.go_up(); }
 
 void EngineState::action_go_down() { map_manager.go_down(); }
 
-void EngineState::render() { state.render(); }
+void EngineState::render() {
+    state.render();
+    if(state.is_primary() && box_manager.is_sidebar_expanded()) {
+        renderer.render_sidebar(*box_manager.sidebar_box, sidebar_menu,
+                                clock_speed);
+    }
+    renderer.render_toggle_button(box_manager.is_sidebar_expanded());
+}
+
+void EngineState::toggle_sidebar() {
+    box_manager.toggle_sidebar();
+    const auto& player_data = entity_manager.player.get_data();
+    map_world.map_window.resize(box_manager.map_box->get_width(),
+                                box_manager.map_box->get_height());
+    map_world.map_window.set_center(player_data.x, player_data.y);
+    map_manager.set_window_tiles();
+    map_manager.update_fov(player_data);
+}
+
+void EngineState::handle_sidebar_action(SidebarMenuAction action) {
+    switch(action) {
+        case SidebarMenuAction::SAVE: {
+            SPDLOG_INFO("Menu save triggered");
+            Packer p(save_path);
+            p << *this;
+            break;
+        }
+        case SidebarMenuAction::RESTORE:
+            SPDLOG_INFO("Menu restore triggered");
+            is_reload_game = true;
+            break;
+        case SidebarMenuAction::TEXT_EDITOR:
+            SPDLOG_INFO("Menu text editor toggle triggered");
+            state.toggle_editor();
+            break;
+        case SidebarMenuAction::CLOCK_PAUSE:
+            SPDLOG_INFO("Clock speed: pause");
+            clock_speed = ClockSpeed::PAUSED;
+            break;
+        case SidebarMenuAction::CLOCK_PLAY:
+            SPDLOG_INFO("Clock speed: play");
+            clock_speed = ClockSpeed::NORMAL;
+            break;
+        case SidebarMenuAction::CLOCK_FAST_FORWARD:
+            SPDLOG_INFO("Clock speed: fast forward");
+            clock_speed = ClockSpeed::FAST;
+            break;
+        case SidebarMenuAction::NONE:
+        default:
+            break;
+    }
+}
 
 Packer& operator<<(Packer& p, EngineState const& obj) {
     ant_proto::EngineState msg;

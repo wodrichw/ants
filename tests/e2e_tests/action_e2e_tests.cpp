@@ -119,7 +119,7 @@ std::vector<E2eCase> build_action_cases() {
     {
         const std::vector<std::vector<std::string>> programs = {
             {"NOP"},
-            {"MOVE DOWN"},
+            {"MOVE"},
             {"INC A"},
             {"DEC B"},
             {"LDI A 1"},
@@ -140,7 +140,7 @@ std::vector<E2eCase> build_action_cases() {
     {
         const std::vector<std::vector<std::string>> programs = {
             {"INVALID"},
-            {"MOVE"},
+            {"MOVE DOWN"},
             {"ADD A"},
             {"LDI C 1"},
             {"JMP"},

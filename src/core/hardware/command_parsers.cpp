@@ -20,54 +20,6 @@ void NoArgCommandParser::operator()(CommandConfig const& config,
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
-void MoveCommandParser::operator()(CommandConfig const& config,
-                                   ParseArgs& args) {
-    SPDLOG_TRACE("Parsing {} command", config.command_string);
-    uchar const instruction = config.command_enum;
-
-    std::string direction;
-    args.code_stream >> direction;
-    if(!args.code_stream || direction.empty()) {
-        args.code.push_back(instruction << 3);
-        TokenParser::terminate(args.code_stream, args.status,
-                               config.command_string, "expecting no args");
-        SPDLOG_TRACE("{} command parsed", config.command_string);
-        return;
-    }
-
-    bool dir_flag1 = false;
-    bool dir_flag2 = false;
-
-    if(direction == "RIGHT") {
-        dir_flag1 = false;
-        dir_flag2 = false;
-    } else if(direction == "UP") {
-        dir_flag1 = false;
-        dir_flag2 = true;
-    } else if(direction == "LEFT") {
-        dir_flag1 = true;
-        dir_flag2 = false;
-    } else if(direction == "DOWN") {
-        dir_flag1 = true;
-        dir_flag2 = true;
-    } else {
-        args.status.error(
-            "Invalid direction keyword - acceptable directions are: UP, "
-            "LEFT, DOWN and RIGHT.");
-        SPDLOG_ERROR("Invalid MOVE direction: {}", direction);
-        return;
-    }
-
-    uchar const dir_bits = (static_cast<uchar>(dir_flag1) << 1) |
-                           (static_cast<uchar>(dir_flag2) & 1);
-    uchar const instruction_byte = (instruction << 3) | 0b100 | (dir_bits & 3);
-    args.code.push_back(instruction_byte);
-
-    TokenParser::terminate(args.code_stream, args.status, config.command_string,
-                           "expecting 1 argument");
-    SPDLOG_TRACE("{} command parsed", config.command_string);
-}
-
 void NoArgCommandDeparser::operator()(CommandConfig const& config,
                                       DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command - no args", config.command_string);

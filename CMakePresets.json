@@ -37,7 +37,9 @@
       "binaryDir": "${sourceDir}/build_tests_ninja_msvc_debug_trace",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "LOG": "TRACE"
+        "LOG": "TRACE",
+        "UNIT_TEST": "ON",
+        "E2E_TESTS": "ON"
       }
     },
     {

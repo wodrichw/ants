@@ -33,7 +33,7 @@ INSTANTIATE_TEST_SUITE_P(
         ParseCase{{"LOAD A 1"}, 5},
         ParseCase{{"INC A"}, 1},
         ParseCase{{"start:", "JMP start"}, 3},
-        ParseCase{{"MOVE UP"}, 1}
+        ParseCase{{"MOVE"}, 1}
     )
 );
 

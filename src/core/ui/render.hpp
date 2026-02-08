@@ -3,12 +3,14 @@
 
 #include <libtcod.hpp>
 
+#include "app/clock_speed.hpp"
 #include "entity/building.hpp"
 #include "entity/entity_data.hpp"
 #include "map/map.hpp"
 #include "map/window.hpp"
 #include "spdlog/spdlog.h"
 #include "ui/layoutbox.hpp"
+#include "ui/sidebar_menu.hpp"
 #include "ui/text_editor.hpp"
 
 class Renderer {
@@ -22,6 +24,9 @@ class Renderer {
                                     TextEditor const& editor,
                                     ulong ant_count) = 0;
     virtual void render_help_boxes(LayoutBox const& box) = 0;
+    virtual void render_sidebar(LayoutBox const& box, SidebarMenu const& menu,
+                                ClockSpeed clock_speed) = 0;
+    virtual void render_toggle_button(bool is_expanded) = 0;
     virtual void present() = 0;
     virtual void pixel_to_tile_coordinates(int pixel_x, int pixel_y,
                                            long& tile_x, long& tile_y) = 0;
@@ -37,6 +42,8 @@ class NoneRenderer : public Renderer {
     void render_building(LayoutBox const&, Building&, MapWindow const&) {};
     void render_text_editor(LayoutBox const&, TextEditor const&, ulong) {};
     void render_help_boxes(LayoutBox const&) {};
+    void render_sidebar(LayoutBox const&, SidebarMenu const&, ClockSpeed) {};
+    void render_toggle_button(bool) {};
     void present() {};
     void pixel_to_tile_coordinates(int, int, long& tile_x, long& tile_y) {
         tile_x = 0;
@@ -81,6 +88,9 @@ class tcodRenderer : public Renderer {
     void render_text_editor(LayoutBox const& box, TextEditor const& editor,
                             ulong ant_count);
     void render_help_boxes(LayoutBox const&);
+    void render_sidebar(LayoutBox const& box, SidebarMenu const& menu,
+                        ClockSpeed clock_speed);
+    void render_toggle_button(bool is_expanded);
     void present();
     void pixel_to_tile_coordinates(int pixel_x, int pixel_y, long& tile_x,
                                    long& tile_y);

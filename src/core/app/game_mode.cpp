@@ -31,7 +31,8 @@ PrimaryMode::PrimaryMode(LayoutBox& box, CommandMap const& command_map,
                          SoftwareManager& software_manager,
                          EntityManager& entity_manager, MapManager& map_manager,
                          MapWorld& map_world, Renderer& renderer,
-                         bool& is_reload_game,
+                                                 bool& is_reload_game,
+                                                 std::function<bool()> input_blocker,
                          const ThreadPool<AsyncProgramJob>& job_pool)
     : box(box),
       hardware_manager(command_map),
@@ -40,7 +41,8 @@ PrimaryMode::PrimaryMode(LayoutBox& box, CommandMap const& command_map,
       map_world(map_world),
       renderer(renderer),
       is_reload_game(is_reload_game),
-      job_pool(job_pool) {
+            job_pool(job_pool),
+            input_blocker(input_blocker) {
     initialize(software_manager);
 }
 
@@ -49,7 +51,8 @@ PrimaryMode::PrimaryMode(const ant_proto::HardwareManager msg, LayoutBox& box,
                          SoftwareManager& software_manager,
                          EntityManager& entity_manager, MapManager& map_manager,
                          MapWorld& map_world, Renderer& renderer,
-                         bool& is_reload_game,
+                                                 bool& is_reload_game,
+                                                 std::function<bool()> input_blocker,
                          const ThreadPool<AsyncProgramJob>& job_pool)
     : box(box),
       hardware_manager(msg, command_map),
@@ -58,7 +61,8 @@ PrimaryMode::PrimaryMode(const ant_proto::HardwareManager msg, LayoutBox& box,
       map_world(map_world),
       renderer(renderer),
       is_reload_game(is_reload_game),
-      job_pool(job_pool) {
+            job_pool(job_pool),
+            input_blocker(input_blocker) {
     SPDLOG_DEBUG("Unpacking primary mode object");
     initialize(software_manager);
     entity_manager.rebuild_workers(hardware_manager, software_manager);
@@ -72,35 +76,43 @@ void PrimaryMode::initialize(SoftwareManager& software_manager) {
     event_system.keyboard_events.add(
         LEFT_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, -1, 0));
+                        entity_manager.player_depth, true, -1, 0,
+                        input_blocker));
     event_system.keyboard_events.add(
         RIGHT_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, 1, 0));
+                        entity_manager.player_depth, true, 1, 0,
+                        input_blocker));
     event_system.keyboard_events.add(
         UP_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, 0, -1));
+                        entity_manager.player_depth, true, 0, -1,
+                        input_blocker));
     event_system.keyboard_events.add(
         DOWN_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, 0, 1));
+                        entity_manager.player_depth, true, 0, 1,
+                        input_blocker));
     event_system.keyboard_events.add(
         H_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, -1, 0));
+                        entity_manager.player_depth, true, -1, 0,
+                        input_blocker));
     event_system.keyboard_events.add(
         L_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, 1, 0));
+                        entity_manager.player_depth, true, 1, 0,
+                        input_blocker));
     event_system.keyboard_events.add(
         K_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, 0, -1));
+                        entity_manager.player_depth, true, 0, -1,
+                        input_blocker));
     event_system.keyboard_events.add(
         J_KEY_EVENT,
         new MoveHandler(entity_manager.player, map_manager, map_world,
-                        entity_manager.player_depth, true, 0, 1));
+                        entity_manager.player_depth, true, 0, 1,
+                        input_blocker));
 
     // ADD ANT EVENT
     event_system.keyboard_events.add(

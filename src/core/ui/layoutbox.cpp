@@ -29,6 +29,13 @@ void LayoutBox::get_abs_pos(long x0, long y0, long &x1, long &y1) const {
 
 long LayoutBox::get_width() const { return this->w; }
 long LayoutBox::get_height() const { return this->h; }
+void LayoutBox::resize(long new_x, long new_y, long new_w, long new_h) {
+    x = new_x;
+    y = new_y;
+    w = new_w;
+    h = new_h;
+    SPDLOG_TRACE("Resized box to ({}, {}) with dimensions {}x{}", x, y, w, h);
+}
 std::pair<LayoutBox *, LayoutBox *> &LayoutBox::split(ulong percentage,
                                                       Orientation orientation) {
     if(orientation == Orientation::HORIZONTAL) {
@@ -53,7 +60,7 @@ BoxManager::BoxManager(ulong w, ulong h)
         : main(static_cast<long>(w), static_cast<long>(h)),
             text_editor_root(static_cast<long>(w), static_cast<long>(h)) {
     SPDLOG_DEBUG("Creating BoxManager");
-    ulong map_split = 80;
+    ulong map_split = 60;
 
     SPDLOG_DEBUG("Splitting main box to create map and sidebar");
     std::tie(map_box, sidebar_box) =
@@ -75,7 +82,32 @@ BoxManager::BoxManager(ulong w, ulong h)
         globals::TEXTBOXWIDTH + globals::REGBOXWIDTH,
         globals::TEXTBOXHEIGHT + globals::REGBOXHEIGHT);
 
+    set_sidebar_expanded(false);
+
     SPDLOG_TRACE("BoxManager created");
+}
+
+void BoxManager::toggle_sidebar() {
+    set_sidebar_expanded(!sidebar_expanded);
+}
+
+void BoxManager::set_sidebar_expanded(bool expanded) {
+    sidebar_expanded = expanded;
+    long main_w = main.get_width();
+    long main_h = main.get_height();
+
+    if(sidebar_expanded) {
+        long map_w = (main_w * static_cast<long>(sidebar_split_percent)) / 100;
+        long sidebar_w = main_w - map_w;
+        map_box->resize(0, 0, map_w, main_h);
+        sidebar_box->resize(map_w, 0, sidebar_w, main_h);
+        SPDLOG_DEBUG("Sidebar expanded: map {}x{}, sidebar {}x{}", map_w,
+                     main_h, sidebar_w, main_h);
+    } else {
+        map_box->resize(0, 0, main_w, main_h);
+        sidebar_box->resize(main_w, 0, 0, main_h);
+        SPDLOG_DEBUG("Sidebar collapsed: map {}x{}", main_w, main_h);
+    }
 }
 
 void LayoutBox::center(ulong new_width, ulong new_height) {

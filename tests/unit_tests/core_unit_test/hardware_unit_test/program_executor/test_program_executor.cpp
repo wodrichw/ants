@@ -64,7 +64,7 @@ protected:
         // Create log file for this test case
         std::string test_name = ::testing::UnitTest::GetInstance()->current_test_info()->name();
         log_filename = "test_" + test_name + ".log";
-        std::string logger_name = "test_logger_" + test_name;
+        logger_name = "test_logger_" + test_name;
 
         try {
             auto logger = spdlog::get(logger_name);
@@ -100,9 +100,16 @@ protected:
         bool test_passed = !::testing::Test::HasFailure();
 
         // Ensure log file is flushed before file operations.
-        if (auto logger = spdlog::default_logger()) {
+        if (auto logger = spdlog::get(logger_name)) {
             logger->flush();
         }
+
+        auto fallback = spdlog::get("test_logger_fallback");
+        if (!fallback) {
+            fallback = spdlog::stdout_color_mt("test_logger_fallback");
+        }
+        spdlog::set_default_logger(fallback);
+        spdlog::drop(logger_name);
 
         // Always create run.log for transcript
         std::filesystem::copy_file(log_filename, "run.log",
@@ -126,6 +133,7 @@ protected:
     std::unique_ptr<ThreadPool<AsyncProgramJob>> job_pool;
     std::unique_ptr<ProgramExecutor> program_executor;
     std::string log_filename;
+    std::string logger_name;
     AssemblyProgramBuilder program_builder;
 };
 

@@ -25,17 +25,7 @@ void SoftwareManager::add_lines(std::vector<std::string> const& lines) {
     clear_current();
 
     Status status;
-    for(const auto& line : lines) {
-        if(trim_copy(line) == "MOVE") {
-            status.error(
-                "MOVE command requires a direction (UP, DOWN, LEFT, RIGHT)");
-            break;
-        }
-    }
-
-    if(!status.p_err) {
-        parser.parse(lines, *current_code, status);
-    }
+    parser.parse(lines, *current_code, status);
 
     if(status.p_err) {
         SPDLOG_ERROR("Failed to parse program - clearing machine code...");
@@ -58,7 +48,11 @@ void SoftwareManager::get_lines(std::vector<std::string>& lines) {
 MachineCode& SoftwareManager::get() { return *current_code; }
 
 MachineCode& SoftwareManager::operator[](ulong ant_idx) {
-    ulong code_idx = ant_mapping[ant_idx];
+    auto it = ant_mapping.find(ant_idx);
+    if(it == ant_mapping.end()) {
+        return *current_code;
+    }
+    ulong code_idx = it->second;
     return code_idx >= code_list.size() ? *current_code
                                         : *(code_list[code_idx]);
 }

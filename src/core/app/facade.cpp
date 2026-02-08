@@ -10,7 +10,11 @@ AntGameFacade::AntGameFacade(ProjectArguments& config)
 
 bool AntGameFacade::update() {
     if(clock_timeout >= SDL_GetTicks64()) return false;
-    clock_timeout += 17;  // 1000ms / 60 FPS = 17
+    ulong interval_ms =  17 * 2;  // 1000ms / 60 FPS = 17
+    if(engine.get_clock_speed() == ClockSpeed::FAST) {
+        interval_ms = 17 / 2;
+    }
+    clock_timeout += interval_ms;
 
     engine.update();
     engine.render();

@@ -1,6 +1,7 @@
 add_executable(test_e2e
     ${CMAKE_CURRENT_SOURCE_DIR}/action_e2e_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/keyboard_e2e_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sidebar_e2e_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/replay_e2e_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/save_restore_e2e_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/e2e_helpers.cpp
@@ -22,5 +23,6 @@ target_compile_definitions(test_e2e PRIVATE
 add_test(NAME E2ETests COMMAND test_e2e)
 add_test(NAME E2eSaveRestoreTests COMMAND test_e2e --gtest_filter=E2eSaveRestore*)
 add_test(NAME E2eKeyboard COMMAND test_e2e --gtest_filter=E2eKeyboard*)
+add_test(NAME E2eSidebar COMMAND test_e2e --gtest_filter=E2eSidebar*)
 
 list(APPEND TEST_TARGETS test_e2e)
