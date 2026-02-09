@@ -71,6 +71,15 @@
       "name": "ubuntu-debug-trace",
       "configurePreset": "ubuntu-debug-trace",
       "jobs": 0
+    },
+    {
+      "name": "ubuntu-debug-trace-ants",
+      "displayName": "Ubuntu Debug + Trace (ants)",
+      "configurePreset": "ubuntu-debug-trace",
+      "targets": [
+        "ants"
+      ],
+      "jobs": 0
     }
   ]
 }

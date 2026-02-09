@@ -7,7 +7,7 @@
 
 struct ParseCase {
     std::vector<std::string> lines;
-    ulong expected_code_size;
+    size_t expected_code_size;
 };
 
 class ParserParseTest : public ::testing::TestWithParam<ParseCase> {};

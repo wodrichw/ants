@@ -1,5 +1,7 @@
 #include "app/facade.hpp"
 
+#include "app/clock_speed.hpp"
+
 #include <SDL_timer.h>
 
 AntGameFacade::AntGameFacade() : engine(), clock_timeout(SDL_GetTicks64()) {}
@@ -11,7 +13,7 @@ AntGameFacade::AntGameFacade(ProjectArguments& config)
 bool AntGameFacade::update() {
     if(clock_timeout >= SDL_GetTicks64()) return false;
     ulong interval_ms =  17 * 2;  // 1000ms / 60 FPS = 17
-    if(engine.get_clock_speed() == ClockSpeed::FAST) {
+    if(engine.is_fast_clock()) {
         interval_ms = 17 / 2;
     }
     clock_timeout += interval_ms;

@@ -25,20 +25,23 @@ class ThreadWork {
     // TODO: consolidate counts into one for just the number of unfinished jobs
     std::atomic_ullong& pending_jobs_count;
     std::atomic_ullong& active_worker_count;
+    std::atomic_ullong& unfinished_jobs_count;
 
    public:
     explicit ThreadWork(std::atomic_bool& is_working,
                         std::atomic_bool const& threadpool_active,
                         std::deque<ThreadTask>& pending_jobs,
                         std::atomic_ullong& pending_jobs_count,
-                        std::atomic_ullong& active_worker_count)
+                                                std::atomic_ullong& active_worker_count,
+                                                std::atomic_ullong& unfinished_jobs_count)
         : is_working(is_working),
           threadpool_active(threadpool_active),
           running_task(false),
           pending_jobs(pending_jobs),
           active_task(),
           pending_jobs_count(pending_jobs_count),
-          active_worker_count(active_worker_count) {}
+                    active_worker_count(active_worker_count),
+                    unfinished_jobs_count(unfinished_jobs_count) {}
 
     void operator()() {
         std::chrono::nanoseconds initial_backoff(10);
@@ -59,6 +62,7 @@ class ThreadWork {
             if(active_task.has_value()) {
                 running_task = true;
                 active_task->run();
+                --unfinished_jobs_count;
                 --active_worker_count;
                 running_task = false;
                 active_task.reset();  // Clear the active task after it's done
@@ -80,11 +84,13 @@ class ThreadWorker {
     ThreadWorker(std::atomic_bool const& threadpool_active,
                  std::deque<ThreadTask>& pending_jobs,
                  std::atomic_ullong& pending_jobs_count,
-                 std::atomic_ullong& active_worker_count)
+                 std::atomic_ullong& active_worker_count,
+                 std::atomic_ullong& unfinished_jobs_count)
         : _is_working(false), _thread([&]() {
               ThreadWork<ThreadTask> thread_work(
                   _is_working, threadpool_active, pending_jobs,
-                  pending_jobs_count, active_worker_count);
+                  pending_jobs_count, active_worker_count,
+                  unfinished_jobs_count);
               thread_work();
           }) {}
 
@@ -108,17 +114,19 @@ class ThreadPool {
     std::atomic_bool is_active;
     std::atomic_ullong pending_jobs_count;
     std::atomic_ullong active_worker_count;
+    std::atomic_ullong unfinished_jobs_count;
 
    public:
     ThreadPool(ulong number_threads)
         : workers(),
           pending_jobs(),
           is_active(true),
-                    pending_jobs_count(0),
-                    active_worker_count(0) {
+          pending_jobs_count(0),
+          active_worker_count(0),
+          unfinished_jobs_count(0) {
         for(ulong i = 0; i < number_threads; ++i) {
             workers.emplace_back(is_active, pending_jobs, pending_jobs_count,
-                                 active_worker_count);
+                                 active_worker_count, unfinished_jobs_count);
         }
     }
 
@@ -127,12 +135,13 @@ class ThreadPool {
     ThreadPool& operator=(const ThreadPool<ThreadTask>&) = delete;
 
     void await_jobs() const {
-        while(active_worker_count > 0 || pending_jobs_count > 0) {
-            /*do nothing */
+        while(unfinished_jobs_count > 0) {
+            std::this_thread::yield();
         }
     }
 
     void submit_job(ThreadTask& task) {
+        ++unfinished_jobs_count;
         ++pending_jobs_count;
         std::scoped_lock lock(globals::threadpool_mutex);
         pending_jobs.push_back(std::move(task));

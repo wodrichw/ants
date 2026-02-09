@@ -1,6 +1,5 @@
 #include "hardware/parser.hpp"
 
-#include <limits>
 #include <sstream>
 
 #include "hardware/machine_code.hpp"
@@ -123,12 +122,7 @@ void Parser::preprocess(std::vector<std::string> const& program_code,
     for(std::string const& raw_line : program_code) {
         std::string line = trim_copy(raw_line);
         if(line.length() == 0 || line[0] == '#') continue;
-        if(active_code.size() > std::numeric_limits<ushort>::max()) {
-            status.error("Program too large to index labels");
-            return;
-        }
-        auto address = static_cast<ushort>(active_code.size());
-        if(handle_label(labels, line, address, status)) continue;
+        if(handle_label(labels, line, active_code.size(), status)) continue;
 
         active_code.push_back(line);
     }

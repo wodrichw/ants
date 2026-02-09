@@ -6,7 +6,6 @@
 #include <spdlog/spdlog.h>
 
 #include "app/globals.hpp"
-#include "utils/types.hpp"
 #include "entity.pb.h"
 #include "entity/inventory.hpp"
 #include "hardware/program_executor.hpp"
@@ -97,13 +96,11 @@ struct Region {
     Region(const Rect& perimeter);
     Region(uint32_t seed_x, uint32_t seed_y, const Rect& perimeter);
     Region(const ant_proto::Region& msg);
-    ant_proto::Region get_proto() const;
+    ant_proto::Region get_proto();
 
     // Section_Plan& section_plan(long x, long y) {
     Section_Plan* section_plan(long x, long y, long z) {
-        if(z < 0 || static_cast<ulong>(z) >=
-                        static_cast<ulong>(section_plans.size()))
-            return nullptr;
+        if(z < 0 || static_cast<size_t>(z) >= section_plans.size()) return nullptr;
         std::vector<Section_Plan>& level_sp = section_plans[z];
 
         // auto search_sp = std::lower_bound(level_sp.begin(), level_sp.end(),
@@ -160,8 +157,7 @@ struct Region_Key {
 namespace std {
     template <>
     struct hash<Region_Key> {
-        auto operator()(const Region_Key& k) const
-            -> decltype(std::hash<long>()(0)) {
+        size_t operator()(const Region_Key& k) const {
             return std::hash<long>()(div_floor(k.x, globals::WORLD_LENGTH)) ^
                    std::hash<long>()(div_floor(k.y, globals::WORLD_LENGTH));
         }
@@ -205,8 +201,7 @@ struct Regions {
                     .first;
         }
 
-        Section_Plan* search_sp =
-            find_itr->second.section_plan(x, y, static_cast<long>(l.depth));
+        Section_Plan* search_sp = find_itr->second.section_plan(x, y, l.depth);
         if(!search_sp) {
             SPDLOG_ERROR(
                 "Regions::build_section missing Section_Plan; aborting. x={}, y={}, depth={}, region=({}, {}).",

@@ -20,6 +20,15 @@ void NoArgCommandParser::operator()(CommandConfig const& config,
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
+void MoveCommandParser::operator()(CommandConfig const& config,
+                                   ParseArgs& args) {
+    SPDLOG_TRACE("Parsing {} command - no args", config.command_string);
+    args.code.push_back(config.command_enum << 3);
+    TokenParser::terminate(args.code_stream, args.status, config.command_string,
+                           "expecting no args");
+    SPDLOG_TRACE("{} command parsed", config.command_string);
+}
+
 void NoArgCommandDeparser::operator()(CommandConfig const& config,
                                       DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command - no args", config.command_string);

@@ -23,6 +23,9 @@ class Engine {
     void update();
     void render();
 
+    ClockSpeed get_clock_speed() const;
+    bool is_fast_clock() const;
+
     ReplayStatus start_replay_recording(const std::string& path);
     ReplayStatus start_replay_playback(const std::string& path);
     void stop_replay_recording();
@@ -37,8 +40,6 @@ class Engine {
     void action_assign_program_to_ant(ulong ant_idx);
     void action_go_up();
     void action_go_down();
-
-    ClockSpeed get_clock_speed() const;
 
     EngineState* get_state();
     void reload_state_for_tests();

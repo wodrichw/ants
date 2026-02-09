@@ -70,7 +70,7 @@ struct ReplayRunResult {
     ReplayError error = {};
 };
 
-ReplayRunResult run_replay(const std::string& path, ulong max_frames = 120);
+ReplayRunResult run_replay(const std::string& path, size_t max_frames = 120);
 
 struct ActionWorld {
     ProjectArguments config;
@@ -84,7 +84,7 @@ std::vector<std::pair<long, long>> collect_offsets(Map& map,
                                                    long x,
                                                    long y,
                                                    bool want_wall,
-                                                   ulong count);
+                                                   size_t count);
 
 std::string save_dir();
 std::string save_path();
@@ -109,22 +109,22 @@ struct WorkerSnapshot {
     bool is_move_flag = false;
     bool is_dig_flag = false;
     unsigned short instr_ptr = 0;
-    ulong instr_trigger = 0;
+    unsigned long instr_trigger = 0;
 };
 
 struct WorldSnapshot {
     long player_x = 0;
     long player_y = 0;
-    ulong player_depth = 0;
-    ulong current_depth = 0;
-    ulong worker_count = 0;
+    unsigned long player_depth = 0;
+    unsigned long current_depth = 0;
+    size_t worker_count = 0;
     std::vector<WorkerSnapshot> workers = {};
     std::vector<MapTileSnapshot> map_tiles = {};
     bool has_code = false;
     std::vector<unsigned char> current_code = {};
-    ulong current_label_count = 0;
+    size_t current_label_count = 0;
     std::vector<unsigned char> ant_code = {};
-    ulong ant_label_count = 0;
+    size_t ant_label_count = 0;
 };
 
 WorldSnapshot capture_world_snapshot(

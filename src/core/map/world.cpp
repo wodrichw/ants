@@ -12,7 +12,6 @@
 #include "map/builder.hpp"
 #include "map/section_data.hpp"
 #include "map/window.hpp"
-#include "utils/types.hpp"
 
 Level::Level(const Map& map, ulong depth) : map(map), depth(depth) {}
 
@@ -185,8 +184,8 @@ void Region::do_blueprint_planning() {
         bool successful_attempt = false;
         for(const auto& shape : shapes) {
             bool placed = false;
-            long shape_width = static_cast<long>(shape->w);
-            long shape_height = static_cast<long>(shape->h);
+            long shape_width = shape->w;
+            long shape_height = shape->h;
             for(long z = 0;
                 z + static_cast<long>(shape->depth) <= globals::MAX_LEVEL_DEPTH;
                 ++z) {
@@ -246,10 +245,8 @@ void Region::do_blueprint_planning() {
                          (zone_placement.chunk_x * globals::CHUNK_LENGTH),
                      perimeter.y1 +
                          (zone_placement.chunk_y * globals::CHUNK_LENGTH),
-                     static_cast<long>(zone_placement.zone->w) *
-                         globals::CHUNK_LENGTH,
-                     static_cast<long>(zone_placement.zone->h) *
-                         globals::CHUNK_LENGTH),
+                     zone_placement.zone->w * globals::CHUNK_LENGTH,
+                     zone_placement.zone->h * globals::CHUNK_LENGTH),
                 z - zone_placement.chunk_z, zone_placement.zone->build_section);
         }
     }
@@ -273,25 +270,20 @@ Region::Region(uint32_t seed_x, uint32_t seed_y, const Rect& perimeter)
       seed_y(seed_y),
       perimeter(perimeter),
       randomizer(get_seed()),
-                        is_first_region(perimeter.x1 == 0 && perimeter.y1 == 0) {
+      is_first_region(false) {
     do_blueprint_planning();
 }
 
 Region::Region(const ant_proto::Region& msg)
-        : seed_x(msg.seed_x()),
-            seed_y(msg.seed_y()),
-            perimeter(msg.perimeter()),
-            randomizer(get_seed()),
-            is_first_region(msg.is_first_region()) {
-        do_blueprint_planning();
-}
+    : seed_x(msg.seed_x()),
+      seed_y(msg.seed_y()),
+      perimeter(msg.perimeter()),
+      is_first_region(msg.is_first_region()) {}
 
-ant_proto::Region Region::get_proto() const {
+ant_proto::Region Region::get_proto() {
     ant_proto::Region msg;
     msg.set_seed_x(seed_x);
     msg.set_seed_y(seed_y);
-    *msg.mutable_perimeter() = perimeter.get_proto();
-    msg.set_is_first_region(is_first_region);
     return msg;
 }
 
@@ -306,50 +298,35 @@ struct Generate_Chunk_Callback {
 MapWorld::MapWorld(const Rect& border, bool is_walls_enabled)
     : levels{}, regions(), map_window(border) {
     // Ensure that levels are created
-    for(ulong i = 0; i < globals::MAX_LEVEL_DEPTH; ++i)
-        levels.emplace_back(Level(
-            Map(is_walls_enabled,
-                Generate_Chunk_Callback{static_cast<ulong>(i), *this}),
-            i));
+    for(size_t i = 0; i < globals::MAX_LEVEL_DEPTH; ++i)
+        levels.emplace_back(
+            Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
 }
 
 MapWorld::MapWorld(const Rect& border, bool is_walls_enabled, uint32_t seed_x,
                    uint32_t seed_y)
     : levels{}, regions(seed_x, seed_y), map_window(border) {
     // Ensure that levels are created
-    for(ulong i = 0; i < globals::MAX_LEVEL_DEPTH; ++i)
-        levels.emplace_back(Level(
-            Map(is_walls_enabled,
-                Generate_Chunk_Callback{static_cast<ulong>(i), *this}),
-            i));
+    for(size_t i = 0; i < globals::MAX_LEVEL_DEPTH; ++i)
+        levels.emplace_back(
+            Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
 }
 
 MapWorld::MapWorld(const ant_proto::MapWorld& msg,
                    ThreadPool<AsyncProgramJob>& thread_pool,
                    bool is_walls_enabled)
     : levels{},
-      regions(),
       map_window(msg.map_window()),
       current_depth(msg.current_depth()),
       item_info_map(),
       instr_action_clock(msg.instr_action_clock()) {
-    levels.reserve(static_cast<std::vector<Level>::size_type>(
-        msg.levels().size()));
+    levels.reserve(static_cast<size_t>(msg.levels().size()));
     for(int i = 0; i < msg.levels().size(); ++i) {
         auto cb = Generate_Chunk_Callback{static_cast<ulong>(i), *this};
         levels.emplace_back(Level(msg.levels()[i], instr_action_clock,
                                   item_info_map, thread_pool,
                                   is_walls_enabled, cb));
         levels.back().depth = static_cast<ulong>(i);
-    }
-
-    if(!msg.region_keyvals().empty()) {
-        regions.rmap.clear();
-        for(const auto& kv : msg.region_keyvals()) {
-            regions.rmap.emplace(Region_Key{static_cast<long>(kv.x()),
-                                            static_cast<long>(kv.y())},
-                                 Region(kv.val()));
-        }
     }
 }
 
@@ -362,27 +339,6 @@ ant_proto::MapWorld MapWorld::get_proto() const {
     for(const auto& level : levels) *msg.add_levels() = level.get_proto();
     msg.set_current_depth(current_depth);
     *msg.mutable_map_window() = map_window.get_proto();
-    msg.set_instr_action_clock(instr_action_clock);
-
-    std::vector<Region_Key> ordered_keys;
-    ordered_keys.reserve(regions.rmap.size());
-    for(const auto& [key, region] : regions.rmap) {
-        ordered_keys.push_back(key);
-        (void)region;
-    }
-    std::sort(ordered_keys.begin(), ordered_keys.end(),
-              [](const Region_Key& lhs, const Region_Key& rhs) {
-                  return lhs.x == rhs.x ? lhs.y < rhs.y : lhs.x < rhs.x;
-              });
-    for(const auto& key : ordered_keys) {
-        auto it = regions.rmap.find(key);
-        if(it == regions.rmap.end()) continue;
-        ant_proto::Region_KeyVal kv_msg;
-        kv_msg.set_x(key.x);
-        kv_msg.set_y(key.y);
-        *kv_msg.mutable_val() = it->second.get_proto();
-        *msg.add_region_keyvals() = kv_msg;
-    }
 
     return msg;
 }

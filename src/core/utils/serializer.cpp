@@ -4,7 +4,6 @@
 
 #include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
-#include "utils/types.hpp"
 
 Packer::Packer(std::string const& path) : output(path, std::ios::binary) {
     if(path == "") return;
@@ -46,9 +45,9 @@ Unpacker& Unpacker::operator>>(tcod::ColorRGB& col) {
     (*this) >> msg;
 
     uint color = msg.value();
-    col.r = static_cast<uint8_t>(color >> 16);
-    col.g = static_cast<uint8_t>((color >> 8) & 255);
-    col.b = static_cast<uint8_t>(color & 255);
+    col.r = color >> 16;
+    col.g = (color >> 8) & 255;
+    col.b = color & 255;
     return *this;
 }
 

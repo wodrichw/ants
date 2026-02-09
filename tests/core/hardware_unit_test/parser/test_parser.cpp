@@ -7,7 +7,7 @@
 
 struct ParseCase {
     std::vector<std::string> lines;
-    ulong expected_code_size;
+    size_t expected_code_size;
 };
 
 class ParserParseTest : public ::testing::TestWithParam<ParseCase> {};
@@ -33,7 +33,7 @@ INSTANTIATE_TEST_SUITE_P(
         ParseCase{{"LOAD A 1"}, 5},
         ParseCase{{"INC A"}, 1},
         ParseCase{{"start:", "JMP start"}, 3},
-        ParseCase{{"MOVE"}, 1}
+        ParseCase{{"MOVE UP"}, 1}
     )
 );
 

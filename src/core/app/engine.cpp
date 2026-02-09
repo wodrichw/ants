@@ -91,6 +91,12 @@ void Engine::render() {
     // SPDLOG_TRACE("Render complete");
 }
 
+ClockSpeed Engine::get_clock_speed() const { return state->clock_speed; }
+
+bool Engine::is_fast_clock() const {
+    return state->clock_speed == ClockSpeed::FAST;
+}
+
 ReplayStatus Engine::start_replay_recording(const std::string& path) {
     return state->start_replay_recording(path, config);
 }
@@ -128,10 +134,6 @@ void Engine::action_assign_program_to_ant(ulong ant_idx) {
 void Engine::action_go_up() { state->action_go_up(); }
 
 void Engine::action_go_down() { state->action_go_down(); }
-
-ClockSpeed Engine::get_clock_speed() const {
-    return state->clock_speed;
-}
 
 EngineState* Engine::get_state() { return state; }
 
