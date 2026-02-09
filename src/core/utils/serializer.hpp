@@ -6,8 +6,6 @@
 
 #include "spdlog/spdlog.h"
 
-using ulong = unsigned long;
-
 class Packer {
    public:
     Packer(std::string const& path);

@@ -4,6 +4,7 @@
 
 #include "proto/utils.pb.h"
 #include "spdlog/spdlog.h"
+#include "utils/types.hpp"
 
 Packer::Packer(std::string const& path) : output(path, std::ios::binary) {
     if(path == "") return;

@@ -1,7 +1,10 @@
 #pragma once
 
+#include <string>
 #include <unordered_map>
+#include <vector>
 
+#include "utils/types.hpp"
 #include "proto/hardware.pb.h"
 
 class LabelMap {
