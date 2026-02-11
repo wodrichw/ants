@@ -64,7 +64,7 @@ BoxManager::BoxManager(ulong w, ulong h)
 
     SPDLOG_DEBUG("Splitting main box to create map and sidebar");
     std::tie(map_box, sidebar_box) =
-        main.split(map_split, LayoutBox::Orientation::VERTICAL);
+        main.split(sidebar_split_percent, LayoutBox::Orientation::HORIZONTAL);
 
     LayoutBox *editor_right_menu = nullptr, *editor_empty = nullptr;
 
@@ -97,15 +97,15 @@ void BoxManager::set_sidebar_expanded(bool expanded) {
     long main_h = main.get_height();
 
     if(sidebar_expanded) {
-        long map_w = (main_w * static_cast<long>(sidebar_split_percent)) / 100;
-        long sidebar_w = main_w - map_w;
-        map_box->resize(0, 0, map_w, main_h);
-        sidebar_box->resize(map_w, 0, sidebar_w, main_h);
-        SPDLOG_DEBUG("Sidebar expanded: map {}x{}, sidebar {}x{}", map_w,
-                     main_h, sidebar_w, main_h);
+        long map_h = (main_h * static_cast<long>(sidebar_split_percent)) / 100;
+        long sidebar_h = main_h - map_h;
+        map_box->resize(0, 0, main_w, map_h);
+        sidebar_box->resize(0, map_h, main_w, sidebar_h);
+        SPDLOG_DEBUG("Sidebar expanded: map {}x{}, sidebar {}x{}", main_w,
+                     map_h, main_w, sidebar_h);
     } else {
         map_box->resize(0, 0, main_w, main_h);
-        sidebar_box->resize(main_w, 0, 0, main_h);
+        sidebar_box->resize(0, main_h, main_w, 0);
         SPDLOG_DEBUG("Sidebar collapsed: map {}x{}", main_w, main_h);
     }
 }

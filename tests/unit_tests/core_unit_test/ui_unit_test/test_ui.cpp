@@ -107,24 +107,26 @@ TEST(UiBoxManagerTest, SidebarToggleResizesBoxes) {
     EXPECT_FALSE(manager.is_sidebar_expanded());
     EXPECT_EQ(manager.map_box->get_width(), static_cast<long>(globals::COLS));
     EXPECT_EQ(manager.map_box->get_height(), static_cast<long>(globals::ROWS));
-    EXPECT_EQ(manager.sidebar_box->get_width(), 0);
+    EXPECT_EQ(manager.sidebar_box->get_height(), 0);
 
     manager.toggle_sidebar();
 
     EXPECT_TRUE(manager.is_sidebar_expanded());
-    long expected_map_w =
-        (static_cast<long>(globals::COLS) * 80) / 100;
-    long expected_sidebar_w = static_cast<long>(globals::COLS) - expected_map_w;
-    EXPECT_EQ(manager.map_box->get_width(), expected_map_w);
-    EXPECT_EQ(manager.sidebar_box->get_width(), expected_sidebar_w);
-    EXPECT_EQ(manager.sidebar_box->get_height(),
-              static_cast<long>(globals::ROWS));
+    long expected_map_h =
+        (static_cast<long>(globals::ROWS) * 80) / 100;
+    long expected_sidebar_h =
+        static_cast<long>(globals::ROWS) - expected_map_h;
+    EXPECT_EQ(manager.map_box->get_width(), static_cast<long>(globals::COLS));
+    EXPECT_EQ(manager.map_box->get_height(), expected_map_h);
+    EXPECT_EQ(manager.sidebar_box->get_width(),
+              static_cast<long>(globals::COLS));
+    EXPECT_EQ(manager.sidebar_box->get_height(), expected_sidebar_h);
 
     manager.toggle_sidebar();
 
     EXPECT_FALSE(manager.is_sidebar_expanded());
     EXPECT_EQ(manager.map_box->get_width(), static_cast<long>(globals::COLS));
-    EXPECT_EQ(manager.sidebar_box->get_width(), 0);
+    EXPECT_EQ(manager.sidebar_box->get_height(), 0);
 }
 
 TEST(UiTextEditorTest, InsertAddsCharacter) {

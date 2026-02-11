@@ -81,5 +81,5 @@ TEST(SidebarMenuTest, ToggleButtonBoundsMatchGlobals) {
     EXPECT_EQ(w, 3);
     EXPECT_EQ(h, 1);
     EXPECT_EQ(x, static_cast<long>(globals::COLS) - w);
-    EXPECT_EQ(y, 0);
+    EXPECT_EQ(y, static_cast<long>(globals::ROWS) - h);
 }

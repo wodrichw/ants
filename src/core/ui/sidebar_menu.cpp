@@ -74,7 +74,7 @@ void SidebarMenu::get_toggle_button_bounds(long& x, long& y, long& w, long& h) {
     w = 3;
     h = 1;
     x = globals::COLS - w;
-    y = 0;
+    y = globals::ROWS - h;
 }
 
 void SidebarMenu::close_submenu() {
