@@ -2,6 +2,8 @@
 
 #include <libtcod/mersenne.hpp>
 #include <optional>
+#include <cstdlib>
+#include <spdlog/spdlog.h>
 
 #include "app/globals.hpp"
 #include "entity.pb.h"
@@ -98,6 +100,7 @@ struct Region {
 
     // Section_Plan& section_plan(long x, long y) {
     Section_Plan* section_plan(long x, long y, long z) {
+        if(z < 0 || static_cast<size_t>(z) >= section_plans.size()) return nullptr;
         std::vector<Section_Plan>& level_sp = section_plans[z];
 
         // auto search_sp = std::lower_bound(level_sp.begin(), level_sp.end(),
@@ -181,8 +184,15 @@ struct Regions {
         if(find_itr == rmap.end()) {
             long snap_x = align_to_region(x);
             long snap_y = align_to_region(y);
-            auto new_seed_x = rmap.find({0, 0})->second.seed_x + snap_x;
-            auto new_seed_y = rmap.find({0, 0})->second.seed_y + snap_y;
+            auto origin_itr = rmap.find({0, 0});
+            if(origin_itr == rmap.end()) {
+                SPDLOG_ERROR(
+                    "Regions::build_section missing origin region; aborting. x={}, y={}, depth={}.",
+                    x, y, l.depth);
+                std::abort();
+            }
+            auto new_seed_x = origin_itr->second.seed_x + snap_x;
+            auto new_seed_y = origin_itr->second.seed_y + snap_y;
             find_itr =
                 rmap.emplace(Region_Key{x, y},
                              Region(new_seed_x, new_seed_y,
@@ -192,16 +202,30 @@ struct Regions {
         }
 
         Section_Plan* search_sp = find_itr->second.section_plan(x, y, l.depth);
-        if(search_sp && !search_sp->in_construction) {
-            search_sp->in_construction = true;
-            if(l.map.chunk_built(x, y)) return;
-            search_sp->build_section(l);
+        if(!search_sp) {
+            SPDLOG_ERROR(
+                "Regions::build_section missing Section_Plan; aborting. x={}, y={}, depth={}, region=({}, {}).",
+                x, y, l.depth, find_itr->second.perimeter.x1,
+                find_itr->second.perimeter.y1);
+            std::abort();
         }
+        if(search_sp->in_construction) return;
+        if(l.map.chunk_built(x, y)) return;
+        search_sp->in_construction = true;
+        search_sp->build_section(l);
     }
 
     Regions() : rmap() {
-        rmap.emplace(Region_Key{0, 0}, Region(Rect(0, 0, globals::WORLD_LENGTH,
-                                                   globals::WORLD_LENGTH)));
+        rmap.emplace(Region_Key{0, 0},
+                     Region(Rect(0, 0, globals::WORLD_LENGTH,
+                                 globals::WORLD_LENGTH)));
+    }
+
+    Regions(uint32_t seed_x, uint32_t seed_y) : rmap() {
+        rmap.emplace(Region_Key{0, 0},
+                     Region(seed_x, seed_y,
+                            Rect(0, 0, globals::WORLD_LENGTH,
+                                 globals::WORLD_LENGTH)));
     }
 };
 
@@ -216,9 +240,13 @@ class MapWorld {
 
     MapWorld(const Rect& border,
              bool is_walls_enabled);  // guaranteed first world
+    MapWorld(const Rect& border, bool is_walls_enabled, uint32_t seed_x,
+             uint32_t seed_y);
     MapWorld(const ant_proto::MapWorld& msg,
              ThreadPool<AsyncProgramJob>& thread_pool, bool is_walls_enabled);
     ant_proto::MapWorld get_proto() const;
+
+    bool get_origin_region_seeds(uint32_t& seed_x, uint32_t& seed_y) const;
 
     Level& current_level();
     Level& operator[](ulong depth);

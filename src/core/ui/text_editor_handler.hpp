@@ -2,6 +2,8 @@
 
 #include <SDL_keycode.h>
 
+#include <cctype>
+
 #include "app/game_state.hpp"
 #include "ui/text_editor.hpp"
 
@@ -95,10 +97,12 @@ class EditorKeyHandler : public Subscriber<CharKeyboardEvent> {
     void operator()(CharKeyboardEvent const& event) {
         if(!(((event.key >= 'a' && event.key <= 'z') ||
               (event.key >= '0' && event.key <= '9') || event.key == ',' ||
-              event.key == ' ' || event.key == '#' || event.key == ':') ||
+              event.key == ' ' || event.key == '#' || event.key == ':' ||
+              event.key == '/') ||
              event.key == '-'))
             return;
 
-        editor.insert(toupper(event.key));
+        editor.insert(static_cast<char>(
+            std::toupper(static_cast<unsigned char>(event.key))));
     }
 };

@@ -27,14 +27,14 @@ inline void trim(std::string &s) {
 }
 
 inline long trimmed_size(const std::string &s) {
-    size_t start = s.find_first_not_of(" \t\n\r");
-    size_t end = s.find_last_not_of(" \t\n\r");
+    auto start = s.find_first_not_of(" \t\n\r");
+    auto end = s.find_last_not_of(" \t\n\r");
 
     if(start == std::string::npos || end == std::string::npos) {
         return 0;  // String consists entirely of whitespace
     }
 
-    return end - start + 1;
+    return static_cast<long>(end - start + 1);
 }
 
 inline bool trimmed_empty(std::string const &s) {

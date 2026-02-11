@@ -6,6 +6,7 @@
 #include <libtcod.hpp>
 
 #include "app/globals.hpp"
+#include "utils/types.hpp"
 #include "map/map.hpp"
 #include "map/window.hpp"
 #include "ui/layoutbox.hpp"
@@ -42,7 +43,7 @@ inline void debug_tile(const Map& map, TCOD_ConsoleTile& tile, long x, long y) {
     }
 
     long value = y_mod == 0
-                     ? chunk_id
+                     ? static_cast<long>(chunk_id)
                      : (y_mod == 1 ? std::abs(true_x) : std::abs(true_y));
     if(x_mod == 2) {
         if(value >= 0) return;

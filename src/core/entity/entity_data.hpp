@@ -1,9 +1,8 @@
 #pragma once
 #include <libtcod/color.hpp>
 
+#include "utils/types.hpp"
 #include "entity.pb.h"
-
-using ulong = unsigned long;
 struct RenderPosition {
     long x = 0, y = 0;
     bool requires_update = false;

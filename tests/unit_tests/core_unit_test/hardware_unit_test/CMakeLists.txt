@@ -1,0 +1,13 @@
+# Hardware unit tests (mirroring src/core/hardware structure)
+
+add_subdirectory(program_executor)
+add_subdirectory(label_map)
+add_subdirectory(machine_code)
+add_subdirectory(token_parser)
+add_subdirectory(parser)
+add_subdirectory(command_config)
+add_subdirectory(compiler)
+add_subdirectory(op_def)
+add_subdirectory(hardware_manager)
+add_subdirectory(software_manager)
+add_subdirectory(brain)

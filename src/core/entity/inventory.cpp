@@ -1,5 +1,8 @@
 #include "entity/inventory.hpp"
 
+#include <algorithm>
+#include <vector>
+
 #include "spdlog/spdlog.h"
 
 ItemInfoMap::ItemInfoMap() {
@@ -101,7 +104,16 @@ ant_proto::Inventory Inventory::get_proto() const {
     msg.set_max_stack_count(max_stack_count);
     msg.set_stack_size(stack_size);
     msg.set_max_weight(max_weight);
+    std::vector<std::pair<ItemType, ulong>> ordered;
+    ordered.reserve(items.size());
     for(const auto& item : items) {
+        ordered.emplace_back(item.first, item.second);
+    }
+    std::sort(ordered.begin(), ordered.end(),
+              [](const auto& lhs, const auto& rhs) {
+                  return lhs.first < rhs.first;
+              });
+    for(const auto& item : ordered) {
         ant_proto::InventoryRecord i_msg;
         i_msg.set_type(item.first);
         i_msg.set_count(item.second);

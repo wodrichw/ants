@@ -4,6 +4,7 @@
 
 #include "hardware/command_config.hpp"
 #include "utils/status.hpp"
+#include "utils/types.hpp"
 
 struct ParserArgs;
 struct ProgramExecutor;

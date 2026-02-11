@@ -16,7 +16,7 @@ bool MachineCode::is_empty() const {
     return code.size() == 0 && labels.size() == 0;
 }
 
-size_t MachineCode::size() const { return code.size(); }
+ulong MachineCode::size() const { return static_cast<ulong>(code.size()); }
 
 ant_proto::MachineCode MachineCode::get_proto() {
     ant_proto::MachineCode msg;

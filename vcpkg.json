@@ -10,18 +10,19 @@
   "homepage": "https://github.com/libtcod/libtcod",
   "documentation": "https://libtcod.readthedocs.io/en/latest/",
   "license": "BSD-3-Clause",
+  "builtin-baseline": "96d5fb3de135b86d7222c53f2352ca92827a156b",
   "dependencies": [
+    "benchmark",
     "libtcod",
-    "spdlog",
-    "pybind11",
     "protobuf",
-    "benchmark"
+    "pybind11",
+    "spdlog",
+    "gtest"
   ],
   "overrides": [
     {
       "name": "libtcod",
       "version": "1.24.0"
     }
-  ],
-  "builtin-baseline": "96d5fb3de135b86d7222c53f2352ca92827a156b"
+  ]
 }

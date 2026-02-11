@@ -80,7 +80,25 @@ struct MoveAntCompiler {
     void operator()(CommandConfig const& config, CompileArgs& args) {
         SPDLOG_TRACE("Compiling {} command - speed: {} tks / dig",
                      config.command_string, args.cpu.wait_move_tick_count);
-        args.ops.push_back({args.cpu.wait_move_tick_count, MoveOp(args.cpu)});
+        uchar const instruction = *args.code_it;
+        bool const has_direction = (instruction & 0b100) != 0;
+        bool const dir_flag1 = (instruction & 0b010) != 0;
+        bool const dir_flag2 = (instruction & 0b001) != 0;
+
+        if(has_direction) {
+            DualRegisters& cpu = args.cpu;
+            args.ops.push_back({
+                args.cpu.wait_move_tick_count,
+                [dir_flag1, dir_flag2, &cpu]() {
+                    cpu.dir_flag1 = dir_flag1;
+                    cpu.dir_flag2 = dir_flag2;
+                    Operation op(cpu);
+                    op();
+                }});
+        } else {
+            args.ops.push_back(
+                {args.cpu.wait_move_tick_count, Operation(args.cpu)});
+        }
 
         ++args.code_it;
         SPDLOG_TRACE("{} command compiled - speed: {} tks / move",

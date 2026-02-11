@@ -4,6 +4,7 @@
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 
+#include <functional>
 #include <libtcod.hpp>
 #include <libtcod/console.hpp>
 
@@ -78,6 +79,10 @@ class EditorMode : public Mode {
     get_char_keyboard_publisher() override {
         return event_system.char_keyboard_events;
     }
+
+    TextEditor& get_editor() { return editor; }
+    const TextEditor& get_editor() const { return editor; }
+
 };
 
 class PrimaryMode : public Mode {
@@ -90,12 +95,14 @@ class PrimaryMode : public Mode {
     Renderer& renderer;
     bool& is_reload_game;
     const ThreadPool<AsyncProgramJob>& job_pool;
+    std::function<bool()> input_blocker;
 
    public:
     PrimaryMode(LayoutBox& box, CommandMap const& command_map,
                 SoftwareManager& software_manager,
                 EntityManager& entity_manager, MapManager& map_manager,
                 MapWorld& map_world, Renderer& renderer, bool& is_reload_game,
+                std::function<bool()> input_blocker,
                 const ThreadPool<AsyncProgramJob>& job_pool);
 
     PrimaryMode(const ant_proto::HardwareManager msg, LayoutBox& box,
@@ -103,6 +110,7 @@ class PrimaryMode : public Mode {
                 SoftwareManager& software_manager,
                 EntityManager& entity_manager, MapManager& map_manager,
                 MapWorld& map_world, Renderer& renderer, bool& is_reload_game,
+                std::function<bool()> input_blocker,
                 const ThreadPool<AsyncProgramJob>& job_pool);
 
     void initialize(SoftwareManager& software_manager);
@@ -131,6 +139,8 @@ class PrimaryMode : public Mode {
     get_char_keyboard_publisher() override {
         return event_system.char_keyboard_events;
     }
+
+    HardwareManager& get_hardware_manager() { return hardware_manager; }
 
     ant_proto::HardwareManager get_proto() const {
         ant_proto::HardwareManager msg;

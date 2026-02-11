@@ -113,6 +113,9 @@ class World_BspListener : public ITCODBspCallback {
 
 bool Region::can_place_zone(chunk_assignments_t& chunk_assignemnts, long x,
                             long y, long z, Zone& zone) {
+    if(z < 0 || x < 0 || y < 0) return false;
+    if(z + static_cast<long>(zone.depth) > globals::MAX_LEVEL_DEPTH)
+        return false;
     for(ulong i = x; i < x + zone.w; ++i) {
         for(ulong j = y; j < y + zone.h; ++j) {
             for(ulong k = z; k < z + zone.depth; ++k) {
@@ -125,6 +128,9 @@ bool Region::can_place_zone(chunk_assignments_t& chunk_assignemnts, long x,
 
 void Region::place_zone(chunk_assignments_t& chunk_assignments, long x, long y,
                         long z, Zone& zone) {
+    if(z < 0 || x < 0 || y < 0) return;
+    if(z + static_cast<long>(zone.depth) > globals::MAX_LEVEL_DEPTH)
+        return;
     for(ulong i = x; i < x + zone.w; ++i) {
         for(ulong j = y; j < y + zone.h; ++j) {
             for(ulong k = z; k < z + zone.depth; ++k) {
@@ -180,7 +186,9 @@ void Region::do_blueprint_planning() {
             bool placed = false;
             long shape_width = shape->w;
             long shape_height = shape->h;
-            for(long z = 0; z <= globals::MAX_LEVEL_DEPTH; ++z) {
+            for(long z = 0;
+                z + static_cast<long>(shape->depth) <= globals::MAX_LEVEL_DEPTH;
+                ++z) {
                 for(long x = 0; x <= xy_length - shape_width; ++x) {
                     for(long y = 0; y <= xy_length - shape_height; ++y) {
                         if(can_place_zone(chunk_assignments, x, y, z, *shape)) {
@@ -295,6 +303,15 @@ MapWorld::MapWorld(const Rect& border, bool is_walls_enabled)
             Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
 }
 
+MapWorld::MapWorld(const Rect& border, bool is_walls_enabled, uint32_t seed_x,
+                   uint32_t seed_y)
+    : levels{}, regions(seed_x, seed_y), map_window(border) {
+    // Ensure that levels are created
+    for(size_t i = 0; i < globals::MAX_LEVEL_DEPTH; ++i)
+        levels.emplace_back(
+            Level(Map(is_walls_enabled, Generate_Chunk_Callback{i, *this}), i));
+}
+
 MapWorld::MapWorld(const ant_proto::MapWorld& msg,
                    ThreadPool<AsyncProgramJob>& thread_pool,
                    bool is_walls_enabled)
@@ -303,10 +320,13 @@ MapWorld::MapWorld(const ant_proto::MapWorld& msg,
       current_depth(msg.current_depth()),
       item_info_map(),
       instr_action_clock(msg.instr_action_clock()) {
+    levels.reserve(static_cast<size_t>(msg.levels().size()));
     for(int i = 0; i < msg.levels().size(); ++i) {
         auto cb = Generate_Chunk_Callback{static_cast<ulong>(i), *this};
-        levels[i] = Level(msg.levels()[i], instr_action_clock, item_info_map,
-                          thread_pool, is_walls_enabled, cb);
+        levels.emplace_back(Level(msg.levels()[i], instr_action_clock,
+                                  item_info_map, thread_pool,
+                                  is_walls_enabled, cb));
+        levels.back().depth = static_cast<ulong>(i);
     }
 }
 
@@ -321,4 +341,13 @@ ant_proto::MapWorld MapWorld::get_proto() const {
     *msg.mutable_map_window() = map_window.get_proto();
 
     return msg;
+}
+
+bool MapWorld::get_origin_region_seeds(uint32_t& seed_x,
+                                       uint32_t& seed_y) const {
+    auto it = regions.rmap.find(Region_Key{0, 0});
+    if(it == regions.rmap.end()) return false;
+    seed_x = it->second.seed_x;
+    seed_y = it->second.seed_y;
+    return true;
 }

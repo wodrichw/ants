@@ -3,12 +3,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "app/globals.hpp"
+#include "utils/types.hpp"
 #include "entity/building.hpp"
 #include "entity/entity_data.hpp"
 #include "map.pb.h"
 #include "map/section_data.hpp"
-
-using ulong = unsigned long;
 
 struct Tile {
     bool is_explored = false;  // has this tile already been seen by the player?

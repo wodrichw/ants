@@ -20,6 +20,15 @@ void NoArgCommandParser::operator()(CommandConfig const& config,
     SPDLOG_TRACE("{} command parsed", config.command_string);
 }
 
+void MoveCommandParser::operator()(CommandConfig const& config,
+                                   ParseArgs& args) {
+    SPDLOG_TRACE("Parsing {} command - no args", config.command_string);
+    args.code.push_back(config.command_enum << 3);
+    TokenParser::terminate(args.code_stream, args.status, config.command_string,
+                           "expecting no args");
+    SPDLOG_TRACE("{} command parsed", config.command_string);
+}
+
 void NoArgCommandDeparser::operator()(CommandConfig const& config,
                                       DeparseArgs& args) {
     SPDLOG_TRACE("Deparsing {} command - no args", config.command_string);
@@ -32,8 +41,17 @@ void LoadConstantParser::operator()(CommandConfig const& config,
                                     ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar instruction = CommandEnum::LOAD;
-    uchar const register_idx = TokenParser::letter_idx(args.code_stream);
-    cpu_word_size const value = TokenParser::integer(args.code_stream);
+    uchar const register_idx =
+        TokenParser::letter_idx(args.code_stream, args.status);
+    if(args.status.p_err) return;
+    if(register_idx > 1) {
+        args.status.error("Invalid register - expected A or B");
+        return;
+    }
+
+    cpu_word_size const value =
+        TokenParser::integer(args.code_stream, args.status);
+    if(args.status.p_err) return;
 
     // Instruction + register
     args.code.push_back((instruction << 3) | (register_idx & 1));
@@ -72,8 +90,21 @@ void TwoRegisterCommandParser::operator()(CommandConfig const& config,
                                           ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
-    uchar const reg_src_idx = TokenParser::letter_idx(args.code_stream);
-    uchar const reg_dst_idx = TokenParser::letter_idx(args.code_stream);
+    uchar const reg_src_idx =
+        TokenParser::letter_idx(args.code_stream, args.status);
+    if(args.status.p_err) return;
+    if(reg_src_idx > 1) {
+        args.status.error("Invalid register - expected A or B");
+        return;
+    }
+
+    uchar const reg_dst_idx =
+        TokenParser::letter_idx(args.code_stream, args.status);
+    if(args.status.p_err) return;
+    if(reg_dst_idx > 1) {
+        args.status.error("Invalid register - expected A or B");
+        return;
+    }
 
     args.code.push_back((instruction << 3) | ((reg_src_idx << 1) & 1) |
                         (reg_dst_idx & 1));
@@ -102,7 +133,13 @@ void OneRegisterCommandParser::operator()(CommandConfig const& config,
                                           ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
-    uchar const register_idx = TokenParser::letter_idx(args.code_stream);
+    uchar const register_idx =
+        TokenParser::letter_idx(args.code_stream, args.status);
+    if(args.status.p_err) return;
+    if(register_idx > 1) {
+        args.status.error("Invalid register - expected A or B");
+        return;
+    }
 
     args.code.push_back((instruction << 3) | (register_idx & 1));
 
@@ -128,6 +165,11 @@ void JumpParser::operator()(CommandConfig const& config, ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
     std::string label = TokenParser::get_label(args.code_stream, args.status);
+    if(args.status.p_err) return;
+    if(!args.labels.contains(label)) {
+        args.status.error("Invalid jump label - label not defined");
+        return;
+    }
     ushort const label_idx = args.labels.at(label);
 
     args.code.push_back(instruction << 3);
@@ -157,7 +199,13 @@ void OneScentCommandParser::operator()(CommandConfig const& config,
                                        ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
-    uchar const scent_idx = TokenParser::letter_idx(args.code_stream);
+    uchar const scent_idx =
+        TokenParser::letter_idx(args.code_stream, args.status);
+    if(args.status.p_err) return;
+    if(scent_idx > 7) {
+        args.status.error("Invalid scent token - expected A-H");
+        return;
+    }
 
     args.code.push_back((instruction << 3) | (scent_idx & 0b111));
 
@@ -170,12 +218,19 @@ void SetScentPriorityParser::operator()(CommandConfig const& config,
                                         ParseArgs& args) {
     SPDLOG_TRACE("Parsing {} command", config.command_string);
     uchar const instruction = config.command_enum;
-    uchar const scent_idx = TokenParser::letter_idx(args.code_stream);
-
-    args.code.push_back((instruction << 3) | (scent_idx & 0b111));
+    uchar const scent_idx =
+        TokenParser::letter_idx(args.code_stream, args.status);
+    if(args.status.p_err) return;
+    if(scent_idx > 7) {
+        args.status.error("Invalid scent token - expected A-H");
+        return;
+    }
 
     schar priority =
         TokenParser::get_signed_byte(args.code_stream, args.status);
+    if(args.status.p_err) return;
+
+    args.code.push_back((instruction << 3) | (scent_idx & 0b111));
     args.code.push_back(static_cast<uchar>(priority));
 
     TokenParser::terminate(args.code_stream, args.status, config.command_string,

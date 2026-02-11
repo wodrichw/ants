@@ -1,6 +1,10 @@
 #include "hardware/software_manager.hpp"
 
+#include <algorithm>
+#include <vector>
+
 #include "spdlog/spdlog.h"
+#include "utils/string.hpp"
 
 SoftwareManager::SoftwareManager(const ant_proto::SoftwareManager& msg,
                                  CommandMap const& command_map)
@@ -44,7 +48,11 @@ void SoftwareManager::get_lines(std::vector<std::string>& lines) {
 MachineCode& SoftwareManager::get() { return *current_code; }
 
 MachineCode& SoftwareManager::operator[](ulong ant_idx) {
-    ulong code_idx = ant_mapping[ant_idx];
+    auto it = ant_mapping.find(ant_idx);
+    if(it == ant_mapping.end()) {
+        return *current_code;
+    }
+    ulong code_idx = it->second;
     return code_idx >= code_list.size() ? *current_code
                                         : *(code_list[code_idx]);
 }
@@ -73,7 +81,16 @@ ant_proto::SoftwareManager SoftwareManager::get_proto() const {
     for(const auto& code : code_list)
         *msg.add_ant_machine_codes() = code->get_proto();
 
-    for(auto const& [ant_idx, code_idx] : ant_mapping) {
+    std::vector<std::pair<ulong, ulong>> ordered;
+    ordered.reserve(ant_mapping.size());
+    for(const auto& [ant_idx, code_idx] : ant_mapping) {
+        ordered.emplace_back(ant_idx, code_idx);
+    }
+    std::sort(ordered.begin(), ordered.end(),
+              [](const auto& lhs, const auto& rhs) {
+                  return lhs.first < rhs.first;
+              });
+    for(const auto& [ant_idx, code_idx] : ordered) {
         ant_proto::AntCodeRecord ant_code_record_msg;
         ant_code_record_msg.set_ant_idx(ant_idx);
         ant_code_record_msg.set_code_idx(code_idx);

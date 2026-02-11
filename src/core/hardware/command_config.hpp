@@ -7,7 +7,7 @@ struct ParseArgs;
 struct DeparseArgs;
 struct CompileArgs;
 
-enum CommandEnum {
+enum CommandEnum : unsigned char {
     NOP = 0b00000,
     MOVE = 0b00001,
     LOAD = 0b00010,

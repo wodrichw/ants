@@ -1,0 +1,7 @@
+#todo
+1. Rebuild the e2e, unit tests, and the ants executable target using the cmake preset.
+2. Fix any compilation issues
+3. Run all e2e tests and fix any issues
+4. Rebuild if necessary
+5. Run all unit tests and fix any issues
+6. Rebuild if necessary, making sure the ants executable is most up to date

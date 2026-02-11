@@ -1,4 +1,5 @@
 #include "ui/render.hpp"
+#include "app/clock_speed.hpp"
 
 #include <cassert>
 #include <numeric>
@@ -6,10 +7,12 @@
 
 #include "app/globals.hpp"
 #include "spdlog/spdlog.h"
+#include "ui/colors.hpp"
 #include "ui/debug_graphics.hpp"
+#include "utils/types.hpp"
 
 struct Box {
-    ulong x, y, w, h;
+    long x, y, w, h;
     std::vector<std::string> &asciiGrid;
     Box(std::vector<std::string> &asciiGrid, long x, long y, int w, int h)
         : x(x), y(y), w(w), h(h), asciiGrid(asciiGrid) {
@@ -32,20 +35,20 @@ struct Box {
         populate_char(0, h - 1, '+');
         populate_char(w - 1, 0, '+');
         populate_char(w - 1, h - 1, '+');
-        for(ulong i = 1; i < h - 1; ++i) {
+        for(long i = 1; i < h - 1; ++i) {
             populate_char(0, i, '|');
             populate_char(w - 1, i, '|');
         }
-        for(ulong i = 1; i < w - 1; ++i) {
+        for(long i = 1; i < w - 1; ++i) {
             populate_char(i, 0, '-');
             populate_char(i, h - 1, '-');
         }
 
-        for(ushort i = 1; i < h - 1; ++i) {
-            ushort text_line_idx = offset_y + i - 1;
+        for(long i = 1; i < h - 1; ++i) {
+            auto text_line_idx = static_cast<size_t>(offset_y + i - 1);
             bool is_line_filled = text_line_idx < text.size();
-            for(ushort j = 1; j < w - 1; ++j) {
-                ushort char_idx = offset_x + j - 1;
+            for(long j = 1; j < w - 1; ++j) {
+                auto char_idx = static_cast<size_t>(offset_x + j - 1);
                 populate_char(
                     j, i,
                     is_line_filled && char_idx < text[text_line_idx].size()
@@ -223,7 +226,7 @@ void tcodRenderer::render_building(LayoutBox const &box, Building &b,
 
 void tcodRenderer::render_text_editor(LayoutBox const &box,
                                       TextEditor const &editor,
-                                      size_t ant_count) {
+                                      ulong ant_count) {
     // SPDLOG_TRACE("Rendering text editor");
     std::vector<std::string> asciiGrid(globals::TEXTBOXHEIGHT + 2);
     for(int i = 0; i < globals::TEXTBOXHEIGHT + 2; ++i) {
@@ -247,7 +250,8 @@ void tcodRenderer::render_text_editor(LayoutBox const &box,
     accBox.populate({"ACC:0   "});
     bacBox.populate({"BAC:1   "});
 
-    int numAntsSpaces = 4 - std::to_string(ant_count).length();
+    int numAntsSpaces =
+        4 - static_cast<int>(std::to_string(ant_count).length());
     std::ostringstream numAntsStream;
     numAntsStream << "ANT:" << ant_count << std::string(numAntsSpaces, ' ');
     antBox.populate({numAntsStream.str()});
@@ -273,6 +277,84 @@ void tcodRenderer::render_text_editor(LayoutBox const &box,
 // For instance, when standing in a nursery, display keys to produce new
 // workers. This could be replaced with something else in the future.
 void tcodRenderer::render_help_boxes(LayoutBox const &) {}
+
+void tcodRenderer::render_sidebar(LayoutBox const& box, SidebarMenu const& menu,
+                                  ClockSpeed clock_speed) {
+    long w = box.get_width();
+    long h = box.get_height();
+    if(w <= 3 || h <= 3) return;
+
+    std::vector<std::string> asciiGrid(h);
+    for(long i = 0; i < h; ++i) {
+        asciiGrid[i] = std::string(w, ' ');
+    }
+
+    Box sidebarBox(asciiGrid, 1, 1, static_cast<int>(w - 2),
+                   static_cast<int>(h - 2));
+
+    std::vector<std::string> lines;
+    auto is_active_speed = [clock_speed](SidebarMenuAction action) {
+        switch(clock_speed) {
+            case ClockSpeed::PAUSED:
+                return action == SidebarMenuAction::CLOCK_PAUSE;
+            case ClockSpeed::NORMAL:
+                return action == SidebarMenuAction::CLOCK_PLAY;
+            case ClockSpeed::FAST:
+                return action == SidebarMenuAction::CLOCK_FAST_FORWARD;
+            default:
+                return false;
+        }
+    };
+    const auto& items = menu.items();
+    for(size_t i = 0; i < items.size(); ++i) {
+        bool is_selected = !menu.is_submenu_open() &&
+                           menu.selected_index() == i;
+        bool is_open = menu.open_submenu_index().has_value() &&
+                       menu.open_submenu_index().value() == i;
+
+        std::string label = items[i].label;
+        if(!items[i].children.empty()) {
+            label += is_open ? " v" : " >";
+        }
+
+        lines.push_back(std::string(is_selected ? "> " : "  ") + label);
+
+        if(is_open) {
+            const auto& submenu = items[i].children;
+            for(size_t j = 0; j < submenu.size(); ++j) {
+                bool is_sub_selected = menu.submenu_selected_index() == j;
+                std::string sub_label = submenu[j].label;
+                std::string prefix = is_sub_selected ? "  > " : "    ";
+                std::string indicator =
+                    is_active_speed(submenu[j].action) ? "* " : "  ";
+                lines.push_back(prefix + indicator + sub_label);
+            }
+        }
+    }
+
+    sidebarBox.populate(lines);
+
+    std::string result =
+        std::accumulate(asciiGrid.begin(), asciiGrid.end(), std::string(""));
+
+    tcod::print_rect(root_console, get_rect(box, 0, 0, static_cast<int>(w),
+                                           static_cast<int>(h)),
+                     result, color::white, color::dark_grey, TCOD_LEFT,
+                     TCOD_BKGND_SET);
+}
+
+void tcodRenderer::render_toggle_button(bool is_expanded) {
+    long x = 0, y = 0, w = 0, h = 0;
+    SidebarMenu::get_toggle_button_bounds(x, y, w, h);
+
+    const tcod::ColorRGB bg =
+        is_expanded ? color::dark_grey : color::blue;
+
+    tcod::print_rect(root_console,
+                     {static_cast<int>(x), static_cast<int>(y),
+                      static_cast<int>(w), static_cast<int>(h)},
+                     "[M]", color::white, bg, TCOD_LEFT, TCOD_BKGND_SET);
+}
 
 void tcodRenderer::present() {
     // SPDLOG_TRACE("Presenting tcod context");

@@ -3,12 +3,14 @@
 #include <SDL2/SDL_events.h>
 
 #include <algorithm>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
+#include "app/globals.hpp"
+#include "utils/types.hpp"
+#include "spdlog/spdlog.h"
 #include "subscriber.hpp"
-
-using ulong = unsigned long;
 
 template <typename Enum, typename Event>
 struct EventPublisher {
@@ -17,7 +19,8 @@ struct EventPublisher {
     }
 
     void remove(Enum e, Subscriber<Event>* subscriber) {
-        ulong key = std::hash(e);
+        std::hash<Enum> hash;
+        ulong key = hash(e);
         auto it = subscriber_map.find(key);
         if(it == subscriber_map.end()) {
             return;
@@ -30,6 +33,7 @@ struct EventPublisher {
     }
 
     void notify(Event const& event) {
+        debug_notify(event);
         std::hash<Event> hash;
         ulong key = hash(event);
         auto it = subscriber_map.find(key);
@@ -59,6 +63,22 @@ struct EventPublisher {
     }
 
     std::unordered_map<ulong, std::vector<Subscriber<Event>*>*> subscriber_map;
+
+    void debug_notify(Event const& event) {
+        if constexpr(std::is_same_v<Event, KeyboardEvent>) {
+            if(event.type == L_KEY_EVENT) {
+                SPDLOG_INFO(
+                    "debug_notify: L_KEY_EVENT subscriber_map size={} ",
+                    subscriber_map.size());
+                for(const auto& pair : subscriber_map) {
+                    const auto* subscribers = pair.second;
+                    const auto count = subscribers ? subscribers->size() : 0;
+                    SPDLOG_INFO("debug_notify: key={} subscribers={}",
+                                pair.first, count);
+                }
+            }
+        }
+    }
 };
 
 struct EventSystem {

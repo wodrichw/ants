@@ -2,9 +2,8 @@
 
 #include <libtcod.hpp>
 
+#include "app/globals.hpp"
 #include "spdlog/spdlog.h"
-
-using ulong = unsigned long;
 
 MapWindow::MapWindow(Rect const& border)
     : border(border),
@@ -31,6 +30,18 @@ MapWindow::~MapWindow() {
 void MapWindow::set_center(long x, long y) {
     SPDLOG_TRACE("Setting map window center to ({}, {})", x, y);
     border.set_center(x, y);
+}
+
+void MapWindow::resize(long width, long height) {
+    if(width <= 0 || height <= 0) {
+        SPDLOG_WARN("Attempted to resize map window to {}x{}", width, height);
+        return;
+    }
+
+    SPDLOG_INFO("Resizing map window to {}x{}", width, height);
+    delete map;
+    border = Rect(border.x1, border.y1, width, height);
+    map = new TCODMap(width, height);
 }
 
 bool MapWindow::in_fov(long x, long y) const {

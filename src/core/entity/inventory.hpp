@@ -5,9 +5,9 @@
 
 #include <unordered_map>
 
+#include "utils/types.hpp"
 #include "proto/entity.pb.h"
 #include "utils/serializer.hpp"
-using ulong = unsigned long;
 
 // Note: ItemType enum is also defined in protobuf so messing with numbering
 // will mess with the serialization

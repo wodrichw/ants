@@ -26,10 +26,10 @@ EntityData::EntityData(long x, long y, char ch, long fov_radius,
 }
 
 EntityData::EntityData(const ant_proto::EntityData& msg)
-    : x(msg.x()),
-      y(msg.y()),
-      ch(msg.ch()),
-      fov_radius(msg.fov_radius()),
+    : x(static_cast<long>(msg.x())),
+      y(static_cast<long>(msg.y())),
+      ch(static_cast<char>(msg.ch())),
+      fov_radius(static_cast<long>(msg.fov_radius())),
       col(tcod::ColorRGB{static_cast<uint8_t>(msg.color().r()),
                          static_cast<uint8_t>(msg.color().g()),
                          static_cast<uint8_t>(msg.color().b())})

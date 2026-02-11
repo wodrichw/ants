@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "utils/types.hpp"
+
 class SoftwareManager;
 
 struct TextEditor {
